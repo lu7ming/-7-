@@ -788,6 +788,54 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .weather-desc{font-size:12px;color:var(--muted);}
 .weather-loc{font-size:11px;color:var(--faint);margin-left:auto;}
 
+/* ---- 生命之树 ---- */
+.tree-page{display:flex;flex-direction:column;align-items:center;padding:10px 0;min-height:500px;}
+.tree-svg{max-width:420px;width:100%;height:auto;display:block;}
+.tree-svg .trunk{animation:tree-sway 6s ease-in-out infinite alternate;transform-origin:50% 100%;}
+.tree-svg .leaf-cluster{animation:tree-breathe 4s ease-in-out infinite alternate;transform-origin:50% 60%;}
+.tree-svg .leaf{animation:leaf-twinkle 5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center;}
+.tree-svg .particle{animation:particle-float 3s ease-in-out infinite;transform-box:fill-box;}
+.tree-svg .fruit{animation:fruit-glow 3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center;}
+.tree-svg .flower{animation:flower-bloom 4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center;}
+.tree-svg .root{animation:root-glow 5s ease-in-out infinite alternate;transform-box:fill-box;}
+@keyframes tree-sway{0%{transform:rotate(-0.8deg);}100%{transform:rotate(0.8deg);}}
+@keyframes tree-breathe{0%{transform:scale(1);}100%{transform:scale(1.03);}}
+@keyframes leaf-twinkle{0%{opacity:0.8;}100%{opacity:1;}}
+@keyframes particle-float{0%{opacity:0;transform:translateY(0);}50%{opacity:0.6;}100%{opacity:0;transform:translateY(-30px);}}
+@keyframes fruit-glow{0%{filter:brightness(1);}100%{filter:brightness(1.2);}}
+@keyframes flower-bloom{0%{transform:scale(0.95);}100%{transform:scale(1.05);}}
+@keyframes root-glow{0%{opacity:0.3;}100%{opacity:0.6;}}
+
+.tree-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:420px;margin-top:16px;}
+.tree-stat{text-align:center;padding:12px 8px;background:var(--glass-bg-soft);border:1px solid var(--glass-border);border-radius:12px;backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));}
+.tree-stat .ts-icon{font-size:20px;}
+.tree-stat .ts-num{font-size:20px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.tree-stat .ts-label{font-size:11px;color:var(--muted);margin-top:2px;}
+
+.tree-level-bar{width:100%;max-width:420px;margin-top:14px;}
+.tree-level-bar .tlb-head{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:6px;}
+.tree-level-bar .tlb-track{height:10px;background:var(--glass-bg-soft);border:1px solid var(--glass-border);border-radius:999px;overflow:hidden;}
+.tree-level-bar .tlb-fill{height:100%;background:linear-gradient(90deg,var(--good),var(--warm));border-radius:999px;transition:width .8s ease;}
+
+.tree-branches{width:100%;max-width:420px;margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tree-branch-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--glass-bg-soft);border:1px solid var(--glass-border);border-radius:10px;}
+.tree-branch-item .tbi-icon{font-size:16px;flex-shrink:0;}
+.tree-branch-item .tbi-info{flex:1;min-width:0;}
+.tree-branch-item .tbi-name{font-size:12px;font-weight:600;color:var(--ink);}
+.tree-branch-item .tbi-val{font-size:11px;color:var(--muted);}
+.tree-branch-item .tbi-bar{height:4px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden;}
+.tree-branch-item .tbi-bar-fill{height:100%;border-radius:2px;transition:width .5s;}
+
+/* 首页小树预览卡 */
+.tree-preview{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;}
+.tree-preview-svg{width:56px;height:56px;flex-shrink:0;}
+.tree-preview-info{flex:1;min-width:0;}
+.tree-preview-info .tpi-title{font-size:14px;font-weight:700;color:var(--ink);}
+.tree-preview-info .tpi-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.tree-preview-info .tpi-bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden;}
+.tree-preview-info .tpi-bar-fill{height:100%;background:linear-gradient(90deg,var(--good),var(--warm));border-radius:3px;transition:width .5s;}
+.tree-preview-arrow{font-size:18px;color:var(--muted);flex-shrink:0;}
+
 /* ---- Habit week card (首页) ---- */
 .habit-week-card{padding:16px 18px;}
 .hw-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -1153,7 +1201,8 @@ let state={
   quotes:[],          // 摘抄/观后感：[{id,sourceType,source,excerpt,reflection,date,createdAt}]
   goals:[],           // 目标/OKR：[{id,title,level:"vision"|"annual"|"monthly",note,createdAt}]
   financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200}, // 月度预算
-  onboarded:false      // 是否已引导
+  onboarded:false,      // 是否已引导
+  treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}}  // 生命之树
 };
 let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:""};
 let currentDate=fmtDate(new Date());
@@ -1237,7 +1286,7 @@ function load(){
           {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
           {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
         ],
-        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false
+        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}}
       },p);
       state.entries=state.entries||{};
       state.contacts=state.contacts||[];
@@ -1320,6 +1369,7 @@ function migrate(){
     if(e&&e.focusSessions==null)e.focusSessions=[];
     if(e&&e.health&&e.health.meditation==null)e.health.meditation=[];
   });
+  if(!state.treeData)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
 }
 
 /* ============== 记录 ============== */
@@ -1992,6 +2042,7 @@ const NAV_ITEMS=[
  {id:"week",l:"周计划",ico:"🗓"},
  {id:"note",l:"笔记",ico:"📝"},
  {id:"board",l:"看板",ico:"📈"},
+ {id:"tree",l:"生命树",ico:"🌳"},
  {id:"trends",l:"趋势",ico:"📊"}
 ];
 function renderTop(){
@@ -2218,6 +2269,7 @@ function viewHome(){
      ${viewCalendar()}
      ${viewMonthHighlight()}
    </div>
+   ${treePreview()}
    <div class="greet pano-full">
      <div class="greet-eyebrow">WORKSPACE / HOME</div>
 <div class="greet-h">${greetOf(parseDate(currentDate))}，鹿7铭。</div>
@@ -4239,6 +4291,7 @@ function render(){
    case"week":html=viewWeek();break;
    case"note":html=viewNotes();break;
    case"board":html=viewBoard();break;
+   case"tree":html=viewTree();break;
    case"trends":html=viewTrends();break;
    default:html=viewHome();
   }
@@ -5332,6 +5385,394 @@ function exportYearReportImage(){
   img.src=url;
 }
 
+/* ============== 生命之树 ============== */
+const TREE_LEVELS=[
+  {lv:1,name:"种子",icon:"🌰",min:0,max:500,desc:"一切的开始"},
+  {lv:2,name:"嫩芽",icon:"🌱",min:500,max:2000,desc:"破土而出"},
+  {lv:3,name:"小苗",icon:"🌿",min:2000,max:5000,desc:"向阳生长"},
+  {lv:4,name:"小树",icon:"🌳",min:5000,max:10000,desc:"枝繁叶茂"},
+  {lv:5,name:"大树",icon:"🌲",min:10000,max:20000,desc:"根深蒂固"},
+  {lv:6,name:"开花树",icon:"🌸",min:20000,max:50000,desc:"繁花似锦"},
+  {lv:7,name:"繁茂古树",icon:"🌟",min:50000,max:999999,desc:"参天之木"}
+];
+
+/* 计算今日养分：从各模块数据中提取 */
+function calcTreeNutrients(){
+  const today=fmtDate(new Date());
+  const r=getDay(today);
+  let water=0,sunlight=0,fertilizer=0;
+  const num=(v)=>+(v||0);
+
+  // 打卡 → 水
+  const dn=CHECK_TPL.reduce((a,c)=>a+c.items.filter(it=>r.checks[c.cat+"-"+it]).length,0);
+  water+=dn*10;
+
+  // 喝水记录 → 水
+  if(r.health&&r.health.water){
+    const w=r.health.water;
+    if(typeof w==="object"){
+      water+=Object.values(w).filter(v=>v===true).length*5;
+    }else{
+      water+=num(w)*5;
+    }
+  }
+
+  // 学习 → 肥
+  const fs=r.focusSessions||[];
+  const studyMin=fs.reduce((s,f)=>s+Math.round(num(f.duration)/60),0);
+  fertilizer+=studyMin*2;
+  if(r.study&&r.study.vocal&&r.study.vocal.vocal_time)fertilizer+=num(r.study.vocal.vocal_time);
+  if(r.study&&r.study.english&&(r.study.english.en_words||r.study.english.en_read))fertilizer+=num(r.study.english.en_words)+num(r.study.english.en_read);
+
+  // 运动 → 阳光
+  if(r.health&&r.health.exercise){
+    const ex=r.health.exercise;
+    if(typeof ex==="object")sunlight+=num(ex.minutes);
+    else sunlight+=num(ex);
+  }
+  if(r.health&&r.health.meditation)sunlight+=r.health.meditation.reduce((s,m)=>s+Math.round(num(m.duration)/60),0);
+  if(r.health&&r.health.sleep&&num(r.health.sleep)>=7)sunlight+=20;
+
+  // 思考 → 肥
+  const refls=state.reflections[today]||[];
+  fertilizer+=refls.length*20;
+
+  // 连续打卡 → 额外养分
+  const streak=streakDays();
+  if(streak>=7)fertilizer+=50;
+  if(streak>=30){water+=100;sunlight+=100;}
+
+  return {water,sunlight,fertilizer,total:water+sunlight+fertilizer};
+}
+
+/* 更新树数据（每次 render 时调用，确保养分实时） */
+function updateTreeData(){
+  const today=fmtDate(new Date());
+  const td=state.treeData;
+  if(!td)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+  // 如果今天还没计算过，累加今日养分
+  if(td.lastCalcDate!==today){
+    const n=calcTreeNutrients();
+    td.nutrients=(+td.nutrients||0)+(+n.total||0);
+    td.water=(+td.water||0)+(+n.water||0);
+    td.sunlight=(+td.sunlight||0)+(+n.sunlight||0);
+    td.fertilizer=(+td.fertilizer||0)+(+n.fertilizer||0);
+    td.history[today]={water:+n.water,sunlight:+n.sunlight,fertilizer:+n.fertilizer,total:+n.total};
+    td.lastCalcDate=today;
+    // 更新等级
+    for(let i=TREE_LEVELS.length-1;i>=0;i--){
+      if(td.nutrients>=TREE_LEVELS[i].min){td.level=TREE_LEVELS[i].lv;break;}
+    }
+    save();
+  }
+}
+
+/* 生成树的 SVG（写实渐变风） */
+function treeSVG(level,size){
+  const w=size||400,h=size||400;
+  const cx=w/2;
+  let svg=`<svg class="tree-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // 背景天空渐变（根据时间）
+  const hr=new Date().getHours();
+  let skyColors;
+  if(hr<6)skyColors=["#1a1a2e","#16213e","#0f3460"];      // 夜
+  else if(hr<11)skyColors=["#FFE5B4","#FFD0A0","#C8E0F0"]; // 晨
+  else if(hr<16)skyColors=["#C8E0F0","#A8D0F0","#88C0E0"]; // 日
+  else if(hr<19)skyColors=["#FFB07C","#FF8C5A","#C85A3A"]; // 黄昏
+  else skyColors=["#3A2E4A","#2A2030","#1A1420"];           // 晚
+
+  svg+=`<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${skyColors[0]}"/>
+      <stop offset="50%" stop-color="${skyColors[1]}"/>
+      <stop offset="100%" stop-color="${skyColors[2]}"/>
+    </linearGradient>
+    <radialGradient id="trunk" cx="0.5" cy="0.3">
+      <stop offset="0%" stop-color="#8B6F47"/>
+      <stop offset="60%" stop-color="#6B5435"/>
+      <stop offset="100%" stop-color="#4A3A24"/>
+    </radialGradient>
+    <radialGradient id="leaf1" cx="0.4" cy="0.3">
+      <stop offset="0%" stop-color="#A8D88A"/>
+      <stop offset="60%" stop-color="#7FB069"/>
+      <stop offset="100%" stop-color="#5A8A4A"/>
+    </radialGradient>
+    <radialGradient id="leaf2" cx="0.4" cy="0.3">
+      <stop offset="0%" stop-color="#C8E8A8"/>
+      <stop offset="60%" stop-color="#9CCB82"/>
+      <stop offset="100%" stop-color="#6B9C52"/>
+    </radialGradient>
+    <radialGradient id="fruit" cx="0.4" cy="0.3">
+      <stop offset="0%" stop-color="#FFD08A"/>
+      <stop offset="60%" stop-color="#E89B5A"/>
+      <stop offset="100%" stop-color="#C77838"/>
+    </radialGradient>
+    <radialGradient id="flower" cx="0.5" cy="0.4">
+      <stop offset="0%" stop-color="#FFE0F0"/>
+      <stop offset="60%" stop-color="#FF9EC4"/>
+      <stop offset="100%" stop-color="#E06B9C"/>
+    </radialGradient>
+    <radialGradient id="ground" cx="0.5" cy="0.3">
+      <stop offset="0%" stop-color="#8B7355"/>
+      <stop offset="100%" stop-color="#5A4A36"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+
+  // 天空背景
+  svg+=`<rect width="${w}" height="${h}" fill="url(#sky)" rx="20"/>`;
+
+  // 太阳/月亮
+  if(hr>=6&&hr<19){
+    svg+=`<circle cx="${w-60}" cy="50" r="18" fill="#FFE5A0" opacity="0.8" filter="url(#glow)"/>`;
+  }else{
+    svg+=`<circle cx="${w-60}" cy="50" r="14" fill="#F0EBE2" opacity="0.6" filter="url(#glow)"/>`;
+    svg+=`<circle cx="${w-55}" cy="48" r="10" fill="${skyColors[0]}" opacity="0.8"/>`;
+  }
+
+  // 地面
+  svg+=`<ellipse cx="${cx}" cy="${h-30}" rx="${w*0.4}" ry="25" fill="url(#ground)" opacity="0.5"/>`;
+
+  if(level===1){
+    // 种子
+    svg+=`<g class="trunk">
+      <ellipse cx="${cx}" cy="${h-45}" rx="14" ry="10" fill="url(#trunk)"/>
+      <path d="M${cx-6},${h-45} Q${cx},${h-55} ${cx+6},${h-45}" stroke="#7FB069" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>`;
+  }else if(level===2){
+    // 嫩芽
+    svg+=`<g class="trunk">
+      <line x1="${cx}" y1="${h-30}" x2="${cx}" y2="${h-80}" stroke="url(#trunk)" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="${cx-12}" cy="${h-70}" rx="10" ry="6" fill="url(#leaf1)" transform="rotate(-30 ${cx-12} ${h-70})"/>
+      <ellipse cx="${cx+12}" cy="${h-70}" rx="10" ry="6" fill="url(#leaf1)" transform="rotate(30 ${cx+12} ${h-70})"/>
+    </g>`;
+  }else if(level===3){
+    // 小苗
+    svg+=`<g class="trunk">
+      <path d="M${cx},${h-30} Q${cx-3},${h-100} ${cx},${h-120}" stroke="url(#trunk)" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <g class="leaf-cluster">
+        <ellipse cx="${cx-18}" cy="${h-90}" rx="14" ry="9" fill="url(#leaf1)" transform="rotate(-25 ${cx-18} ${h-90})"/>
+        <ellipse cx="${cx+18}" cy="${h-95}" rx="14" ry="9" fill="url(#leaf1)" transform="rotate(25 ${cx+18} ${h-95})"/>
+        <ellipse cx="${cx-10}" cy="${h-115}" rx="12" ry="8" fill="url(#leaf2)" transform="rotate(-15 ${cx-10} ${h-115})"/>
+        <ellipse cx="${cx+10}" cy="${h-115}" rx="12" ry="8" fill="url(#leaf2)" transform="rotate(15 ${cx+10} ${h-115})"/>
+        <circle cx="${cx}" cy="${h-125}" r="8" fill="url(#leaf1)"/>
+      </g>
+    </g>`;
+  }else{
+    // 小树到大树（level 4-7）
+    const scale=0.6+(level-3)*0.12; // 树越来越大
+    const trunkH=120*scale;
+    const crownR=50*scale;
+    const crownY=h-30-trunkH;
+
+    svg+=`<g class="trunk">`;
+    // 树干（分叉）
+    svg+=`<path d="M${cx},${h-30} Q${cx-4},${h-trunkH*0.6} ${cx-2},${crownY+10}" stroke="url(#trunk)" stroke-width="${8*scale}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${h-30} Q${cx+4},${h-trunkH*0.6} ${cx+2},${crownY+10}" stroke="url(#trunk)" stroke-width="${8*scale}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${h-30} L${cx},${crownY+15}" stroke="url(#trunk)" stroke-width="${6*scale}" stroke-linecap="round"/>`;
+    // 分枝
+    svg+=`<path d="M${cx},${crownY+20} Q${cx-30*scale},${crownY+5} ${cx-40*scale},${crownY-5}" stroke="url(#trunk)" stroke-width="${4*scale}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${crownY+20} Q${cx+30*scale},${crownY+5} ${cx+40*scale},${crownY-5}" stroke="url(#trunk)" stroke-width="${4*scale}" fill="none" stroke-linecap="round"/>`;
+    svg+=`</g>`;
+
+    // 树冠（多团叶子）
+    svg+=`<g class="leaf-cluster">`;
+    const clusters=[
+      {x:cx,y:crownY,r:crownR,grad:"leaf1"},
+      {x:cx-crownR*0.7,y:crownY+crownR*0.3,r:crownR*0.7,grad:"leaf2"},
+      {x:cx+crownR*0.7,y:crownY+crownR*0.3,r:crownR*0.7,grad:"leaf1"},
+      {x:cx-crownR*0.3,y:crownY-crownR*0.5,r:crownR*0.6,grad:"leaf2"},
+      {x:cx+crownR*0.3,y:crownY-crownR*0.5,r:crownR*0.6,grad:"leaf1"},
+      {x:cx,y:crownY-crownR*0.7,r:crownR*0.55,grad:"leaf2"},
+    ];
+    if(level>=5){
+      clusters.push({x:cx-crownR*1.1,y:crownY,r:crownR*0.5,grad:"leaf1"});
+      clusters.push({x:cx+crownR*1.1,y:crownY,r:crownR*0.5,grad:"leaf2"});
+    }
+    clusters.forEach((c,i)=>{
+      svg+=`<circle class="leaf" cx="${c.x}" cy="${c.y}" r="${c.r}" fill="url(#${c.grad})" opacity="${0.8+0.2*(i%2)}"/>`;
+    });
+
+    // 果实（level >= 4）
+    if(level>=4){
+      const fruits=[
+        {x:cx-crownR*0.4,y:crownY+crownR*0.2},
+        {x:cx+crownR*0.5,y:crownY-crownR*0.1},
+        {x:cx-crownR*0.1,y:crownY+crownR*0.4},
+      ];
+      if(level>=5)fruits.push({x:cx+crownR*0.2,y:crownY+crownR*0.3});
+      if(level>=6)fruits.push({x:cx-crownR*0.6,y:crownY-crownR*0.3});
+      fruits.forEach(f=>{
+        svg+=`<circle class="fruit" cx="${f.x}" cy="${f.y}" r="${6*scale}" fill="url(#fruit)"/>`;
+      });
+    }
+
+    // 花朵（level >= 6）
+    if(level>=6){
+      const flowers=[
+        {x:cx+crownR*0.6,y:crownY-crownR*0.4},
+        {x:cx-crownR*0.8,y:crownY+crownR*0.1},
+        {x:cx+crownR*0.1,y:crownY-crownR*0.6},
+      ];
+      if(level>=7)flowers.push({x:cx-crownR*0.3,y:crownY+crownR*0.5});
+      flowers.forEach(f=>{
+        for(let p=0;p<5;p++){
+          const ang=p*72*Math.PI/180;
+          const px=f.x+Math.cos(ang)*5*scale;
+          const py=f.y+Math.sin(ang)*5*scale;
+          svg+=`<circle class="flower" cx="${px}" cy="${py}" r="${4*scale}" fill="url(#flower)" opacity="0.9"/>`;
+        }
+        svg+=`<circle cx="${f.x}" cy="${f.y}" r="${3*scale}" fill="#FFE5A0"/>`;
+      });
+    }
+
+    // 星星（level 7）
+    if(level>=7){
+      svg+=`<text x="${cx}" y="${crownY-crownR*0.9}" text-anchor="middle" font-size="20" filter="url(#glow)">🌟</text>`;
+      svg+=`<text x="${cx-crownR}" y="${crownY-crownR*0.4}" text-anchor="middle" font-size="14" filter="url(#glow)">✨</text>`;
+      svg+=`<text x="${cx+crownR}" y="${crownY-crownR*0.4}" text-anchor="middle" font-size="14" filter="url(#glow)">✨</text>`;
+    }
+    svg+=`</g>`;
+  }
+
+  // 根系（level >= 2）
+  if(level>=2){
+    svg+=`<g class="root" opacity="0.4">`;
+    svg+=`<path d="M${cx-8},${h-30} Q${cx-20},${h-20} ${cx-30},${h-12}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx+8},${h-30} Q${cx+20},${h-20} ${cx+30},${h-12}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${h-30} L${cx},${h-10}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    if(level>=4){
+      svg+=`<path d="M${cx-15},${h-25} Q${cx-30},${h-15} ${cx-40},${h-8}" stroke="#6B5435" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx+15},${h-25} Q${cx+30},${h-15} ${cx+40},${h-8}" stroke="#6B5435" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    }
+    svg+=`</g>`;
+  }
+
+  // 飘浮粒子（养分粒子）
+  if(level>=3){
+    for(let i=0;i<5;i++){
+      const px=cx+(Math.random()-0.5)*100;
+      const py=h-100-Math.random()*80;
+      svg+=`<circle class="particle" cx="${px}" cy="${py}" r="2" fill="#FFE5A0" opacity="0" style="animation-delay:${i*0.6}s"/>`;
+    }
+  }
+
+  svg+=`</svg>`;
+  return svg;
+}
+
+/* 生命之树模块 */
+function viewTree(){
+  updateTreeData();
+  const td=state.treeData;
+  const lv=TREE_LEVELS[td.level-1]||TREE_LEVELS[0];
+  const todayN=calcTreeNutrients();
+
+  // 各分支养分
+  const r=getDay(fmtDate(new Date()));
+  const checkDn=CHECK_TPL.reduce((a,c)=>a+c.items.filter(it=>r.checks[c.cat+"-"+it]).length,0);
+  const studyMin=(r.focusSessions||[]).reduce((s,f)=>s+Math.round((+(f.duration||0))/60),0);
+  const exerciseRaw=r.health&&r.health.exercise;
+  const exerciseMin=typeof exerciseRaw==="object"?(+(exerciseRaw&&exerciseRaw.minutes)||0):+(exerciseRaw||0);
+  const medMin=(r.health&&r.health.meditation)?r.health.meditation.reduce((s,m)=>s+Math.round((+(m.duration||0))/60),0):0;
+  const refls=state.reflections[fmtDate(new Date())]||[];
+  const booksRead=state.books.filter(b=>b.status==="已读").length;
+
+  const branches=[
+    {icon:"🌱",name:"根系·打卡",val:checkDn,max:15,color:"var(--good)",unit:"项"},
+    {icon:"📖",name:"学习枝",val:studyMin,max:120,color:"var(--warm)",unit:"分"},
+    {icon:"💪",name:"健康枝",val:exerciseMin+medMin,max:60,color:"#5B9BD5",unit:"分"},
+    {icon:"💭",name:"思考花",val:refls.length,max:5,color:"#9B7BC4",unit:"条"},
+    {icon:"📚",name:"书叶",val:booksRead,max:30,color:"#7FB069",unit:"本"},
+    {icon:"🎯",name:"果实",val:state.projects.filter(p=>p.status==="done").length,max:10,color:"#E89B5A",unit:"个"}
+  ];
+
+  const branchesHtml=branches.map(b=>{
+    const pct=Math.min(100,Math.round(b.val/b.max*100));
+    return `<div class="tree-branch-item">
+      <span class="tbi-icon">${b.icon}</span>
+      <div class="tbi-info">
+        <div class="tbi-name">${b.name}</div>
+        <div class="tbi-val">${b.val} ${b.unit}</div>
+        <div class="tbi-bar"><div class="tbi-bar-fill" style="width:${pct}%;background:${b.color}"></div></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const nextLv=TREE_LEVELS[td.level]||null;
+  const progress=nextLv?Math.round(((+td.nutrients||0)-lv.min)/(nextLv.min-lv.min)*100):100;
+  const toNext=nextLv?nextLv.min-(+td.nutrients||0):0;
+
+  return `<div class="card tree-page">
+    <div class="section-eyebrow">TREE OF LIFE</div>
+    <div class="section-title" style="font-size:18px;text-align:center">🌳 生命之树</div>
+    <p class="section-desc" style="text-align:center">${lv.icon} ${lv.name} · ${lv.desc}</p>
+
+    ${treeSVG(td.level,400)}
+
+    <div class="tree-level-bar">
+      <div class="tlb-head">
+        <span>${lv.icon} Lv.${td.level} ${lv.name}</span>
+        <span>${nextLv?'距下一级 '+toNext:'已满级 🌟'}</span>
+      </div>
+      <div class="tlb-track"><div class="tlb-fill" style="width:${progress}%"></div></div>
+    </div>
+
+    <div class="tree-info">
+      <div class="tree-stat">
+        <div class="ts-icon">💧</div>
+        <div class="ts-num">${(+td.water||0).toFixed(0)}</div>
+        <div class="ts-label">累计水分</div>
+      </div>
+      <div class="tree-stat">
+        <div class="ts-icon">☀️</div>
+        <div class="ts-num">${(+td.sunlight||0).toFixed(0)}</div>
+        <div class="ts-label">累计阳光</div>
+      </div>
+      <div class="tree-stat">
+        <div class="ts-icon">🌿</div>
+        <div class="ts-num">${(+td.fertilizer||0).toFixed(0)}</div>
+        <div class="ts-label">累计养分</div>
+      </div>
+      <div class="tree-stat">
+        <div class="ts-icon">⭐</div>
+        <div class="ts-num">${(+td.nutrients||0).toFixed(0)}</div>
+        <div class="ts-label">总能量</div>
+      </div>
+    </div>
+
+    <div class="tree-branches">
+      ${branchesHtml}
+    </div>
+
+    <div style="margin-top:14px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6">
+      💧 打卡/喝水 → 水分 · ☀️ 运动/睡眠 → 阳光 · 🌿 学习/思考 → 养分<br/>
+      今日已获：${todayN.total} 能量（水${todayN.water}+光${todayN.sunlight}+肥${todayN.fertilizer}）
+    </div>
+  </div>`;
+}
+
+/* 首页小树预览卡 */
+function treePreview(){
+  updateTreeData();
+  const td=state.treeData;
+  const lv=TREE_LEVELS[td.level-1]||TREE_LEVELS[0];
+  const nextLv=TREE_LEVELS[td.level]||null;
+  const progress=nextLv?Math.round(((+td.nutrients||0)-lv.min)/(nextLv.min-lv.min)*100):100;
+  const todayN=calcTreeNutrients();
+
+  return `<div class="card tree-preview pano-full" data-nav="tree">
+    ${treeSVG(td.level,56).replace('class="tree-svg"','class="tree-preview-svg"').replace(/class="(trunk|leaf-cluster|leaf|particle|fruit|flower|root)"/g,'class="$1" style="animation:none"')}
+    <div class="tree-preview-info">
+      <div class="tpi-title">${lv.icon} ${lv.name} · Lv.${td.level}</div>
+      <div class="tpi-sub">今日 +${todayN.total} 能量 · 总 ${(+td.nutrients||0).toFixed(0)}</div>
+      <div class="tpi-bar"><div class="tpi-bar-fill" style="width:${progress}%"></div></div>
+    </div>
+    <span class="tree-preview-arrow">›</span>
+  </div>`;
+}
+
 /* ============== 数据工具 ============== */
 function openData(){
  const b=document.getElementById("dataBody");
@@ -5628,6 +6069,8 @@ async function init(){
   applyTheme();
   render();
   bind();
+  // 初始化生命之树
+  updateTreeData();
   // 初始化推送提醒
   setTimeout(()=>{try{initNotifications();}catch(e){}},2000);
   // 异步获取天气（不阻塞渲染）
