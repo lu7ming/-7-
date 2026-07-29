@@ -1605,10 +1605,101 @@ function parseQuickCapture(raw){
     return {mod:"思考",detail:"已记入思考流",raw:text};
   }
 
-  // 11. 默认：作为任务
+  // 11. 读书："读 《XXX》30分钟" / "读书 XXX 60分钟"
+  const bookMatch=text.match(/^(?:读书?|阅读|看书)\s*[《\"\'「]?(.+?)[》\"\'」]?\s*(\d+)\s*(?:分钟|分|min)/);
+  if(bookMatch){
+    const title=bookMatch[1].trim();
+    const minutes=+bookMatch[2];
+    let book=state.books.find(b=>b.title&&title&&(b.title.includes(title)||title.includes(b.title)));
+    if(book){
+      if(!book.start)book.start=currentDate;
+      book.progress=Math.min(100,(book.progress||0)+Math.round(minutes/30));
+      if(book.progress>=100){book.status="done";book.end=currentDate;}
+    }else{
+      state.books.push({id:uid(),title:title,author:"",status:"reading",progress:Math.min(20,Math.round(minutes/30)),start:currentDate,end:"",note:"快速录入",summary:""});
+    }
+    r.study.reading=r.study.reading||{minutes:0};
+    r.study.reading.minutes=(+r.study.reading.minutes||0)+minutes;
+    r.checks["学习-英语学习"]=true;
+    return {mod:"学习",detail:`读书《${title}》${minutes}分钟（已勾选打卡）`,raw:text};
+  }
+
+  // 12. 跑步/运动："跑步 5km" / "跑步 30分钟" / "运动 1小时"
+  const runMatch=text.match(/^(?:跑步|运动|锻炼)\s*(\d+(?:\.\d+)?)\s*(km|公里|分钟|分|小时|h)?/);
+  if(runMatch){
+    const val=+runMatch[1];
+    const unit=runMatch[2]||"分钟";
+    const minutes=unit==="小时"||unit==="h"?val*60:(unit==="km"||unit==="公里"?Math.round(val*6):val);
+    r.health.exercise=r.health.exercise||{};
+    r.health.exercise.type=unit==="km"||unit==="公里"?"跑步":"运动";
+    r.health.exercise.minutes=(+r.health.exercise.minutes||0)+minutes;
+    r.checks["健康-运动"]=true;
+    return {mod:"健康",detail:`运动${minutes}分钟（已勾选打卡）`,raw:text};
+  }
+
+  // 13. 睡眠："睡眠 7.5小时" / "睡了 8小时" / "昨晚睡 6h"
+  const sleepMatch=text.match(/^(?:睡了?|睡眠|昨晚睡)\s*(\d+(?:\.\d+)?)\s*(?:小时|h|个小时)/);
+  if(sleepMatch){
+    const hours=+sleepMatch[1];
+    r.health.sleep=r.health.sleep||{};
+    r.health.sleep.hours=hours;
+    if(hours>=7)r.checks["健康-23 点前睡"]=true;
+    return {mod:"健康",detail:`睡眠 ${hours} 小时${hours>=7?"（已勾选打卡）":""}`,raw:text};
+  }
+
+  // 14. 冥想："冥想 10分钟"
+  const medMatch=text.match(/^(?:冥想|静坐|打坐|meditate)\s*(\d+)\s*(?:分钟|分|min)?/);
+  if(medMatch){
+    const minutes=+medMatch[1];
+    r.health.meditation=r.health.meditation||[];
+    r.health.meditation.push({id:uid(),startTime:new Date().toISOString(),duration:minutes*60,completed:true,source:"quick"});
+    r.checks["健康-运动"]=true;
+    return {mod:"健康",detail:`冥想 ${minutes} 分钟（已勾选打卡）`,raw:text};
+  }
+
+  // 15. 项目进度："项目 XXX 进度 50%" / "项目 XXX 进度更新 80%"
+  const projMatch=text.match(/^项目\s+(.+?)\s*进度\s*(\d+)\s*%/);
+  if(projMatch){
+    const name=projMatch[1].trim();
+    const progress=+projMatch[2];
+    let proj=state.projects.find(p=>p.name&&p.name.includes(name));
+    if(proj){
+      proj.progress=progress;
+    }else{
+      state.projects.push({id:uid(),name:name,deadline:"",progress:progress,outline:[],goalRef:"",courseRef:"",note:"快速录入",createdAt:Date.now()});
+    }
+    return {mod:"项目",detail:`项目「${name}」进度更新到 ${progress}%`,raw:text};
+  }
+
+  // 16. 情绪记录："😊 今天很开心" / "开心 XXX" / "焦虑 XXX"
+  const moodMatch=text.match(/^(?:😊|😄|😁|😃|🙂|😌|😢|😭|😣|😟|😔|😞|😤|😡|🤔|😐|😑)\s*(.+)/) ||
+                   text.match(/^(开心|快乐|高兴|兴奋|平静|焦虑|难过|伤心|沮丧|愤怒|压力|幸福|满足)\s*[:：]?\s*(.+)/);
+  if(moodMatch){
+    const emotionMap={开心:"😊",快乐:"😊",高兴:"😊",兴奋:"😊",幸福:"😊",满足:"😊",平静:"😌",焦虑:"😣",难过:"😢",伤心:"😢",沮丧:"😔",愤怒:"😡",压力:"😟"};
+    let mood="";
+    let content="";
+    if(moodMatch[1]&&/[\u{1F600}-\u{1F6FF}]/u.test(moodMatch[1])){
+      mood=moodMatch[1].trim();
+      content=moodMatch[2]||"";
+    }else{
+      mood=emotionMap[moodMatch[1]]||"🙂";
+      content=moodMatch[2]||moodMatch[1];
+    }
+    if(typeof addReflection==="function"){
+      addReflection(currentDate,{text:content,mood:mood});
+    }else{
+      // 退化方案：直接写 state
+      state.reflections[currentDate]=state.reflections[currentDate]||[];
+      state.reflections[currentDate].push({id:uid(),text:content,mood:mood,tags:[],createdAt:Date.now()});
+    }
+    return {mod:"思考",detail:`情绪 ${mood} 已记入思考流`,raw:text};
+  }
+
+  // 17. 默认：作为任务
   r.tasks.push({text:text,done:false});
   return {mod:"任务",detail:text,raw:text};
 }
+
 function guessExpenseCategory(text){
   if(text.match(/餐|饭|面|外卖|咖啡|早|午|晚|食/))return "餐饮";
   if(text.match(/车|地铁|公交|打车|出租|滴滴/))return "交通";
