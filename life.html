@@ -1127,6 +1127,31 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
   filter:blur(.4px);opacity:.75;animation:twinkle 3.2s ease-in-out infinite;}
 .rest-ambient.xmas-on .rest-xmas{display:block;}
 @keyframes twinkle{0%,100%{opacity:.5}50%{opacity:.9}}
+/* 暴雪里的小木屋 */
+.rest-ambient .rest-cabin{position:absolute;left:15%;bottom:0;width:210px;height:180px;pointer-events:none;}
+.rest-ambient .cabin-ground{position:absolute;bottom:10px;left:-80px;right:-130px;height:64px;
+  background:radial-gradient(60% 100% at 50% 100%, rgba(228,236,245,.18), rgba(228,236,245,0) 72%);
+  filter:blur(8px);}
+.rest-ambient .cabin{position:absolute;bottom:36px;left:18px;width:160px;height:124px;}
+.rest-ambient .cabin-roof{position:absolute;top:0;left:-15px;right:-15px;height:54px;
+  background:linear-gradient(180deg,#3c2b23,#231612);clip-path:polygon(50% 0,100% 100%,0 100%);}
+.rest-ambient .cabin-roof .roof-snow{position:absolute;left:0;right:0;bottom:0;height:15px;
+  background:linear-gradient(180deg,rgba(240,246,252,.94),rgba(240,246,252,.5));
+  clip-path:polygon(50% 36%,100% 100%,0 100%);filter:blur(.3px);}
+.rest-ambient .cabin-body{position:absolute;top:52px;left:0;right:0;bottom:0;
+  background:linear-gradient(180deg,#2e2019,#170e0b);border-radius:0 0 9px 9px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);}
+.rest-ambient .cabin-window{position:absolute;left:24px;top:22px;width:32px;height:36px;
+  background:radial-gradient(circle at 50% 38%, #ffe2a4, #e89a4e 68%, #c1742f);border-radius:4px;
+  box-shadow:0 0 24px 9px rgba(232,154,78,.6), inset 0 0 7px rgba(255,236,200,.65);
+  animation:breathe 6.5s ease-in-out infinite;}
+.rest-ambient .cabin-window::before,.rest-ambient .cabin-window::after{content:"";position:absolute;background:rgba(110,62,26,.72);}
+.rest-ambient .cabin-window::before{left:50%;top:3px;bottom:3px;width:2px;transform:translateX(-50%);}
+.rest-ambient .cabin-window::after{top:50%;left:3px;right:3px;height:2px;transform:translateY(-50%);}
+.rest-ambient .cabin-door{position:absolute;right:22px;top:28px;width:26px;height:56px;
+  background:linear-gradient(180deg,#3c291f,#22160f);border-radius:5px 5px 0 0;}
+.rest-ambient .cabin-glow{position:absolute;left:42px;bottom:22px;width:130px;height:96px;
+  background:radial-gradient(circle, rgba(232,154,78,.30), rgba(232,154,78,0) 70%);filter:blur(11px);}
 
 .rest-panel{position:fixed;z-index:45;left:50%;bottom:8%;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;color:#F2EBE0;pointer-events:auto;}
@@ -1232,6 +1257,17 @@ body.rest-mode #restAmbient{display:block;}
 <!-- 休息模式 · 魁北克冬夜 -->
 <div id="restAmbient" class="rest-ambient">
   <div class="rest-glow"></div>
+  <div class="rest-cabin" aria-hidden="true">
+    <div class="cabin-ground"></div>
+    <div class="cabin">
+      <div class="cabin-roof"><span class="roof-snow"></span></div>
+      <div class="cabin-body">
+        <div class="cabin-window"></div>
+        <div class="cabin-door"></div>
+      </div>
+    </div>
+    <div class="cabin-glow"></div>
+  </div>
   <canvas id="snowCanvas"></canvas>
   <div class="bokeh" style="left:11%;top:26%;width:96px;height:96px"></div>
   <div class="bokeh" style="left:79%;top:18%;width:70px;height:70px"></div>
@@ -7533,11 +7569,11 @@ function startSnow(){
   snowCtx=c.getContext("2d");snowCtx.scale(dpr,dpr);
   const W=window.innerWidth,H=window.innerHeight;
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const n=reduce?16:48;
+  const n=reduce?30:110;
   snowParts=Array.from({length:n},()=>({
     x:Math.random()*W,y:Math.random()*H,
-    len:8+Math.random()*16,sp:0.3+Math.random()*0.7,
-    drift:(Math.random()-0.5)*0.5,a:0.35+Math.random()*0.5,w:0.8+Math.random()*1.3
+    len:6+Math.random()*22,sp:0.4+Math.random()*1.1,
+    drift:(Math.random()-0.5)*0.85,a:0.3+Math.random()*0.55,w:0.7+Math.random()*1.5
   }));
   function frame(){
     snowCtx.clearRect(0,0,W,H);
