@@ -459,6 +459,27 @@ body[data-theme="dark"] .data-row input[type=month]{color-scheme:dark;}
 .date-nav .dn-label{flex:1;text-align:center;font-size:13px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .date-nav .dn-label .dn-sub{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
 
+/* ===== 日历 ===== */
+.cal{background:var(--card-soft);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-h .cal-title{font-size:15px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cal-h .cal-nav{display:flex;gap:6px}
+.cal-h .cal-nav button{background:var(--card);border:1px solid var(--line);border-radius:6px;width:32px;height:32px;font-size:15px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-h .cal-nav button:hover{background:var(--line)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-grid .cal-wh{text-align:center;font-size:11px;color:var(--muted);padding:4px 0;font-weight:600}
+.cal-grid .cal-day{aspect-ratio:1;border:1px solid transparent;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;color:var(--ink-2);cursor:pointer;background:var(--card);transition:all .15s;position:relative;min-height:38px}
+.cal-grid .cal-day:hover{border-color:var(--accent);transform:translateY(-1px)}
+.cal-grid .cal-day.other{color:var(--muted);opacity:.4}
+.cal-grid .cal-day.has-data{color:var(--ink);font-weight:600}
+.cal-grid .cal-day.has-data::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--good)}
+.cal-grid .cal-day.checkin{background:rgba(127,176,105,.15);border-color:rgba(127,176,105,.4)}
+.cal-grid .cal-day.checkin::after{background:var(--good)}
+.cal-grid .cal-day.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,184,99,.3) inset}
+.cal-grid .cal-day.selected{background:var(--accent);color:var(--accent-ink);font-weight:700;border-color:var(--accent)}
+.cal-grid .cal-day.selected::after{background:var(--accent-ink)}
+.cal-grid .cal-empty{aspect-ratio:1}
+
 /* Contact A/B/C/D */
 .cat-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);
   margin:14px 0 6px;}
@@ -1130,6 +1151,55 @@ function weekStats(ref){
   const checked=days.filter(d=>d.checkIn).length;
   return {days,checked,total:7,range:r};
 }
+/* 日历组件：显示某月，每天可点选切换日期 */
+let calCursor=fmtDate(new Date()); // 日历当前显示的月份（YYYY-MM-DD，取年月）
+function viewCalendar(){
+  const cur=new Date(); const today=fmtDate(cur);
+  const cd=parseDate(calCursor);
+  const year=cd.getFullYear(), month=cd.getMonth();
+  const firstDay=new Date(year,month,1);
+  const startWeek=firstDay.getDay(); // 0=日
+  const lastDate=new Date(year,month+1,0).getDate();
+  const days=monthHeatmap(year,month); // [{date,day,checkIn,hasData}]
+  const weekHead=["日","一","二","三","四","五","六"];
+  const monthName=`${year}年${month+1}月`;
+  // 计算打卡天数 / 有数据天数
+  const checkinCount=days.filter(d=>d.checkIn).length;
+  const dataCount=days.filter(d=>d.hasData).length;
+  let cells="";
+  // 前置空格
+  for(let i=0;i<startWeek;i++) cells+=`<div class="cal-empty"></div>`;
+  // 日期格
+  days.forEach(d=>{
+    const isToday=d.date===today;
+    const isSelected=d.date===currentDate;
+    const cls=["cal-day"];
+    if(d.checkin)cls.push("checkin");
+    else if(d.hasData)cls.push("has-data");
+    if(isToday)cls.push("today");
+    if(isSelected)cls.push("selected");
+    cells+=`<div class="${cls.join(" ")}" data-cal-date="${d.date}">${d.day}</div>`;
+  });
+  return `<div class="cal pano-full">
+    <div class="cal-h">
+      <div class="cal-title">${monthName}</div>
+      <div class="cal-nav">
+        <button data-cal-nav="prev" title="上个月">‹</button>
+        <button data-cal-nav="today" title="回到今天">今</button>
+        <button data-cal-nav="next" title="下个月">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${weekHead.map(w=>`<div class="cal-wh">${w}</div>`).join("")}
+      ${cells}
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap">
+      <span>● 有数据 ${dataCount} 天</span>
+      <span style="color:var(--good)">● 已打卡 ${checkinCount} 天</span>
+      <span style="color:var(--accent)">● 今天 / 选中日</span>
+    </div>
+  </div>`;
+}
 /* 月份打卡热力图数据 */
 function monthHeatmap(year,month){
   const days=[];
@@ -1705,12 +1775,7 @@ function viewHome(){
    </div>`;
 
   return `
-   <div class="date-nav pano-full">
-     <button class="dn-btn" data-date-nav="prev">← 前一天</button>
-     <div class="dn-label">${currentDate}<span class="dn-sub">${(()=>{const t=fmtDate(new Date());const diff=diffDays(currentDate,t);if(diff===0)return"今天";if(diff===1)return"昨天";if(diff===-1)return"明天";if(diff>0)return diff+"天前";return Math.abs(diff)+"天后"})()}</span></div>
-     <button class="dn-btn" data-date-nav="next">后一天 →</button>
-     ${currentDate!==fmtDate(new Date())?`<button class="dn-btn today" data-date-nav="today">回到今天</button>`:""}
-   </div>
+   ${viewCalendar()}
    <div class="greet pano-full">
      <div class="greet-eyebrow">WORKSPACE / HOME</div>
 <div class="greet-h">${greetOf(parseDate(currentDate))}，鹿7铭。</div>
@@ -3398,12 +3463,20 @@ function onClick(e){
     return;
   }
   if(t.dataset.nav){activeNav=t.dataset.nav;activeTool=null;render();return;}
-  // 日期切换（首页前一天/后一天/今天）
-  if(t.dataset.dateNav){
-    const a=t.dataset.dateNav;
-    if(a==="prev")currentDate=addDays(currentDate,-1);
-    else if(a==="next")currentDate=addDays(currentDate,1);
-    else if(a==="today")currentDate=fmtDate(new Date());
+  // 日历：点日期切换到那一天
+  if(t.dataset.calDate){
+    currentDate=t.dataset.calDate;
+    // 同步日历游标月份
+    calCursor=currentDate;
+    render();
+    return;
+  }
+  // 日历：翻月 / 回今天
+  if(t.dataset.calNav){
+    const a=t.dataset.calNav;
+    if(a==="prev"){const d=parseDate(calCursor);calCursor=fmtDate(new Date(d.getFullYear(),d.getMonth()-1,1));}
+    else if(a==="next"){const d=parseDate(calCursor);calCursor=fmtDate(new Date(d.getFullYear(),d.getMonth()+1,1));}
+    else if(a==="today"){calCursor=fmtDate(new Date());currentDate=fmtDate(new Date());}
     render();
     return;
   }
