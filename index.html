@@ -156,7 +156,11 @@ body[data-theme="dark"][data-palette="lavender"]{
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;min-height:100vh;min-height:-webkit-fill-available;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--body-gradient);background-attachment:fixed;color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
+  background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
+html{background:var(--body-gradient);background-attachment:fixed;-webkit-background-attachment:fixed;}
+body{background:transparent;}
+.app,.sidebar,.main,.scroll{background:transparent;}
+.sidebar{background:var(--glass-bg-soft);}
 button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
 
@@ -249,7 +253,7 @@ button{cursor:pointer;border:none;background:none;}
   box-shadow:var(--glass-inset);
 }
 .top-icon:active{transform:scale(.95);}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 90px;overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);}
 .scroll::-webkit-scrollbar{width:6px;}
 .scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
 
@@ -354,7 +358,7 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
    .pano-grid > .card{margin-bottom:0;}
    .pano-full{grid-column:1/-1;}
 }
-.cal-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px}
+.cal-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-bottom:14px}
 .cal-row > *{min-width:0}
 .cal-row .cal{margin-bottom:0;display:flex;flex-direction:column;width:100%}
 .cal-row .cal .cal-grid{flex:1}
@@ -811,7 +815,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
   .sidebar.open{left:0;}
   .sb-overlay.show{display:block;}
   .mob-bar{display:flex;}
-  .scroll{padding:6px 14px 90px;}
+  .scroll{padding:6px 14px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));}
   .main-top{padding:10px 14px;}
   .greet-h{font-size:22px;}
   .section-title{font-size:20px;}
