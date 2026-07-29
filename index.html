@@ -5471,16 +5471,19 @@ function updateTreeData(){
 function treeSVG(level,size){
   const w=size||400,h=size||400;
   const cx=w/2;
+  const groundY=h-45;
   let svg=`<svg class="tree-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
 
   // 背景天空渐变（根据时间）
   const hr=new Date().getHours();
-  let skyColors;
-  if(hr<6)skyColors=["#1a1a2e","#16213e","#0f3460"];      // 夜
-  else if(hr<11)skyColors=["#FFE5B4","#FFD0A0","#C8E0F0"]; // 晨
-  else if(hr<16)skyColors=["#C8E0F0","#A8D0F0","#88C0E0"]; // 日
-  else if(hr<19)skyColors=["#FFB07C","#FF8C5A","#C85A3A"]; // 黄昏
-  else skyColors=["#3A2E4A","#2A2030","#1A1420"];           // 晚
+  let skyColors,groundColors,sunColor,isNight;
+  if(hr<6){skyColors=["#0D1B2A","#1B2838","#2C3E50"];groundColors=["#1a2a1a","#0D1a0D"];sunColor="#E8E8E8";isNight=true;}
+  else if(hr<8){skyColors=["#FFB088","#FFCBA8","#E8D5C0"];groundColors=["#5A6B4A","#3A4A30"];sunColor="#FF9E5A";isNight=false;}
+  else if(hr<11){skyColors=["#A8D8F0","#C8E8FF","#E8F4FF"];groundColors=["#6B8E5A","#4A6B3A"];sunColor="#FFE5A0";isNight=false;}
+  else if(hr<16){skyColors=["#87CEEB","#B0E0F5","#D8F0FF"];groundColors=["#7FB069","#5A8A4A"];sunColor="#FFEF8A";isNight=false;}
+  else if(hr<18){skyColors=["#FFB07C","#FF9E5A","#E87A3A"];groundColors=["#6B7B4A","#4A5A30"];sunColor="#FF6B3A";isNight=false;}
+  else if(hr<20){skyColors=["#5A4A6B","#3A2E4A","#2A2038"];groundColors=["#3A3A2A","#2A2A1A"];sunColor="#FF8C5A";isNight=false;}
+  else{skyColors=["#0D0D1A","#1A1A2E","#16132B"];groundColors=["#1a1a1a","#0D0D0D"];sunColor="#E8E8F0";isNight=true;}
 
   svg+=`<defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -5488,173 +5491,303 @@ function treeSVG(level,size){
       <stop offset="50%" stop-color="${skyColors[1]}"/>
       <stop offset="100%" stop-color="${skyColors[2]}"/>
     </linearGradient>
-    <radialGradient id="trunk" cx="0.5" cy="0.3">
-      <stop offset="0%" stop-color="#8B6F47"/>
-      <stop offset="60%" stop-color="#6B5435"/>
-      <stop offset="100%" stop-color="#4A3A24"/>
+    <linearGradient id="ground-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${groundColors[0]}"/>
+      <stop offset="100%" stop-color="${groundColors[1]}"/>
+    </linearGradient>
+    <linearGradient id="trunk-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3D2B1F"/>
+      <stop offset="30%" stop-color="#6B4F35"/>
+      <stop offset="55%" stop-color="#8B6F47"/>
+      <stop offset="75%" stop-color="#6B4F35"/>
+      <stop offset="100%" stop-color="#3D2B1F"/>
+    </linearGradient>
+    <linearGradient id="trunk-shadow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="50%" stop-color="rgba(0,0,0,0.15)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </linearGradient>
+    <radialGradient id="leaf-light" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#D4F0B8"/>
+      <stop offset="30%" stop-color="#A8D88A"/>
+      <stop offset="65%" stop-color="#7FB069"/>
+      <stop offset="100%" stop-color="#4A7A3A"/>
     </radialGradient>
-    <radialGradient id="leaf1" cx="0.4" cy="0.3">
-      <stop offset="0%" stop-color="#A8D88A"/>
-      <stop offset="60%" stop-color="#7FB069"/>
-      <stop offset="100%" stop-color="#5A8A4A"/>
+    <radialGradient id="leaf-dark" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#B8D89C"/>
+      <stop offset="35%" stop-color="#8EC06A"/>
+      <stop offset="70%" stop-color="#5E9A48"/>
+      <stop offset="100%" stop-color="#3A6A2C"/>
     </radialGradient>
-    <radialGradient id="leaf2" cx="0.4" cy="0.3">
-      <stop offset="0%" stop-color="#C8E8A8"/>
-      <stop offset="60%" stop-color="#9CCB82"/>
-      <stop offset="100%" stop-color="#6B9C52"/>
+    <radialGradient id="leaf-highlight" cx="0.3" cy="0.2" r="0.6">
+      <stop offset="0%" stop-color="rgba(255,255,200,0.4)"/>
+      <stop offset="100%" stop-color="rgba(255,255,200,0)"/>
     </radialGradient>
-    <radialGradient id="fruit" cx="0.4" cy="0.3">
-      <stop offset="0%" stop-color="#FFD08A"/>
-      <stop offset="60%" stop-color="#E89B5A"/>
-      <stop offset="100%" stop-color="#C77838"/>
+    <radialGradient id="fruit-grad" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#FFE0A0"/>
+      <stop offset="35%" stop-color="#F5B05A"/>
+      <stop offset="70%" stop-color="#D87838"/>
+      <stop offset="100%" stop-color="#A05020"/>
     </radialGradient>
-    <radialGradient id="flower" cx="0.5" cy="0.4">
-      <stop offset="0%" stop-color="#FFE0F0"/>
-      <stop offset="60%" stop-color="#FF9EC4"/>
-      <stop offset="100%" stop-color="#E06B9C"/>
+    <radialGradient id="fruit-shine" cx="0.3" cy="0.2" r="0.3">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
-    <radialGradient id="ground" cx="0.5" cy="0.3">
-      <stop offset="0%" stop-color="#8B7355"/>
-      <stop offset="100%" stop-color="#5A4A36"/>
+    <radialGradient id="flower-grad" cx="0.4" cy="0.3" r="0.7">
+      <stop offset="0%" stop-color="#FFF0F5"/>
+      <stop offset="40%" stop-color="#FFB0CC"/>
+      <stop offset="80%" stop-color="#E0789C"/>
+      <stop offset="100%" stop-color="#C04878"/>
     </radialGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft-shadow"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.15"/></filter>
   </defs>`;
 
-  // 天空背景
-  svg+=`<rect width="${w}" height="${h}" fill="url(#sky)" rx="20"/>`;
+  // 天空
+  svg+=`<rect width="${w}" height="${h}" fill="url(#sky)"/>`;
 
-  // 太阳/月亮
-  if(hr>=6&&hr<19){
-    svg+=`<circle cx="${w-60}" cy="50" r="18" fill="#FFE5A0" opacity="0.8" filter="url(#glow)"/>`;
-  }else{
-    svg+=`<circle cx="${w-60}" cy="50" r="14" fill="#F0EBE2" opacity="0.6" filter="url(#glow)"/>`;
-    svg+=`<circle cx="${w-55}" cy="48" r="10" fill="${skyColors[0]}" opacity="0.8"/>`;
+  // 星星（夜晚）
+  if(isNight){
+    const stars=[[40,30,1],[80,50,1.5],[120,25,1],[200,40,1.2],[280,20,1],[320,55,1.5],[360,35,1],[60,70,0.8],[180,60,1],[260,65,0.8],[340,70,1.2]];
+    stars.forEach(s=>{svg+=`<circle cx="${s[0]}" cy="${s[1]}" r="${s[2]}" fill="#FFF" opacity="${0.4+Math.random()*0.4}"><animate attributeName="opacity" values="0.3;0.8;0.3" dur="${2+Math.random()*3}s" repeatCount="indefinite"/></circle>`;});
   }
 
-  // 地面
-  svg+=`<ellipse cx="${cx}" cy="${h-30}" rx="${w*0.4}" ry="25" fill="url(#ground)" opacity="0.5"/>`;
+  // 太阳/月亮
+  const sunX=w-65,sunY=55;
+  if(isNight){
+    svg+=`<circle cx="${sunX}" cy="${sunY}" r="16" fill="${sunColor}" opacity="0.9" filter="url(#glow)"/>`;
+    svg+=`<circle cx="${sunX-5}" cy="${sunY-3}" r="13" fill="${skyColors[0]}" opacity="0.95"/>`;
+    svg+=`<circle cx="${sunX-4}" cy="${sunY-2}" r="12" fill="${sunColor}" opacity="0.8"/>`;
+  }else{
+    // 太阳光晕
+    svg+=`<circle cx="${sunX}" cy="${sunY}" r="28" fill="${sunColor}" opacity="0.2"/>`;
+    svg+=`<circle cx="${sunX}" cy="${sunY}" r="20" fill="${sunColor}" opacity="0.4" filter="url(#glow)"/>`;
+    svg+=`<circle cx="${sunX}" cy="${sunY}" r="14" fill="${sunColor}" opacity="0.9"/>`;
+  }
 
+  // 远山
+  svg+=`<path d="M0,${groundY-10} Q${w*0.15},${groundY-45} ${w*0.3},${groundY-15} Q${w*0.45},${groundY-35} ${w*0.6},${groundY-10} Q${w*0.75},${groundY-30} ${w},${groundY-12} L${w},${groundY} L0,${groundY} Z" fill="${groundColors[1]}" opacity="0.4"/>`;
+  svg+=`<path d="M0,${groundY-5} Q${w*0.2},${groundY-25} ${w*0.4},${groundY-8} Q${w*0.6},${groundY-20} ${w*0.8},${groundY-5} Q${w*0.9},${groundY-15} ${w},${groundY-3} L${w},${groundY} L0,${groundY} Z" fill="${groundColors[1]}" opacity="0.6"/>`;
+
+  // 云朵（白天）
+  if(!isNight&&level>=2){
+    const clouds=[[60,40,1],[250,30,0.8],[330,55,0.6]];
+    clouds.forEach(c=>{
+      svg+=`<g opacity="${c[2]*0.6}">`;
+      svg+=`<ellipse cx="${c[0]}" cy="${c[1]}" rx="20" ry="8" fill="#FFF"/>`;
+      svg+=`<ellipse cx="${c[0]+12}" cy="${c[1]+2}" rx="15" ry="7" fill="#FFF"/>`;
+      svg+=`<ellipse cx="${c[0]-10}" cy="${c[1]+3}" rx="12" ry="5" fill="#FFF"/>`;
+      svg+=`</g>`;
+    });
+  }
+
+  // 草地
+  svg+=`<ellipse cx="${cx}" cy="${groundY+5}" rx="${w*0.48}" ry="30" fill="url(#ground-grad)"/>`;
+  // 小草
+  if(level>=2){
+    const grass=[[-80,3],[-50,-2],[-30,4],[30,-3],[50,2],[80,-2],[100,3],[-100,-1]];
+    grass.forEach(g=>{
+      const gx=cx+g[0],gy=groundY+g[1];
+      svg+=`<path d="M${gx},${gy} Q${gx+2},${gy-8} ${gx+1},${gy-12} M${gx+3},${gy} Q${gx+4},${gy-6} ${gx+5},${gy-10}" stroke="${groundColors[0]}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>`;
+    });
+  }
+
+  // ===== 树的主体 =====
   if(level===1){
-    // 种子
-    svg+=`<g class="trunk">
-      <ellipse cx="${cx}" cy="${h-45}" rx="14" ry="10" fill="url(#trunk)"/>
-      <path d="M${cx-6},${h-45} Q${cx},${h-55} ${cx+6},${h-45}" stroke="#7FB069" stroke-width="3" fill="none" stroke-linecap="round"/>
+    // 种子——半埋在土中
+    svg+=`<g class="trunk" filter="url(#soft-shadow)">
+      <ellipse cx="${cx}" cy="${groundY-3}" rx="16" ry="11" fill="url(#trunk-grad)"/>
+      <ellipse cx="${cx-3}" cy="${groundY-6}" rx="10" ry="6" fill="rgba(255,255,255,0.1)"/>
+      <path d="M${cx-4},${groundY-2} Q${cx},${groundY-12} ${cx+4},${groundY-2}" stroke="#7FB069" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${groundY-14}" r="2" fill="#A8D88A"/>
     </g>`;
   }else if(level===2){
-    // 嫩芽
-    svg+=`<g class="trunk">
-      <line x1="${cx}" y1="${h-30}" x2="${cx}" y2="${h-80}" stroke="url(#trunk)" stroke-width="4" stroke-linecap="round"/>
-      <ellipse cx="${cx-12}" cy="${h-70}" rx="10" ry="6" fill="url(#leaf1)" transform="rotate(-30 ${cx-12} ${h-70})"/>
-      <ellipse cx="${cx+12}" cy="${h-70}" rx="10" ry="6" fill="url(#leaf1)" transform="rotate(30 ${cx+12} ${h-70})"/>
+    // 嫩芽——两片子叶+茎
+    svg+=`<g class="trunk" filter="url(#soft-shadow)">
+      <path d="M${cx},${groundY} Q${cx-1},${groundY-25} ${cx},${groundY-40}" stroke="url(#trunk-grad)" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="${cx-11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(-35 ${cx-11} ${groundY-35})"/>
+      <ellipse cx="${cx+11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(35 ${cx+11} ${groundY-35})"/>
+      <ellipse cx="${cx-11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(-35 ${cx-11} ${groundY-36})"/>
+      <ellipse cx="${cx+11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(35 ${cx+11} ${groundY-36})"/>
+      <circle cx="${cx}" cy="${groundY-42}" r="3" fill="#A8D88A"/>
     </g>`;
   }else if(level===3){
-    // 小苗
-    svg+=`<g class="trunk">
-      <path d="M${cx},${h-30} Q${cx-3},${h-100} ${cx},${h-120}" stroke="url(#trunk)" stroke-width="6" fill="none" stroke-linecap="round"/>
-      <g class="leaf-cluster">
-        <ellipse cx="${cx-18}" cy="${h-90}" rx="14" ry="9" fill="url(#leaf1)" transform="rotate(-25 ${cx-18} ${h-90})"/>
-        <ellipse cx="${cx+18}" cy="${h-95}" rx="14" ry="9" fill="url(#leaf1)" transform="rotate(25 ${cx+18} ${h-95})"/>
-        <ellipse cx="${cx-10}" cy="${h-115}" rx="12" ry="8" fill="url(#leaf2)" transform="rotate(-15 ${cx-10} ${h-115})"/>
-        <ellipse cx="${cx+10}" cy="${h-115}" rx="12" ry="8" fill="url(#leaf2)" transform="rotate(15 ${cx+10} ${h-115})"/>
-        <circle cx="${cx}" cy="${h-125}" r="8" fill="url(#leaf1)"/>
-      </g>
+    // 小苗——有分枝
+    svg+=`<g class="trunk" filter="url(#soft-shadow)">
+      <path d="M${cx},${groundY} Q${cx-2},${groundY-50} ${cx},${groundY-80} Q${cx+2},${groundY-95} ${cx},${groundY-105}" stroke="url(#trunk-grad)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M${cx},${groundY-60} Q${cx-15},${groundY-65} ${cx-25},${groundY-72}" stroke="url(#trunk-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M${cx},${groundY-65} Q${cx+15},${groundY-70} ${cx+25},${groundY-77}" stroke="url(#trunk-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
     </g>`;
+    svg+=`<g class="leaf-cluster">`;
+    const leafClusters3=[
+      {x:cx-25,y:groundY-75,r:16,grad:"leaf-light",rot:-20},
+      {x:cx+25,y:groundY-80,r:16,grad:"leaf-light",rot:20},
+      {x:cx-12,y:groundY-95,r:14,grad:"leaf-dark",rot:-10},
+      {x:cx+12,y:groundY-100,r:14,grad:"leaf-dark",rot:10},
+      {x:cx,y:groundY-110,r:16,grad:"leaf-light",rot:0},
+    ];
+    leafClusters3.forEach(c=>{
+      svg+=`<g transform="rotate(${c.rot} ${c.x} ${c.y})">
+        <ellipse cx="${c.x}" cy="${c.y}" rx="${c.r}" ry="${c.r*0.7}" fill="url(#${c.grad})"/>
+        <ellipse cx="${c.x-c.r*0.15}" cy="${c.y-c.r*0.15}" rx="${c.r*0.7}" ry="${c.r*0.45}" fill="url(#leaf-highlight)"/>
+      </g>`;
+    });
+    svg+=`</g>`;
   }else{
-    // 小树到大树（level 4-7）
-    const scale=0.6+(level-3)*0.12; // 树越来越大
-    const trunkH=120*scale;
-    const crownR=50*scale;
-    const crownY=h-30-trunkH;
+    // 小树到古树（level 4-7）——真实树形
+    const scale=0.55+(level-3)*0.13;
+    const trunkH=140*scale;
+    const trunkBaseW=14*scale;
+    const trunkTopW=7*scale;
+    const crownY=groundY-trunkH;
+    const crownR=55*scale;
 
     svg+=`<g class="trunk">`;
-    // 树干（分叉）
-    svg+=`<path d="M${cx},${h-30} Q${cx-4},${h-trunkH*0.6} ${cx-2},${crownY+10}" stroke="url(#trunk)" stroke-width="${8*scale}" fill="none" stroke-linecap="round"/>`;
-    svg+=`<path d="M${cx},${h-30} Q${cx+4},${h-trunkH*0.6} ${cx+2},${crownY+10}" stroke="url(#trunk)" stroke-width="${8*scale}" fill="none" stroke-linecap="round"/>`;
-    svg+=`<path d="M${cx},${h-30} L${cx},${crownY+15}" stroke="url(#trunk)" stroke-width="${6*scale}" stroke-linecap="round"/>`;
-    // 分枝
-    svg+=`<path d="M${cx},${crownY+20} Q${cx-30*scale},${crownY+5} ${cx-40*scale},${crownY-5}" stroke="url(#trunk)" stroke-width="${4*scale}" fill="none" stroke-linecap="round"/>`;
-    svg+=`<path d="M${cx},${crownY+20} Q${cx+30*scale},${crownY+5} ${cx+40*scale},${crownY-5}" stroke="url(#trunk)" stroke-width="${4*scale}" fill="none" stroke-linecap="round"/>`;
+    // 树干——锥形贝塞尔
+    svg+=`<path d="M${cx-trunkBaseW},${groundY}
+      Q${cx-trunkBaseW*0.8},${groundY-trunkH*0.4} ${cx-trunkTopW},${crownY+trunkH*0.1}
+      L${cx+trunkTopW},${crownY+trunkH*0.1}
+      Q${cx+trunkBaseW*0.8},${groundY-trunkH*0.4} ${cx+trunkBaseW},${groundY}
+      Z" fill="url(#trunk-grad)" filter="url(#soft-shadow)"/>`;
+    // 树皮纹理
+    svg+=`<path d="M${cx-trunkBaseW*0.5},${groundY-5} Q${cx-trunkBaseW*0.3},${groundY-trunkH*0.3} ${cx-trunkTopW*0.5},${crownY+trunkH*0.15}" stroke="rgba(0,0,0,0.12)" stroke-width="1" fill="none"/>`;
+    svg+=`<path d="M${cx+trunkBaseW*0.3},${groundY-8} Q${cx+trunkBaseW*0.2},${groundY-trunkH*0.35} ${cx+trunkTopW*0.3},${crownY+trunkH*0.12}" stroke="rgba(0,0,0,0.08)" stroke-width="0.8" fill="none"/>`;
+    svg+=`<path d="M${cx},${groundY-10} L${cx},${crownY+trunkH*0.1}" stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="none"/>`;
+
+    // 主分枝
+    const branchW=4*scale;
+    svg+=`<path d="M${cx},${crownY+trunkH*0.15} Q${cx-25*scale},${crownY} ${cx-45*scale},${crownY-8*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${crownY+trunkH*0.15} Q${cx+25*scale},${crownY} ${cx+45*scale},${crownY-8*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${crownY+trunkH*0.1} Q${cx-10*scale},${crownY-15*scale} ${cx-15*scale},${crownY-30*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.8}" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${crownY+trunkH*0.1} Q${cx+10*scale},${crownY-15*scale} ${cx+15*scale},${crownY-30*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.8}" fill="none" stroke-linecap="round"/>`;
+    if(level>=5){
+      svg+=`<path d="M${cx-40*scale},${crownY-5*scale} Q${cx-55*scale},${crownY-15*scale} ${cx-60*scale},${crownY-25*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.7}" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx+40*scale},${crownY-5*scale} Q${cx+55*scale},${crownY-15*scale} ${cx+60*scale},${crownY-25*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.7}" fill="none" stroke-linecap="round"/>`;
+    }
     svg+=`</g>`;
 
-    // 树冠（多团叶子）
+    // 树冠——多层不规则叶簇
     svg+=`<g class="leaf-cluster">`;
     const clusters=[
-      {x:cx,y:crownY,r:crownR,grad:"leaf1"},
-      {x:cx-crownR*0.7,y:crownY+crownR*0.3,r:crownR*0.7,grad:"leaf2"},
-      {x:cx+crownR*0.7,y:crownY+crownR*0.3,r:crownR*0.7,grad:"leaf1"},
-      {x:cx-crownR*0.3,y:crownY-crownR*0.5,r:crownR*0.6,grad:"leaf2"},
-      {x:cx+crownR*0.3,y:crownY-crownR*0.5,r:crownR*0.6,grad:"leaf1"},
-      {x:cx,y:crownY-crownR*0.7,r:crownR*0.55,grad:"leaf2"},
+      {x:cx,y:crownY,r:crownR,grad:"leaf-light"},
+      {x:cx-crownR*0.65,y:crownY+crownR*0.25,r:crownR*0.72,grad:"leaf-dark"},
+      {x:cx+crownR*0.65,y:crownY+crownR*0.25,r:crownR*0.72,grad:"leaf-light"},
+      {x:cx-crownR*0.35,y:crownY-crownR*0.45,r:crownR*0.62,grad:"leaf-dark"},
+      {x:cx+crownR*0.35,y:crownY-crownR*0.45,r:crownR*0.62,grad:"leaf-light"},
+      {x:cx,y:crownY-crownR*0.65,r:crownR*0.58,grad:"leaf-dark"},
     ];
     if(level>=5){
-      clusters.push({x:cx-crownR*1.1,y:crownY,r:crownR*0.5,grad:"leaf1"});
-      clusters.push({x:cx+crownR*1.1,y:crownY,r:crownR*0.5,grad:"leaf2"});
+      clusters.push({x:cx-crownR*1.05,y:crownY+crownR*0.05,r:crownR*0.52,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*1.05,y:crownY+crownR*0.05,r:crownR*0.52,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*0.7,y:crownY-crownR*0.55,r:crownR*0.45,grad:"leaf-light"});
+      clusters.push({x:cx+crownR*0.7,y:crownY-crownR*0.55,r:crownR*0.45,grad:"leaf-dark"});
+    }
+    if(level>=6){
+      clusters.push({x:cx,y:crownY-crownR*0.9,r:crownR*0.42,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*1.2,y:crownY-crownR*0.2,r:crownR*0.38,grad:"leaf-light"});
+      clusters.push({x:cx+crownR*1.2,y:crownY-crownR*0.2,r:crownR*0.38,grad:"leaf-dark"});
+    }
+    if(level>=7){
+      clusters.push({x:cx-crownR*0.5,y:crownY+crownR*0.6,r:crownR*0.35,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*0.5,y:crownY+crownR*0.6,r:crownR*0.35,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*1.3,y:crownY+crownR*0.3,r:crownR*0.3,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*1.3,y:crownY+crownR*0.3,r:crownR*0.3,grad:"leaf-light"});
     }
     clusters.forEach((c,i)=>{
-      svg+=`<circle class="leaf" cx="${c.x}" cy="${c.y}" r="${c.r}" fill="url(#${c.grad})" opacity="${0.8+0.2*(i%2)}"/>`;
+      // 不规则边缘的叶簇
+      const bumps=6;
+      let path=`M${c.x+c.r},${c.y}`;
+      for(let b=0;b<bumps;b++){
+        const ang=(b/bumps)*Math.PI*2;
+        const ang2=((b+0.5)/bumps)*Math.PI*2;
+        const r1=c.r*(0.88+0.12*((b+i)%3===0?1:0));
+        const r2=c.r*(0.82+0.08*((b+i)%2));
+        const x1=c.x+Math.cos(ang)*r1;
+        const y1=c.y+Math.sin(ang)*r1;
+        const x2=c.x+Math.cos(ang2)*r2;
+        const y2=c.y+Math.sin(ang2)*r2;
+        path+=` Q${(c.x+Math.cos(ang)*r1*1.1).toFixed(1)},${(c.y+Math.sin(ang)*r1*1.1).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+      }
+      path+=` Z`;
+      svg+=`<path class="leaf" d="${path}" fill="url(#${c.grad})" opacity="${0.88+0.12*(i%2)}"/>`;
+      // 高光
+      svg+=`<ellipse cx="${c.x-c.r*0.2}" cy="${c.y-c.r*0.25}" rx="${c.r*0.5}" ry="${c.r*0.35}" fill="url(#leaf-highlight)" opacity="${0.5+0.3*(i%2)}"/>`;
     });
 
     // 果实（level >= 4）
     if(level>=4){
       const fruits=[
-        {x:cx-crownR*0.4,y:crownY+crownR*0.2},
-        {x:cx+crownR*0.5,y:crownY-crownR*0.1},
-        {x:cx-crownR*0.1,y:crownY+crownR*0.4},
+        {x:cx-crownR*0.4,y:crownY+crownR*0.3,r:7*scale},
+        {x:cx+crownR*0.5,y:crownY+crownR*0.1,r:6*scale},
+        {x:cx-crownR*0.1,y:crownY+crownR*0.55,r:7*scale},
+        {x:cx+crownR*0.2,y:crownY-crownR*0.2,r:6*scale},
       ];
-      if(level>=5)fruits.push({x:cx+crownR*0.2,y:crownY+crownR*0.3});
-      if(level>=6)fruits.push({x:cx-crownR*0.6,y:crownY-crownR*0.3});
+      if(level>=5){fruits.push({x:cx-crownR*0.6,y:crownY-crownR*0.1,r:6*scale});fruits.push({x:cx+crownR*0.6,y:crownY+crownR*0.4,r:7*scale});}
+      if(level>=6){fruits.push({x:cx-crownR*0.3,y:crownY-crownR*0.5,r:5*scale});fruits.push({x:cx+crownR*0.3,y:crownY-crownR*0.6,r:5*scale});}
+      if(level>=7){fruits.push({x:cx,y:crownY-crownR*0.8,r:5*scale});}
       fruits.forEach(f=>{
-        svg+=`<circle class="fruit" cx="${f.x}" cy="${f.y}" r="${6*scale}" fill="url(#fruit)"/>`;
+        svg+=`<circle class="fruit" cx="${f.x}" cy="${f.y}" r="${f.r}" fill="url(#fruit-grad)"/>`;
+        svg+=`<circle cx="${f.x-f.r*0.3}" cy="${f.y-f.r*0.3}" r="${f.r*0.35}" fill="url(#fruit-shine)"/>`;
       });
     }
 
     // 花朵（level >= 6）
     if(level>=6){
       const flowers=[
-        {x:cx+crownR*0.6,y:crownY-crownR*0.4},
-        {x:cx-crownR*0.8,y:crownY+crownR*0.1},
-        {x:cx+crownR*0.1,y:crownY-crownR*0.6},
+        {x:cx+crownR*0.7,y:crownY-crownR*0.3},
+        {x:cx-crownR*0.8,y:crownY+crownR*0.15},
+        {x:cx+crownR*0.1,y:crownY-crownR*0.7},
+        {x:cx-crownR*0.5,y:crownY-crownR*0.3},
+        {x:cx+crownR*0.4,y:crownY+crownR*0.5},
       ];
-      if(level>=7)flowers.push({x:cx-crownR*0.3,y:crownY+crownR*0.5});
+      if(level>=7){flowers.push({x:cx,y:crownY-crownR*0.95});flowers.push({x:cx-crownR*0.9,y:crownY-crownR*0.1});flowers.push({x:cx+crownR*0.9,y:crownY-crownR*0.1});}
       flowers.forEach(f=>{
         for(let p=0;p<5;p++){
-          const ang=p*72*Math.PI/180;
-          const px=f.x+Math.cos(ang)*5*scale;
-          const py=f.y+Math.sin(ang)*5*scale;
-          svg+=`<circle class="flower" cx="${px}" cy="${py}" r="${4*scale}" fill="url(#flower)" opacity="0.9"/>`;
+          const ang=p*72*Math.PI/180-Math.PI/2;
+          const px=f.x+Math.cos(ang)*6*scale;
+          const py=f.y+Math.sin(ang)*6*scale;
+          svg+=`<circle class="flower" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${4.5*scale}" fill="url(#flower-grad)" opacity="0.92"/>`;
         }
-        svg+=`<circle cx="${f.x}" cy="${f.y}" r="${3*scale}" fill="#FFE5A0"/>`;
+        svg+=`<circle cx="${f.x}" cy="${f.y}" r="${3*scale}" fill="#FFE060"/>`;
       });
     }
 
-    // 星星（level 7）
+    // 星星和光芒（level 7）
     if(level>=7){
-      svg+=`<text x="${cx}" y="${crownY-crownR*0.9}" text-anchor="middle" font-size="20" filter="url(#glow)">🌟</text>`;
-      svg+=`<text x="${cx-crownR}" y="${crownY-crownR*0.4}" text-anchor="middle" font-size="14" filter="url(#glow)">✨</text>`;
-      svg+=`<text x="${cx+crownR}" y="${crownY-crownR*0.4}" text-anchor="middle" font-size="14" filter="url(#glow)">✨</text>`;
+      svg+=`<g filter="url(#glow)">`;
+      svg+=`<text x="${cx}" y="${crownY-crownR*1.05}" text-anchor="middle" font-size="22">🌟</text>`;
+      svg+=`<text x="${cx-crownR*1.1}" y="${crownY-crownR*0.3}" text-anchor="middle" font-size="16">✨</text>`;
+      svg+=`<text x="${cx+crownR*1.1}" y="${crownY-crownR*0.3}" text-anchor="middle" font-size="16">✨</text>`;
+      svg+=`<text x="${cx-crownR*0.4}" y="${crownY+crownR*0.8}" text-anchor="middle" font-size="14">✨</text>`;
+      svg+=`</g>`;
     }
     svg+=`</g>`;
   }
 
   // 根系（level >= 2）
   if(level>=2){
-    svg+=`<g class="root" opacity="0.4">`;
-    svg+=`<path d="M${cx-8},${h-30} Q${cx-20},${h-20} ${cx-30},${h-12}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-    svg+=`<path d="M${cx+8},${h-30} Q${cx+20},${h-20} ${cx+30},${h-12}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-    svg+=`<path d="M${cx},${h-30} L${cx},${h-10}" stroke="#6B5435" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg+=`<g class="root" opacity="0.35">`;
+    const rootSpread=level>=4?40:25;
+    svg+=`<path d="M${cx-8},${groundY} Q${cx-15},${groundY+8} ${cx-rootSpread},${groundY+18}" stroke="#4A3A24" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx+8},${groundY} Q${cx+15},${groundY+8} ${cx+rootSpread},${groundY+18}" stroke="#4A3A24" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg+=`<path d="M${cx},${groundY} L${cx},${groundY+22}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
     if(level>=4){
-      svg+=`<path d="M${cx-15},${h-25} Q${cx-30},${h-15} ${cx-40},${h-8}" stroke="#6B5435" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
-      svg+=`<path d="M${cx+15},${h-25} Q${cx+30},${h-15} ${cx+40},${h-8}" stroke="#6B5435" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx-18},${groundY+3} Q${cx-28},${groundY+12} ${cx-42},${groundY+15}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx+18},${groundY+3} Q${cx+28},${groundY+12} ${cx+42},${groundY+15}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx-10},${groundY+15} L${cx-20},${groundY+25}" stroke="#4A3A24" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+      svg+=`<path d="M${cx+10},${groundY+15} L${cx+20},${groundY+25}" stroke="#4A3A24" stroke-width="1" fill="none" stroke-linecap="round"/>`;
     }
     svg+=`</g>`;
   }
 
-  // 飘浮粒子（养分粒子）
+  // 飘浮粒子（养分/萤火虫）
   if(level>=3){
-    for(let i=0;i<5;i++){
-      const px=cx+(Math.random()-0.5)*100;
-      const py=h-100-Math.random()*80;
-      svg+=`<circle class="particle" cx="${px}" cy="${py}" r="2" fill="#FFE5A0" opacity="0" style="animation-delay:${i*0.6}s"/>`;
+    const particleCount=isNight?8:5;
+    const particleColor=isNight?"#FFE060":"#FFE5A0";
+    for(let i=0;i<particleCount;i++){
+      const px=cx+((i*37+13)%200-100);
+      const py=groundY-80-((i*53+17)%120);
+      svg+=`<circle class="particle" cx="${px}" cy="${py}" r="${isNight?2.5:2}" fill="${particleColor}" opacity="0" style="animation-delay:${i*0.5}s"/>`;
     }
   }
 
