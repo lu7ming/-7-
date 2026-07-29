@@ -3388,6 +3388,7 @@ function weekRangeOf(dateStr){
 }
 function getWeekPlan(dateStr){
   const wid=weekIdOf(dateStr);
+  if(!state.weeklyPlans)state.weeklyPlans=[];
   let p=state.weeklyPlans.find(x=>x.week_id===wid);
   if(!p){
     p={week_id:wid,start_date:weekRangeOf(dateStr).start,end_date:weekRangeOf(dateStr).end,
@@ -3490,6 +3491,7 @@ function viewWeek(){
 /* ============== 知识库 / 笔记系统 ============== */
 const NOTE_TYPES=[{k:"reading",l:"读书笔记",ico:"📖"},{k:"course",l:"课程笔记",ico:"🎓"},{k:"idea",l:"灵感速记",ico:"💡"},{k:"meeting",l:"会议记录",ico:"👥"},{k:"daily",l:"日记",ico:"📅"}];
 function viewNotes(){
+  if(!state.notes)state.notes=[];
   const list=state.notes.slice().sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
   return `
    <div class="card">
