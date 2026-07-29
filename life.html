@@ -1102,6 +1102,51 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
 .memo-date{font-size:11px;color:var(--faint);margin-left:auto;}
 .btn-sm{padding:3px 10px;font-size:12px;}
 
+/* ===== 休息模式 · 魁北克冬夜 ===== */
+.rest-ambient{position:fixed;inset:0;z-index:40;display:none;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% -12%, rgba(150,70,55,.32), rgba(150,70,55,0) 55%),
+    linear-gradient(180deg, #0d1b33 0%, #0b1626 46%, #0a1320 100%);
+}
+.rest-ambient .rest-glow{position:absolute;top:0;left:0;right:0;height:40vh;
+  background:radial-gradient(100% 100% at 50% 0%, rgba(184,92,60,.30), rgba(184,92,60,0) 60%);}
+#snowCanvas{position:absolute;inset:0;width:100%;height:100%;}
+.rest-ambient .bokeh{position:absolute;border-radius:50%;filter:blur(16px);
+  background:radial-gradient(circle, rgba(232,182,122,.92), rgba(232,182,122,0) 70%);
+  animation:breathe 7s ease-in-out infinite;}
+.rest-ambient .bokeh:nth-child(3){animation-delay:0s;}
+.rest-ambient .bokeh:nth-child(4){animation-delay:1.2s;}
+.rest-ambient .bokeh:nth-child(5){animation-delay:2.4s;}
+.rest-ambient .bokeh:nth-child(6){animation-delay:3.1s;}
+.rest-ambient .bokeh:nth-child(7){animation-delay:.6s;}
+.rest-ambient .bokeh:nth-child(8){animation-delay:4.2s;}
+.rest-ambient .bokeh:nth-child(9){animation-delay:2.0s;}
+@keyframes breathe{0%,100%{opacity:.32;transform:scale(1)}50%{opacity:.72;transform:scale(1.14)}}
+.rest-ambient .rest-xmas{position:absolute;top:0;left:0;right:0;height:50px;display:none;
+  background:repeating-linear-gradient(90deg, rgba(232,182,110,0) 0 24px, rgba(232,182,110,.9) 24px 28px, rgba(232,182,110,0) 28px 54px);
+  filter:blur(.4px);opacity:.75;animation:twinkle 3.2s ease-in-out infinite;}
+.rest-ambient.xmas-on .rest-xmas{display:block;}
+@keyframes twinkle{0%,100%{opacity:.5}50%{opacity:.9}}
+
+.rest-panel{position:fixed;z-index:45;left:50%;bottom:8%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;color:#F2EBE0;pointer-events:auto;}
+.rest-panel.hidden{display:none;}
+#restClock{font-size:62px;font-weight:200;letter-spacing:5px;font-variant-numeric:tabular-nums;
+  color:#F4ECDD;text-shadow:0 2px 34px rgba(0,0,0,.55);line-height:1;}
+#restDate{font-size:14px;color:#C9BBA8;letter-spacing:2px;}
+#restLine{font-size:14px;color:#D9A55B;max-width:82vw;opacity:.92;font-style:italic;}
+.rest-panel .rp-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:2px;}
+.rest-panel .rp-btns .btn{background:rgba(217,165,91,.16);border:1px solid rgba(217,165,91,.42);color:#F2EBE0;backdrop-filter:blur(4px);}
+.rest-panel .rp-btns .btn:active{background:rgba(217,165,91,.3);}
+
+/* 休息模式下：世界沉下去，暖光浮上来 */
+body.rest-mode{--warm:#D9A55B;--ink:#F2EBE0;}
+body.rest-mode #scroll{filter:blur(.7px) brightness(.82);opacity:.9;transition:filter .7s ease,opacity .7s ease;}
+body.rest-mode .sidebar,body.rest-mode .topbar{opacity:.5;transition:opacity .7s ease;}
+body.rest-mode .card{background:rgba(18,28,46,.55)!important;backdrop-filter:blur(3px);border-color:rgba(217,165,91,.18)!important;}
+body.rest-mode .top-icon{color:#E8DCC8;}
+body.rest-mode #restAmbient{display:block;}
+
 </style>
 </head>
 <body data-theme="light">
@@ -1147,6 +1192,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
         <button class="top-icon" data-top="data" title="数据">💾</button>
         <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
+        <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
         <button class="top-icon" data-top="theme" title="主题" id="themeBtn">☀️</button>
       </div>
     </div>
@@ -1180,6 +1226,31 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
   <div class="panel">
     <div class="panel-head"><h3>💾 数据 · 备份与整理</h3><button class="btn" id="dataClose">关闭</button></div>
     <div class="panel-body" id="dataBody"></div>
+  </div>
+</div>
+
+<!-- 休息模式 · 魁北克冬夜 -->
+<div id="restAmbient" class="rest-ambient">
+  <div class="rest-glow"></div>
+  <canvas id="snowCanvas"></canvas>
+  <div class="bokeh" style="left:11%;top:26%;width:96px;height:96px"></div>
+  <div class="bokeh" style="left:79%;top:18%;width:70px;height:70px"></div>
+  <div class="bokeh" style="left:41%;top:52%;width:120px;height:120px"></div>
+  <div class="bokeh" style="left:63%;top:70%;width:80px;height:80px"></div>
+  <div class="bokeh" style="left:24%;top:78%;width:64px;height:64px"></div>
+  <div class="bokeh" style="left:89%;top:54%;width:56px;height:56px"></div>
+  <div class="bokeh" style="left:33%;top:14%;width:50px;height:50px"></div>
+  <div class="rest-xmas"></div>
+</div>
+<div id="restPanel" class="rest-panel hidden">
+  <div id="restClock">--:--</div>
+  <div id="restDate"></div>
+  <div id="restLine"></div>
+  <div class="rp-btns">
+    <button class="btn" data-action="rest-fire">🔥 壁炉声</button>
+    <button class="btn" data-action="rest-wind">🌬 远处风声</button>
+    <button class="btn" data-action="rest-xmas">✨ 圣诞灯</button>
+    <button class="btn" data-action="rest-exit">退出休息</button>
   </div>
 </div>
 
@@ -1280,7 +1351,7 @@ let state={
   memos:[],             // 备忘录（自动归类）
   unlockedAch:[]        // 已解锁成就
 };
-let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:""};
+let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false};
 let currentDate=fmtDate(new Date());
 let activeNav="home";
 let selMood="";   // 当前选中的心情（思考流录入用）
@@ -1388,7 +1459,7 @@ function load(){
   }catch(e){}
   try{
     const s=localStorage.getItem(SET_KEY);
-    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:""},JSON.parse(s));
+    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false},JSON.parse(s));
   }catch(e){}
 }
 function saveSettings(){localStorage.setItem(SET_KEY,JSON.stringify(settings));}
@@ -5336,6 +5407,7 @@ function onClick(e){
     if(a==="search")openSearch("");
     else if(a==="data")openData();
     else if(a==="theme")toggleTheme();
+    else if(a==="rest")toggleRest();
     return;
   }
   // 打卡签到
@@ -5723,6 +5795,11 @@ function onClick(e){
   if(t.dataset.noteDel!=null){
     state.notes=state.notes.filter(n=>n.id!==t.dataset.noteDel);save();render();return;
   }
+  /* ---- 休息模式面板 ---- */
+  if(t.dataset.action==="rest-exit"){toggleRest();return;}
+  if(t.dataset.action==="rest-xmas"){restToggleXmas();return;}
+  if(t.dataset.action==="rest-fire"){startSound("fire");toast("🔥 壁炉声已起");return;}
+  if(t.dataset.action==="rest-wind"){startSound("wind");toast("🌬 远处风声已起");return;}
   /* ---- 备忘录 ---- */
   if(t.dataset.action==="add-memo"){
     const inp=document.getElementById("memoInput");
@@ -7399,6 +7476,7 @@ function bind(){
   if(a==="search")openSearch("");
   else if(a==="data")openData();
   else if(a==="theme")toggleTheme();
+  else if(a==="rest")toggleRest();
   else if(a==="palette")openPalette();
   else if(a==="voice")toggleVoice();
   else if(a==="refresh"){
@@ -7416,6 +7494,8 @@ function bind(){
     }
   }
  }));
+// 休息面板在 #scroll 之外，单独接管点击委托
+document.getElementById("restPanel").addEventListener("click",onClick);
  document.getElementById("mobBtn").onclick=()=>{
   document.getElementById("sidebar").classList.toggle("open");
   document.getElementById("sbOverlay").classList.toggle("show");
@@ -7435,6 +7515,77 @@ function bind(){
   if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();openSearch("");}
   if(e.key==="Escape"){closeSearch();document.getElementById("dataOverlay").classList.add("hidden");document.getElementById("paletteOverlay").classList.add("hidden");document.getElementById("sidebar").classList.remove("open");document.getElementById("sbOverlay").classList.remove("show");}
  });
+}
+
+/* ============== 休息模式 · 魁北克冬夜 ============== */
+const REST_LINES=["雪落得很慢，像时间舍不得走。","窗里有光，外面再冷也不慌。","这一刻，只属于你和自己。","城市睡了，灯还醒着。","慢慢呼吸，世界会等你。","远处的暖光，是也有人正过冬。","把今天轻轻放下，明天再说。","安静，是一种很贵的从容。"];
+function restLineToday(){
+  const d=new Date();
+  const seed=Math.floor((Date.now())/86400000)%REST_LINES.length;
+  return REST_LINES[seed];
+}
+let snowCtx=null,snowRAF=null,snowParts=[];
+function startSnow(){
+  const c=document.getElementById("snowCanvas");if(!c)return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;
+  c.style.width=window.innerWidth+"px";c.style.height=window.innerHeight+"px";
+  snowCtx=c.getContext("2d");snowCtx.scale(dpr,dpr);
+  const W=window.innerWidth,H=window.innerHeight;
+  const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const n=reduce?16:48;
+  snowParts=Array.from({length:n},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    len:8+Math.random()*16,sp:0.3+Math.random()*0.7,
+    drift:(Math.random()-0.5)*0.5,a:0.35+Math.random()*0.5,w:0.8+Math.random()*1.3
+  }));
+  function frame(){
+    snowCtx.clearRect(0,0,W,H);
+    for(const p of snowParts){
+      p.y+=p.sp;p.x+=p.drift;
+      if(p.y>H+22){p.y=-22;p.x=Math.random()*W;}
+      if(p.x>W+20)p.x=-20;if(p.x<-20)p.x=W+20;
+      snowCtx.strokeStyle="rgba(245,240,230,"+p.a+")";
+      snowCtx.lineWidth=p.w;snowCtx.lineCap="round";
+      snowCtx.beginPath();snowCtx.moveTo(p.x,p.y);snowCtx.lineTo(p.x-p.drift*5,p.y-p.len);snowCtx.stroke();
+    }
+    snowRAF=requestAnimationFrame(frame);
+  }
+  cancelAnimationFrame(snowRAF);snowRAF=requestAnimationFrame(frame);
+}
+function stopSnow(){
+  if(snowRAF)cancelAnimationFrame(snowRAF);snowRAF=null;
+  const c=document.getElementById("snowCanvas");if(c&&snowCtx)snowCtx.clearRect(0,0,c.width,c.height);
+}
+let restClockTimer=null;
+function startRestClock(){
+  const up=()=>{
+    const d=new Date(),hh=String(d.getHours()).padStart(2,"0"),mm=String(d.getMinutes()).padStart(2,"0");
+    const ck=document.getElementById("restClock");if(ck)ck.textContent=hh+":"+mm;
+    const dt=document.getElementById("restDate");
+    if(dt){const w=["日","一","二","三","四","五","六"][d.getDay()];dt.textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 周${w}`;}
+  };
+  up();restClockTimer=setInterval(up,1000*20);
+}
+function stopRestClock(){if(restClockTimer)clearInterval(restClockTimer);restClockTimer=null;}
+function applyRestMode(){
+  const on=!!settings.restMode;
+  document.body.classList.toggle("rest-mode",on);
+  const amb=document.getElementById("restAmbient");if(amb)amb.style.display=on?"block":"none";
+  const panel=document.getElementById("restPanel");if(panel)panel.classList.toggle("hidden",!on);
+  const rl=document.getElementById("restLine");if(rl)rl.textContent=on?restLineToday():"";
+  if(amb)amb.classList.toggle("xmas-on",!!settings.restXmas);
+  const btn=document.getElementById("restBtn");if(btn)btn.style.opacity=on?"1":"0.55";
+  if(on){startSnow();startRestClock();}else{stopSnow();stopRestClock();}
+}
+function toggleRest(){
+  settings.restMode=!settings.restMode;saveSettings();applyRestMode();
+  toast(settings.restMode?"🌨 进入休息模式 · 魁北克冬夜":"已退出休息模式");
+}
+function restToggleXmas(){
+  settings.restXmas=!settings.restXmas;saveSettings();
+  const amb=document.getElementById("restAmbient");if(amb)amb.classList.toggle("xmas-on",settings.restXmas);
+  toast(settings.restXmas?"✨ 圣诞灯亮了":"圣诞灯已关");
 }
 
 /* ============== 启动 ============== */
@@ -7465,6 +7616,8 @@ async function init(){
   loadWords();
   // 初始化推送提醒
   setTimeout(()=>{try{initNotifications();}catch(e){}},2000);
+  // 恢复休息模式（若上次开启）
+  applyRestMode();
   // 异步获取天气（不阻塞渲染）
   setTimeout(()=>{try{fetchWeather().then(w=>{if(w)render();});}catch(e){}},1500);
   // 每分钟刷新一次问候/连续打卡
