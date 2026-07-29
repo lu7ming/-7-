@@ -1,7 +1,7 @@
 /* 鹿7铭 · 人生工作台 Service Worker
  * 策略：HTML 文档 network-first（保证更新生效），静态资源 cache-first（离线可用）
  */
-const CACHE = "life-workbench-v2";
+const CACHE = "life-workbench-v3"; // v3: 更换图标（萨摩耶）
 const SHELL = "./life.html";
 const ASSETS = [
   "./manifest.json",
