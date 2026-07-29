@@ -2011,9 +2011,12 @@ function parseQuickCapture(raw){
     return {mod:"思考",detail:`情绪 ${mood} 已记入思考流`,raw:text};
   }
 
-  // 17. 默认：作为任务
-  r.tasks.push({text:text,done:false});
-  return {mod:"任务",detail:text,raw:text};
+  // 17. 默认：未匹配其它模块 → 归入备忘录（自动归类，贯穿全局）
+  const mcls=autoClassifyMemo(text);
+  state.memos=state.memos||[];
+  state.memos.push({id:uid(),text:text,title:"",cat:mcls.cat,links:mcls.links,pinned:false,done:false,created:Date.now(),linkedNote:null});
+  const mc=memoCat(mcls.cat);
+  return {mod:"备忘录",detail:mc.ico+" "+mc.l+" · "+text,raw:text};
 }
 
 function guessExpenseCategory(text){
@@ -2481,6 +2484,15 @@ function todayStream(r){
   }
   if(r.review&&r.review.text){
     html+=`<div class="section-eyebrow" style="margin-top:10px">🔄 复盘</div><div class="list-item"><div class="li-name">${esc(r.review.text.slice(0,80))}…</div></div>`;
+  }
+  // 今日备忘（来自首页快速记录 / 备忘录模块，自动归类）
+  const todaysMemos=(state.memos||[]).filter(m=>fmtDate(new Date(m.created||Date.now()))===currentDate);
+  if(todaysMemos.length){
+    html+=`<div class="section-eyebrow" style="margin-top:10px">📌 备忘（${todaysMemos.filter(m=>!m.done).length} 待办 / ${todaysMemos.length}）</div>`;
+    html+=todaysMemos.slice().sort((a,b)=>(b.created||0)-(a.created||0)).slice(0,8).map(m=>{
+      const c=memoCat(m.cat);
+      return `<div class="list-item" style="border-left:3px solid ${c.color};padding-left:8px"><div class="li-name"><span style="color:${c.color};font-weight:700">${c.ico}${c.l}</span> ${esc(m.text)}</div></div>`;
+    }).join("");
   }
   if(!html)html='<div class="empty">今天还没有记录，用顶部输入框快速录入吧</div>';
   return html;
@@ -3591,7 +3603,7 @@ const MEMO_CATS=[
 const MEMO_KW={
  important:["重要","紧急","务必","立刻","马上","必做","尽快","刻不容缓","马上要"],
  todo:["记得","别忘了","提醒","需要","必须","要做","得做","待办","待会","明天","后天","下周","下周一","截止前","别忘"],
- shopping:["买","购","淘宝","京东","超市","下单","快递","价格","优惠","囤","购物车","代购"],
+ shopping:["买","购","淘宝","京东","超市","下单","快递","价格","优惠","囤","购物车","代购","店","零食","餐厅","饭店","面包","奶茶","水果","吃喝"],
  work:["会议","项目","客户","老板","周报","邮件","deadline","汇报","提交","截止","对接","需求","方案","复盘会"],
  idea:["想法","灵感","创意","主意","点子","忽然想到","想做","脑洞"],
  life:["水电","物业","快递","医院","预约","缴费","电话","维修","搬家","签证","证件","宽带","燃气"],
@@ -6106,6 +6118,7 @@ function runSearch(){
  state.quotes.forEach(q=>push("摘抄",(q.source||"")+" "+(q.excerpt||"")+" "+(q.reflection||""),(q.source||"")+" "+(q.excerpt||"")+" "+(q.reflection||""),(q.source||"")+" "+(q.excerpt||""),"quote:"+q.id));
  state.projects.forEach(p=>push("项目",p.name+" "+p.type+" "+(p.materials||[]).join(" "),p.name+" "+(p.materials||[]).join(" "),p.name+" "+(p.materials||[]).join(" "),"project:"+p.id));
  state.notes.forEach(n=>push("笔记",(n.title||"")+" "+(n.content||"")+" "+(n.tags||[]).join(" "),(n.title||"")+" "+(n.content||"")+" "+(n.tags||[]).join(" "),(n.content||"").slice(0,80),"note:"+n.id));
+ state.memos.forEach(m=>push("备忘",(m.text||"")+" "+(memoCat(m.cat).l),(m.text||"")+"",(m.text||"").slice(0,80),"memo:"+m.id));
  state.weeklyPlans.forEach(w=>{w.weekly_goals.forEach(g=>push("周计划",g.goal||"",g.goal||"",g.goal||"","week:"+w.week_id));});
  if(!res.length){box.innerHTML='<div class="empty">未找到匹配内容</div>';return;}
  box.innerHTML=res.slice(0,80).map(r=>`<div class="sr" data-jump="${r.jump}"><div class="sr-meta"><span class="sr-mod">${r.modL}</span></div><div class="sr-snip">${snippet(r.full,q)}</div></div>`).join("");
@@ -6135,6 +6148,7 @@ function jump(spec){
  else if(type==="quote"){activeNav="quote";render();}
  else if(type==="project"){activeNav="project";render();}
  else if(type==="note"){activeNav="note";render();}
+ else if(type==="memo"){activeNav="memo";render();}
  else if(type==="week"){activeNav="week";render();}
 }
 
