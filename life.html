@@ -244,10 +244,28 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 
 /* ---- iPad panoramic layout ---- */
 @media(min-width:780px){
-  .pano-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .pano-grid > .card{margin-bottom:0;}
-  .pano-full{grid-column:1/-1;}
+.pano-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+   .pano-grid > .card{margin-bottom:0;}
+   .pano-full{grid-column:1/-1;}
 }
+.cal-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px}
+.cal-row > *{min-width:0}
+.cal-row .cal{margin-bottom:0;display:flex;flex-direction:column;width:100%}
+.cal-row .cal .cal-grid{flex:1}
+@media(max-width:700px){.cal-row{grid-template-columns:1fr}}
+.month-card{display:flex;flex-direction:column;gap:10px}
+.month-card .mc-stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.month-card .mc-stat{padding:10px 12px;background:var(--card-soft);border:1px solid var(--line);border-radius:8px}
+.month-card .mc-stat .mc-label{font-size:11px;color:var(--muted);margin-bottom:2px}
+.month-card .mc-stat .mc-val{font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.month-card .mc-stat .mc-val small{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px}
+.month-card .mc-mini{display:grid;grid-template-columns:repeat(31,1fr);gap:2px;margin-top:4px}
+.month-card .mc-mini div{aspect-ratio:1;border-radius:2px;background:var(--line);transition:transform .1s}
+.month-card .mc-mini div:hover{transform:scale(1.4)}
+.month-card .mc-mini div.has{background:var(--accent);opacity:.5}
+.month-card .mc-mini div.check{background:var(--good);opacity:.9}
+.month-card .mc-mini div.today{outline:1.5px solid var(--accent-ink);outline-offset:-1px}
+.month-card .mc-quote{font-size:12px;color:var(--ink-2);font-style:italic;padding:8px 10px;border-left:2px solid var(--accent);background:var(--card-soft);border-radius:4px;line-height:1.5}
 
 /* ---- Top date greeting card ---- */
 .greet{
@@ -460,15 +478,15 @@ body[data-theme="dark"] .data-row input[type=month]{color-scheme:dark;}
 .date-nav .dn-label .dn-sub{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
 
 /* ===== 日历 ===== */
-.cal{background:var(--card-soft);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;max-width:300px;margin-left:auto;margin-right:auto}
+.cal{background:var(--card-soft);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px}
 .cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.cal-h .cal-title{font-size:13px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cal-h .cal-title{font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .cal-h .cal-nav{display:flex;gap:3px}
-.cal-h .cal-nav button{background:var(--card);border:1px solid var(--line);border-radius:4px;width:22px;height:22px;font-size:12px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-h .cal-nav button{background:var(--card);border:1px solid var(--line);border-radius:5px;width:26px;height:26px;font-size:13px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cal-h .cal-nav button:hover{background:var(--line)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-grid .cal-wh{text-align:center;font-size:9px;color:var(--muted);padding:2px 0;font-weight:600}
-.cal-grid .cal-day{border:1px solid transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-2);cursor:pointer;background:var(--card);transition:all .12s;position:relative;aspect-ratio:1;max-height:42px}
+.cal-grid .cal-day{border:1px solid transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-2);cursor:pointer;background:var(--card);transition:all .12s;position:relative;aspect-ratio:1;max-height:48px}
 .cal-grid .cal-day:hover{border-color:var(--accent);transform:translateY(-1px)}
 .cal-grid .cal-day.other{color:var(--muted);opacity:.4}
 .cal-grid .cal-day.has-data{color:var(--ink);font-weight:600}
@@ -478,7 +496,7 @@ body[data-theme="dark"] .data-row input[type=month]{color-scheme:dark;}
 .cal-grid .cal-day.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,184,99,.3) inset}
 .cal-grid .cal-day.selected{background:var(--accent);color:var(--accent-ink);font-weight:700;border-color:var(--accent)}
 .cal-grid .cal-day.selected::after{background:var(--accent-ink)}
-.cal-grid .cal-empty{aspect-ratio:1;max-height:42px}
+.cal-grid .cal-empty{aspect-ratio:1;max-height:48px}
 
 /* Contact A/B/C/D */
 .cat-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);
@@ -1181,7 +1199,7 @@ function viewCalendar(){
     if(isSelected)cls.push("selected");
     cells+=`<div class="${cls.join(" ")}" data-cal-date="${d.date}">${d.day}</div>`;
   });
-  return `<div class="cal pano-full">
+  return `<div class="cal">
     <div class="cal-h">
       <div class="cal-title">${monthName}</div>
       <div class="cal-nav">
@@ -1201,7 +1219,69 @@ function viewCalendar(){
     </div>
   </div>`;
 }
-/* 月份打卡热力图数据 */
+/* 月度亮点：学习/资产/签到统计 + 31天迷你热力图 + 当月最新摘抄 */
+function viewMonthHighlight(){
+  const cd=parseDate(calCursor);
+  const year=cd.getFullYear(), month=cd.getMonth();
+  const summary=monthSummary(year,month);
+  const last=new Date(year,month+1,0).getDate();
+  const today=fmtDate(new Date());
+  const todayY=today.startsWith(`${year}-${String(month+1).padStart(2,"0")}`);
+  const days=monthHeatmap(year,month);
+  // 迷你热力图 31 格
+  const mini=Array.from({length:31},(_,i)=>{
+    const d=i+1;
+    if(d>last)return `<div style="visibility:hidden"></div>`;
+    const ds=days[i];
+    const isT=todayY&&ds.date===today;
+    const cls=ds.checkIn?"check":ds.hasData?"has":"";
+    return `<div class="${cls} ${isT?'today':''}" title="${ds.date}${ds.checkIn?' · 已打卡':ds.hasData?' · 有数据':''}"></div>`;
+  }).join("");
+  // 当月最新摘抄（最多1条）
+  const monthQuotes=(state.quotes||[]).filter(q=>{
+    if(!q.date)return false;
+    const qd=parseDate(q.date);
+    return qd.getFullYear()===year&&qd.getMonth()===month;
+  }).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const quote=monthQuotes[0];
+  const quoteHtml=quote?`<div class="mc-quote">"${esc((quote.excerpt||'').slice(0,60))}${quote.excerpt&&quote.excerpt.length>60?'…':''}"<br/><span style="color:var(--muted);font-size:11px">— ${esc(quote.source||'无名')}</span></div>`:"";
+
+  // 当月第几周 / 剩余天数
+  const dayOfMonth=todayY?parseDate(today).getDate():last;
+  const weekNum=Math.ceil(dayOfMonth/7);
+  const remain=last-dayOfMonth;
+  const goalIn=summary.inSum-summary.outSum; // 净额
+
+  return `<div class="card month-card">
+    <div>
+      <div class="section-eyebrow">${month+1}月 · 第${weekNum}周</div>
+      <div class="section-title" style="font-size:18px">📊 本月亮点</div>
+    </div>
+    <div class="mc-stat-row">
+      <div class="mc-stat">
+        <div class="mc-label">已签到</div>
+        <div class="mc-val">${summary.checkinDays}<small>/ ${dayOfMonth} 天</small></div>
+      </div>
+      <div class="mc-stat">
+        <div class="mc-label">学习时长</div>
+        <div class="mc-val">${summary.vocal+summary.english.read+summary.english.listen}<small>分钟</small></div>
+      </div>
+      <div class="mc-stat">
+        <div class="mc-label">本月支出</div>
+        <div class="mc-val">¥${summary.outSum}</div>
+      </div>
+      <div class="mc-stat">
+        <div class="mc-label">结余</div>
+        <div class="mc-val" style="color:${goalIn>=0?'var(--good)':'var(--bad)'}">¥${goalIn}</div>
+      </div>
+    </div>
+    <div>
+      <div class="mc-label" style="font-size:11px;color:var(--muted);margin-bottom:6px">🗓 31 天打卡节奏${remain>0?` · 剩 ${remain} 天`:''}</div>
+      <div class="mc-mini">${mini}</div>
+    </div>
+    ${quoteHtml}
+  </div>`;
+}
 function monthHeatmap(year,month){
   const days=[];
   const last=new Date(year,month+1,0).getDate();
@@ -1776,7 +1856,10 @@ function viewHome(){
    </div>`;
 
   return `
-   ${viewCalendar()}
+   <div class="cal-row">
+     ${viewCalendar()}
+     ${viewMonthHighlight()}
+   </div>
    <div class="greet pano-full">
      <div class="greet-eyebrow">WORKSPACE / HOME</div>
 <div class="greet-h">${greetOf(parseDate(currentDate))}，鹿7铭。</div>
