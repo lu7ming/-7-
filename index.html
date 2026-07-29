@@ -1086,6 +1086,22 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
 .li-tag{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--card-2);color:var(--muted);margin-left:6px;}
 .interaction-list{border-top:1px dashed var(--line);padding-top:8px;}
 
+/* ---- 备忘录 ---- */
+.memo-card{background:var(--card-soft);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;}
+.memo-card.memo-done{opacity:.55;}
+.memo-card.memo-done .memo-text{text-decoration:line-through;}
+.memo-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.memo-cat{font-size:12px;font-weight:700;white-space:nowrap;}
+.memo-title{font-size:14px;color:var(--ink);}
+.memo-pin{margin-left:auto;background:none;border:none;font-size:15px;cursor:pointer;color:var(--muted);line-height:1;padding:0;}
+.memo-pin.on{color:#E0B020;}
+.memo-text{font-size:13px;color:var(--ink-2);white-space:pre-wrap;line-height:1.5;}
+.memo-links{font-size:12px;color:var(--muted);margin-top:4px;}
+.memo-link{font-size:12px;color:var(--warm);margin-top:4px;}
+.memo-foot{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.memo-date{font-size:11px;color:var(--faint);margin-left:auto;}
+.btn-sm{padding:3px 10px;font-size:12px;}
+
 </style>
 </head>
 <body data-theme="light">
@@ -1261,6 +1277,7 @@ let state={
   alarms:[],            // 闹钟列表
   soundPresets:[],      // 音效收藏
   soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],  // 声音设置
+  memos:[],             // 备忘录（自动归类）
   unlockedAch:[]        // 已解锁成就
 };
 let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:""};
@@ -1345,7 +1362,7 @@ function load(){
           {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
           {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
         ],
-        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[]
+        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[]
       },p);
       state.entries=state.entries||{};
       state.contacts=state.contacts||[];
@@ -1365,6 +1382,7 @@ function load(){
       state.soundPresets=state.soundPresets||[];
       state.soundSettings=state.soundSettings||{volume:0.5,autoPomo:"",autoMed:""};
       state.unlockedAch=state.unlockedAch||[];
+      state.memos=state.memos||[];
       migrate();
     }
   }catch(e){}
@@ -2104,6 +2122,7 @@ const NAV_ITEMS=[
  {id:"review",l:"周复盘",ico:"🔄"},
  {id:"week",l:"周计划",ico:"🗓"},
  {id:"note",l:"笔记",ico:"📝"},
+ {id:"memo",l:"备忘录",ico:"📌"},
  {id:"board",l:"看板",ico:"📈"},
  {id:"tree",l:"生命树",ico:"🌳"},
  {id:"sound",l:"声音",ico:"🎵"},
@@ -3543,6 +3562,7 @@ function renderNoteListHTML(list,q){
       <div class="note-content">${esc(n.content).slice(0,200)}${n.content.length>200?"…":""}</div>
       ${tagsHtml?`<div class="note-tags">${tagsHtml}</div>`:""}
       ${related.length?`<div class="note-related">🔗 ${related.join(" · ")}</div>`:""}
+      ${n.fromMemo?`<div class="note-related" style="color:var(--warm)">📌 来自备忘录</div>`:""}
       <div class="note-date">${(n.created_at||"").slice(0,16).replace("T"," ")}</div>
     </div>`;
   }).join("");
@@ -3554,6 +3574,130 @@ function renderNoteList(q){
   list.sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
   const el=document.getElementById("noteList");
   if(el)el.innerHTML=renderNoteListHTML(list,q);
+}
+
+/* ============== 备忘录（自动归类 + 与笔记联动） ============== */
+const MEMO_CATS=[
+ {k:"important",l:"重要",ico:"⭐",color:"#D9A520"},
+ {k:"todo",l:"待办",ico:"📋",color:"#E08A5B"},
+ {k:"shopping",l:"购物",ico:"🛒",color:"#C99A3E"},
+ {k:"work",l:"工作",ico:"💼",color:"#5B86C9"},
+ {k:"idea",l:"灵感",ico:"💡",color:"#B07BC9"},
+ {k:"life",l:"生活",ico:"🏠",color:"#5BAE8E"},
+ {k:"health",l:"健康",ico:"💪",color:"#C95B7B"},
+ {k:"study",l:"学习",ico:"📚",color:"#7BA5B0"},
+ {k:"misc",l:"杂项",ico:"📦",color:"#9A9A9A"}
+];
+const MEMO_KW={
+ important:["重要","紧急","务必","立刻","马上","必做","尽快","刻不容缓","马上要"],
+ todo:["记得","别忘了","提醒","需要","必须","要做","得做","待办","待会","明天","后天","下周","下周一","截止前","别忘"],
+ shopping:["买","购","淘宝","京东","超市","下单","快递","价格","优惠","囤","购物车","代购"],
+ work:["会议","项目","客户","老板","周报","邮件","deadline","汇报","提交","截止","对接","需求","方案","复盘会"],
+ idea:["想法","灵感","创意","主意","点子","忽然想到","想做","脑洞"],
+ life:["水电","物业","快递","医院","预约","缴费","电话","维修","搬家","签证","证件","宽带","燃气"],
+ health:["药","体检","复查","挂号","健身","运动","看病","牙","复诊","打疫苗"],
+ study:["作业","考试","复习","论文","课","背书","刷题","预习","备考"]
+};
+const MEMO_TYPE_MAP={important:"daily",todo:"idea",shopping:"daily",work:"meeting",idea:"idea",life:"daily",health:"daily",study:"reading",misc:"daily"};
+let memoFilter="all";
+let memoEditId=null;
+function autoClassifyMemo(text){
+  const t=String(text||"").toLowerCase();
+  const score={};MEMO_CATS.forEach(c=>score[c.k]=0);
+  for(const k in MEMO_KW){
+    MEMO_KW[k].forEach(kw=>{ if(t.includes(kw.toLowerCase())) score[k]+=(k==="important"?3:1); });
+  }
+  let best="misc",bestScore=0;
+  const prio=["important","todo","work","idea","shopping","study","health","life","misc"];
+  prio.forEach(k=>{ if(score[k]>bestScore){bestScore=score[k];best=k;} });
+  if(bestScore===0)best="misc";
+  // 跨模块关联：自动识别项目 / 目标 / 联系人
+  const links={projects:[],goals:[],contacts:[]};
+  (state.projects||[]).forEach(p=>{ if(p.name&&text.includes(p.name))links.projects.push(p.id); });
+  (state.goals||[]).forEach(g=>{ if(g.title&&text.includes(g.title))links.goals.push(g.id); });
+  (state.contacts||[]).forEach(c=>{ if(c.name&&text.includes(c.name))links.contacts.push(c.id); });
+  return {cat:best,score:bestScore,links};
+}
+function memoCat(k){return MEMO_CATS.find(c=>c.k===k)||MEMO_CATS[MEMO_CATS.length-1];}
+function getMemo(id){return (state.memos||[]).find(m=>m.id===id);}
+
+function viewMemo(){
+  if(!state.memos)state.memos=[];
+  const memos=state.memos.slice();
+  const total=memos.length;
+  const pinned=memos.filter(m=>m.pinned).length;
+  const done=memos.filter(m=>m.done).length;
+  const f=memoFilter||"all";
+  let list=memos.slice();
+  if(f==="pinned")list=list.filter(m=>m.pinned);
+  else if(f==="done")list=list.filter(m=>m.done);
+  else if(f!=="all")list=list.filter(m=>m.cat===f);
+  list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||(b.created||0)-(a.created||0));
+  const catCounts={};MEMO_CATS.forEach(c=>catCounts[c.k]=memos.filter(m=>m.cat===c.k).length);
+
+  const filterTabs=`<div class="scope-tabs" style="margin-top:10px;flex-wrap:wrap">
+    <button class="scope-tab ${f==="all"?"active":""}" data-memo-filter="all">全部 ${total}</button>
+    <button class="scope-tab ${f==="pinned"?"active":""}" data-memo-filter="pinned">⭐ 置顶 ${pinned}</button>
+    <button class="scope-tab ${f==="done"?"active":""}" data-memo-filter="done">✅ 完成 ${done}</button>
+    ${MEMO_CATS.map(c=>`<button class="scope-tab ${f===c.k?"active":""}" data-memo-filter="${c.k}">${c.ico} ${c.l} ${catCounts[c.k]}</button>`).join("")}
+  </div>`;
+
+  const quickAdd=`
+   <div class="section-eyebrow" style="margin-top:14px">✍️ 快速记录（自动归类）</div>
+   <div class="list-item">
+     <textarea class="big-text" rows="3" id="memoInput" placeholder="随手记一句… 例如：记得明天交论文初稿 / 买牛奶和鸡蛋 / 周末去医院复查" style="margin-top:0"></textarea>
+     <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+       <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="memoPin" style="width:auto"/> ⭐ 置顶</label>
+       <button class="btn" data-action="add-memo">保存备忘</button>
+       <span id="memoPreview" style="font-size:12px;color:var(--muted)"></span>
+     </div>
+   </div>`;
+
+  const listHtml=list.length?list.map(m=>renderMemoCard(m)).join(""):`<div class="empty">还没有备忘，上面记一句试试～</div>`;
+
+  return `<div class="card">
+    <div class="section-eyebrow">MEMO</div>
+    <div class="section-title">📌 备忘录</div>
+    <p class="section-desc">随手速记，自动归类到「重要 / 待办 / 购物 / 工作 / 灵感 / 生活 / 健康 / 学习」，并可与笔记、项目、目标联动</p>
+    ${quickAdd}
+    ${filterTabs}
+    <div style="margin-top:12px" id="memoList">${listHtml}</div>
+  </div>`;
+}
+function renderMemoCard(m){
+  const c=memoCat(m.cat);
+  if(memoEditId===m.id){
+    return `<div class="memo-card" style="border-left:4px solid ${c.color}">
+      <textarea class="big-text" rows="3" id="memoEditInput" style="margin:0">${esc(m.text)}</textarea>
+      <div class="memo-foot">
+        <button class="btn btn-sm" data-memo-save="${m.id}">保存</button>
+        <button class="btn-ghost btn-sm" data-memo-cancel="${m.id}">取消</button>
+        <span class="memo-date">${new Date(m.created||Date.now()).toLocaleString("zh-CN")}</span>
+      </div>
+    </div>`;
+  }
+  const links=[];
+  (m.links&&m.links.projects||[]).forEach(id=>{const p=state.projects.find(x=>x.id===id);if(p)links.push("🎯 "+p.name);});
+  (m.links&&m.links.goals||[]).forEach(id=>{const g=state.goals.find(x=>x.id===id);if(g)links.push("🏹 "+g.title);});
+  (m.links&&m.links.contacts||[]).forEach(id=>{const ct=state.contacts.find(x=>x.id===id);if(ct)links.push("👥 "+ct.name);});
+  const title=m.title?`<b class="memo-title">${esc(m.title)}</b>`:"";
+  return `<div class="memo-card ${m.done?"memo-done":""}" style="border-left:4px solid ${c.color}">
+    <div class="memo-head">
+      <span class="memo-cat" style="color:${c.color}">${c.ico} ${c.l}</span>
+      ${title}
+      <button class="memo-pin ${m.pinned?"on":""}" data-memo-pin="${m.id}" title="置顶">${m.pinned?"⭐":"☆"}</button>
+    </div>
+    <div class="memo-text">${esc(m.text)}</div>
+    ${links.length?`<div class="memo-links">🔗 ${links.join(" · ")}</div>`:""}
+    ${m.linkedNote?`<div class="memo-link">📝 已转入笔记</div>`:""}
+    <div class="memo-foot">
+      <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" data-memo-done="${m.id}" ${m.done?"checked":""} style="width:auto"/> ${m.done?"已完成":"完成"}</label>
+      <button class="btn-ghost btn-sm" data-memo-to-note="${m.id}">转笔记</button>
+      <button class="btn-ghost btn-sm" data-memo-edit="${m.id}">编辑</button>
+      <button class="check-del" data-memo-del="${m.id}">✕</button>
+      <span class="memo-date">${new Date(m.created||Date.now()).toLocaleString("zh-CN")}</span>
+    </div>
+  </div>`;
 }
 
 /* ============== 数据看板 / 仪表盘 ============== */
@@ -5110,6 +5254,7 @@ function render(){
    case"review":html=viewReview();break;
    case"week":html=viewWeek();break;
    case"note":html=viewNotes();break;
+   case"memo":html=viewMemo();break;
    case"board":html=viewBoard();break;
    case"tree":html=viewTree();break;
    case"sound":html=viewSound();break;
@@ -5566,6 +5711,48 @@ function onClick(e){
   if(t.dataset.noteDel!=null){
     state.notes=state.notes.filter(n=>n.id!==t.dataset.noteDel);save();render();return;
   }
+  /* ---- 备忘录 ---- */
+  if(t.dataset.action==="add-memo"){
+    const inp=document.getElementById("memoInput");
+    const v=(inp&&inp.value||"").trim();
+    if(!v){toast("内容不能为空");return;}
+    const cls=autoClassifyMemo(v);
+    state.memos.push({id:uid(),text:v,title:"",cat:cls.cat,links:cls.links,pinned:!!(document.getElementById("memoPin")&&document.getElementById("memoPin").checked),done:false,created:Date.now(),linkedNote:null});
+    save();render();toast("已保存 · 自动归入「"+memoCat(cls.cat).l+"」");return;
+  }
+  if(t.dataset.memoFilter!=null){memoFilter=t.dataset.memoFilter;render();return;}
+  if(t.dataset.memoPin!=null){
+    const m=getMemo(t.dataset.memoPin);if(!m)return;m.pinned=!m.pinned;save();render();return;
+  }
+  const md=t.closest&&t.closest("[data-memo-done]");
+  if(md){
+    const m=getMemo(md.dataset.memoDone);if(!m)return;m.done=md.checked;save();render();return;
+  }
+  if(t.dataset.memoDel!=null){
+    state.memos=state.memos.filter(m=>m.id!==t.dataset.memoDel);
+    (state.notes||[]).forEach(n=>{if(n.fromMemo===t.dataset.memoDel)n.fromMemo=null;});
+    save();render();return;
+  }
+  if(t.dataset.memoEdit!=null){memoEditId=t.dataset.memoEdit;render();return;}
+  if(t.dataset.memoCancel!=null){memoEditId=null;render();return;}
+  if(t.dataset.memoSave!=null){
+    const m=getMemo(t.dataset.memoSave);if(!m)return;
+    const inp=document.getElementById("memoEditInput");
+    const v=(inp&&inp.value||"").trim();
+    if(!v){toast("内容不能为空");return;}
+    const cls=autoClassifyMemo(v);
+    m.text=v;m.cat=cls.cat;m.links=cls.links;memoEditId=null;save();render();toast("已更新归类：「"+memoCat(cls.cat).l+"」");return;
+  }
+  if(t.dataset.memoToNote!=null){
+    const m=getMemo(t.dataset.memoToNote);if(!m)return;
+    if(m.linkedNote){activeNav="note";render();return;}
+    const type=MEMO_TYPE_MAP[m.cat]||"daily";
+    const noteId=uid();
+    state.notes=state.notes||[];
+    state.notes.push({id:noteId,type:type,title:m.title||"来自备忘录",content:m.text,tags:["备忘录"],related:{projects:(m.links&&m.links.projects)||[],goals:(m.links&&m.links.goals)||[],contacts:(m.links&&m.links.contacts)||[]},fromMemo:m.id,created_at:new Date().toISOString()});
+    m.linkedNote=noteId;
+    save();activeNav="note";render();toast("已转入「笔记」知识库");return;
+  }
   /* ---- 课程表 ---- */
   if(t.dataset.action==="add-course" || t.dataset.addCourseSlot!=null){
     let day,startHint="";
@@ -5788,6 +5975,20 @@ function onInput(e){
   /* ---- 笔记 ---- */
   if(t.dataset.noteSearch!=null){
     renderNoteList(t.value);
+    return;
+  }
+  if(t.id==="memoInput"){
+    const v=t.value.trim();
+    const prev=document.getElementById("memoPreview");
+    if(!prev)return;
+    if(!v){prev.innerHTML="";return;}
+    const cls=autoClassifyMemo(v);
+    const c=memoCat(cls.cat);
+    const links=[];
+    (cls.links.projects||[]).forEach(id=>{const p=state.projects.find(x=>x.id===id);if(p)links.push("🎯"+p.name);});
+    (cls.links.goals||[]).forEach(id=>{const g=state.goals.find(x=>x.id===id);if(g)links.push("🏹"+g.title);});
+    (cls.links.contacts||[]).forEach(id=>{const ct=state.contacts.find(x=>x.id===id);if(ct)links.push("👥"+ct.name);});
+    prev.innerHTML=`将归入 <b style="color:${c.color}">${c.ico} ${c.l}</b>${links.length?` · 关联 ${links.join(" ")}`:""}`;
     return;
   }
   if(t.dataset.metric!=null){
