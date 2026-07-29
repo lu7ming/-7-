@@ -2635,6 +2635,9 @@ function viewReview(){
       return `<div class="chart-box">${svgRadarChart(labels,values,300,280)}</div>${inputs}`;
     })()}
 
+    <div class="section-eyebrow" style="margin-top:14px">📤 导出周报</div>
+    <button class="btn" data-action="export-review-image" data-key="${key}">导出为长图</button>
+
     <div class="section-eyebrow" style="margin-top:14px">📚 历史复盘</div>
     <div class="list">
       ${Object.keys(state.reviews).sort().reverse().slice(0,8).map(k=>{
@@ -2644,6 +2647,178 @@ function viewReview(){
       }).join("")||'<div class="empty">还没有历史复盘</div>'}
     </div>
   </div>`;
+}
+
+/* 周报导出为长图：纯 SVG 拼接 + 转 PNG 下载 */
+function exportReviewImage(key){
+  const saved=state.reviews[key];
+  if(!saved){toast("本周复盘为空，请先填写");return;}
+  const scope=saved.scope||(key.indexOf("-Q")>=0?"quarter":key.indexOf("-W")>=0?"week":key.indexOf("-M")>=0?"month":"week");
+  const rg=reviewRangeOf(scope);
+  const gen=summarizeRange(rg.start,rg.end);
+  const radar=saved.radar||{};
+  const dims=[{k:"study",l:"学习"},{k:"health",l:"健康"},{k:"finance",l:"资产"},{k:"relation",l:"关系"},{k:"growth",l:"成长"}];
+  const labels=dims.map(d=>d.l);
+  const values=dims.map(d=>radar[d.k]||1);
+
+  const W=720;
+  // 估算高度
+  const insightsLines=Math.max(1,(saved.insights||"").split("\n").length);
+  const actionsLines=Math.max(1,(saved.actions||"").split("\n").length);
+  const textLines=Math.max(1,Math.ceil((saved.text||"").length/26));
+  let H=200+260+Math.ceil(insightsLines/15)*180+Math.ceil(actionsLines/15)*150+Math.ceil(textLines/12)*180+60;
+  H=Math.max(900,H);
+
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#F0E0D0"/>
+        <stop offset="100%" stop-color="#E8C8A8"/>
+      </linearGradient>
+      <linearGradient id="header" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#1F1B17"/>
+        <stop offset="100%" stop-color="#3A2E22"/>
+      </linearGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="url(#bg)"/>
+    <!-- 顶部标题条 -->
+    <rect x="40" y="30" width="${W-80}" height="80" rx="14" fill="url(#header)"/>
+    <text x="60" y="65" fill="#C8A780" font-size="14" font-weight="700" letter-spacing="2">LIFE WORKBENCH · 人生工作台</text>
+    <text x="60" y="95" fill="#FFFFFF" font-size="22" font-weight="700">${scope==="week"?"周复盘":scope==="month"?"月度复盘":scope==="quarter"?"季度复盘":"年度复盘"} · ${key}</text>
+    <text x="${W-60}" y="95" fill="rgba(255,255,255,0.6)" font-size="13" text-anchor="end">${rg.start} ~ ${rg.end}</text>
+  `;
+
+  // === 数据汇总区 ===
+  let y=140;
+  svg+=`<text x="40" y="${y}" fill="#1F1B17" font-size="14" font-weight="700" letter-spacing="1">📊 数据汇总</text>`;
+  y+=24;
+  const statRows=[
+    ["打卡天数",gen.checkinDays+" / "+7+" 天"],
+    ["声乐练习",gen.vocalMinutes+" 分钟"],
+    ["英语单词",gen.englishWords+" 个"],
+    ["阅读时长",gen.englishRead+" 分钟"],
+    ["听力时长",gen.englishListen+" 分钟"],
+    ["收入","¥"+gen.inSum],["支出","¥"+gen.outSum],["结余","¥"+(gen.inSum-gen.outSum)],
+    ["任务完成",gen.tasksDone+" / "+gen.tasksTotal],
+    ["联系互动",gen.contactsCount+" 位"]
+  ];
+  statRows.forEach((row,i)=>{
+    const x=40+(i%2)*320;
+    const yy=y+Math.floor(i/2)*28;
+    svg+=`<rect x="${x}" y="${yy-16}" width="300" height="24" rx="6" fill="rgba(255,255,255,0.5)"/>`;
+    svg+=`<text x="${x+12}" y="${yy}" fill="#1F1B17" font-size="13">${row[0]}</text>`;
+    svg+=`<text x="${x+288}" y="${yy}" fill="#1F1B17" font-size="13" font-weight="700" text-anchor="end">${row[1]}</text>`;
+  });
+  y+=Math.ceil(statRows.length/2)*28+20;
+
+  // === 雷达图（左）+ 文字块（右） ===
+  svg+=`<text x="40" y="${y}" fill="#1F1B17" font-size="14" font-weight="700" letter-spacing="1">🎯 五维雷达</text>`;
+  y+=20;
+
+  // 雷达 SVG 内嵌（在 40, y 到 300, y+240）
+  const radarSvg=buildRadarSvgPure(labels,values,260,240);
+  // 提取内容并定位
+  const radarContent=radarSvg.replace(/<svg[^>]*>/,"").replace(/<\/svg>/,"");
+  svg+=`<g transform="translate(40,${y})">${radarContent}</g>`;
+
+  // 右侧文字块
+  let tx=320,ty=y+10;
+  const writeBlock=(title,content,linesPerChunk)=>{
+    svg+=`<text x="${tx}" y="${ty}" fill="#1F1B17" font-size="13" font-weight="700" letter-spacing="1">${title}</text>`;
+    ty+=22;
+    const lines=(content||"(空)").split("\n");
+    lines.forEach(ln=>{
+      // 自动换行：每26字一行
+      const max=26;
+      for(let i=0;i<ln.length||i===0;i+=max){
+        svg+=`<text x="${tx}" y="${ty}" fill="#3A332D" font-size="12">${escapeXml(ln.slice(i,i+max))}</text>`;
+        ty+=18;
+        if(ty>H-100)return;
+      }
+    });
+    ty+=8;
+  };
+  writeBlock("💡 三个洞察",saved.insights||"");
+  writeBlock("🎯 下阶段三件事",saved.actions||"");
+  writeBlock("📝 自由复盘",saved.text||"");
+
+  y=Math.max(y+260,ty+20);
+
+  // 关键词
+  if(gen.keywords&&gen.keywords.length){
+    svg+=`<text x="40" y="${y}" fill="#1F1B17" font-size="13" font-weight="700">🔑 关键词：</text>`;
+    let kx=110;
+    gen.keywords.slice(0,8).forEach(k=>{
+      const w=k.length*14+16;
+      svg+=`<rect x="${kx-4}" y="${y-14}" width="${w}" height="22" rx="11" fill="rgba(200,167,128,0.4)"/>`;
+      svg+=`<text x="${kx+4}" y="${y+2}" fill="#1F1B17" font-size="11">${escapeXml(k)}</text>`;
+      kx+=w+8;
+    });
+    y+=30;
+  }
+
+  // 底部水印
+  svg+=`<text x="${W/2}" y="${H-20}" fill="rgba(31,27,23,0.4)" font-size="11" text-anchor="middle">🐶 鹿7铭 · 人生工作台 · ${fmtDate(new Date())}</text>`;
+  svg+=`</svg>`;
+
+  // 转 PNG 下载
+  const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=()=>{
+    const canvas=document.createElement("canvas");
+    canvas.width=W*2;canvas.height=H*2;
+    const ctx=canvas.getContext("2d");
+    ctx.scale(2,2);
+    ctx.drawImage(img,0,0);
+    canvas.toBlob((b)=>{
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(b);
+      a.download=`周报_${key}.png`;
+      a.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);URL.revokeObjectURL(a.href);},1000);
+      toast("📷 周报已保存为图片");
+    },"image/png");
+  };
+  img.onerror=(e)=>{toast("导出失败，请重试");console.error(e);};
+  img.src=url;
+}
+function escapeXml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+/* 纯 SVG 雷达图（用于导出） */
+function buildRadarSvgPure(labels,values,w,h){
+  const cx=80,cy=80;
+  const r=Math.min(w,h)/2-20;
+  const n=labels.length;
+  const maxVal=5;
+  let polygons="",axes="",dots="";
+  for(let lv=1;lv<=maxVal;lv++){
+    const pts=[];
+    for(let i=0;i<n;i++){
+      const angle=(Math.PI*2/n)*i-Math.PI/2;
+      const lr=r*(lv/maxVal);
+      pts.push((cx+lr*Math.cos(angle)).toFixed(1)+","+(cy+lr*Math.sin(angle)).toFixed(1));
+    }
+    polygons+=`<polygon points="${pts.join(" ")}" fill="none" stroke="#C8A780" stroke-opacity="${0.2+lv*0.1}" stroke-width="1"/>`;
+  }
+  for(let i=0;i<n;i++){
+    const angle=(Math.PI*2/n)*i-Math.PI/2;
+    axes+=`<line x1="${cx}" y1="${cy}" x2="${(cx+r*Math.cos(angle)).toFixed(1)}" y2="${(cy+r*Math.sin(angle)).toFixed(1)}" stroke="#C8A780" stroke-opacity="0.4" stroke-width="1"/>`;
+    const lx=cx+(r+18)*Math.cos(angle);
+    const ly=cy+(r+18)*Math.sin(angle);
+    axes+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#3A332D" font-weight="600">${labels[i]}</text>`;
+  }
+  const dataPts=[];
+  for(let i=0;i<n;i++){
+    const angle=(Math.PI*2/n)*i-Math.PI/2;
+    const dr=r*((values[i]||0)/maxVal);
+    dataPts.push((cx+dr*Math.cos(angle)).toFixed(1)+","+(cy+dr*Math.sin(angle)).toFixed(1));
+  }
+  polygons+=`<polygon points="${dataPts.join(" ")}" fill="rgba(200,167,128,0.35)" stroke="#C8A780" stroke-width="2"/>`;
+  dataPts.forEach(p=>{
+    const[x,y]=p.split(",");
+    dots+=`<circle cx="${x}" cy="${y}" r="3" fill="#C8A780"/>`;
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${polygons}${axes}${dots}</svg>`;
 }
 
 /* 首页：本周坚持概览卡 */
@@ -3793,6 +3968,9 @@ function onClick(e){
     const i=document.getElementById("newTask");const v=(i&&i.value.trim())||"";if(!v)return;
     getDay(currentDate).tasks.push({text:v,done:false});
     save();render();return;
+  }
+  if(t.dataset.action==="export-review-image"){
+    exportReviewImage(t.dataset.key);return;
   }
   if(t.dataset.action==="add-contact"){
     const i=document.getElementById("newContact-"+t.dataset.cat);const v=(i&&i.value.trim())||"";if(!v)return;
