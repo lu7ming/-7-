@@ -3327,6 +3327,12 @@ function viewTrends(){
     <div class="section-eyebrow" style="margin-top:18px">⚖️ 体重曲线（近 30 天）</div>
     <div class="trend-chart">${weightChart}</div>
 
+    <div class="section-eyebrow" style="margin-top:18px">📚 全年学习强度热力图</div>
+    ${studyYearHeatmap()}
+
+    <div class="section-eyebrow" style="margin-top:18px">😊 30 天情绪曲线</div>
+    <div class="trend-chart">${moodLineChart()}</div>
+
     <div class="section-eyebrow" style="margin-top:18px">🔍 按日期回看</div>
     <div class="input-row">
       <input class="tl-input" type="date" id="trendLookDate" value="${currentDate}"/>
@@ -3350,6 +3356,153 @@ function weightSvg(pts){
     ${pts.map((p,i)=>`<circle cx="${xs[i]}" cy="${h-pad-(p.weight-minW)*((h-2*pad)/(maxW-minW))}" r="3" fill="var(--ink)"/>`).join("")}
     <text x="${w-pad}" y="${pad+8}" text-anchor="end" fill="var(--muted)" font-size="10">${last.weight} kg</text>
   </svg>`;
+}
+
+/* ---- 全年学习强度热力图（类似 GitHub 贡献图） ---- */
+function studyYearHeatmap(){
+  const now=new Date();
+  const y=now.getFullYear();
+  // 计算今年的每一天学习时长（声乐+英语+阅读+听力+冥想）
+  const days=[];
+  for(let m=0;m<12;m++){
+    const last=new Date(y,m+1,0).getDate();
+    for(let d=1;d<=last;d++){
+      const ds=fmtDate(new Date(y,m,d));
+      const e=state.entries[ds];
+      let mins=0;
+      if(e&&e.study){
+        mins+=(e.study.vocal&&+e.study.vocal.vocal_time||0);
+        mins+=(e.study.piano&&e.study.piano.piano_song?30:0); // 钢琴按文本记录算30分钟
+        if(e.study.english){
+          mins+=(+e.study.english.en_read||0);
+          mins+=(+e.study.english.en_listen||0);
+        }
+        if(e.study.reading)mins+=(+e.study.reading.minutes||0);
+      }
+      if(e&&e.health&&e.health.meditation){
+        mins+=e.health.meditation.reduce((s,m)=>s+(m.duration||0)/60,0);
+      }
+      // 加上番茄钟分钟数
+      if(e&&e.focusSessions){
+        mins+=e.focusSessions.reduce((s,fs)=>s+(fs.duration||0)/60,0);
+      }
+      days.push({date:ds,mins:Math.round(mins)});
+    }
+  }
+  const maxMins=Math.max(...days.map(d=>d.mins),1);
+  // 按周分列（GitHub 风格：列=周，行=周日历上的星期几）
+  // 这里用按月分组，每月一行，每行最多 31 天
+  const monthNames=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  // 颜色等级：0=无，1=少(<30min), 2=中(30-60), 3=多(60-120), 4=很多(>120)
+  const getColor=(mins)=>{
+    if(mins===0)return "var(--card-soft)";
+    if(mins<30)return "#E8DCC8";
+    if(mins<60)return "#C8B080";
+    if(mins<120)return "var(--warm)";
+    return "#1F1B17";
+  };
+  // 计算每月格子数组（31列）
+  let html=`<div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)">`;
+  for(let m=0;m<12;m++){
+    const last=new Date(y,m+1,0).getDate();
+    html+=`<div style="display:flex;align-items:center;gap:6px">
+      <div style="width:24px;flex-shrink:0">${monthNames[m]}</div>
+      <div style="display:flex;gap:2px;flex:1;overflow-x:auto">`;
+    for(let d=1;d<=31;d++){
+      if(d>last){
+        html+=`<div style="width:14px;height:14px"></div>`;
+      }else{
+        const ds=fmtDate(new Date(y,m,d));
+        const mins=days.find(x=>x.date===ds).mins;
+        html+=`<div title="${ds}: ${mins} 分钟" style="width:14px;height:14px;border-radius:2px;background:${getColor(mins)}"></div>`;
+      }
+    }
+    html+=`</div></div>`;
+  }
+  // 图例
+  html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:var(--muted)">
+    <span>少</span>
+    <div style="width:14px;height:14px;border-radius:2px;background:var(--card-soft)"></div>
+    <div style="width:14px;height:14px;border-radius:2px;background:#E8DCC8"></div>
+    <div style="width:14px;height:14px;border-radius:2px;background:#C8B080"></div>
+    <div style="width:14px;height:14px;border-radius:2px;background:var(--warm)"></div>
+    <div style="width:14px;height:14px;border-radius:2px;background:#1F1B17"></div>
+    <span>多</span>
+    <span style="margin-left:auto">本年累计：${Math.round(days.reduce((s,d)=>s+d.mins,0))} 分钟</span>
+  </div>`;
+  html+=`</div>`;
+  return html;
+}
+
+/* ---- 30 天情绪曲线 ---- */
+function moodLineChart(){
+  const now=new Date();
+  const data=[];
+  const moodVal={
+    "😊":5,"😄":5,"😁":5,"😃":5,"😀":5,
+    "🙂":4,"😌":4,
+    "😐":3,"😑":3,
+    "🤔":3,
+    "😟":2,"😔":2,"😞":2,"😣":2,"😤":2,
+    "😢":1,"😭":1,
+    "😡":1,"😠":1
+  };
+  for(let i=29;i>=0;i--){
+    const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
+    const rfs=state.reflections[ds]||[];
+    let avg=null;
+    if(rfs.length){
+      const vals=rfs.map(r=>moodVal[r.mood]||3).filter(v=>v);
+      if(vals.length)avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    }
+    data.push({label:ds.slice(5),value:avg===null?0:Math.round(avg*10)/10,date:ds});
+  }
+  const max=5;
+  const w=720,h=200;
+  const padL=30,padR=10,padT=10,padB=24;
+  const iw=w-padL-padR,ih=h-padT-padB;
+  // 背景：横线分隔（1-5 刻度）
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px">
+    <line x1="${padL}" y1="${padT}" x2="${w-padR}" y2="${padT}" stroke="var(--line)"/>
+    <line x1="${padL}" y1="${padT+ih*0.25}" x2="${w-padR}" y2="${padT+ih*0.25}" stroke="var(--line)"/>
+    <line x1="${padL}" y1="${padT+ih*0.5}" x2="${w-padR}" y2="${padT+ih*0.5}" stroke="var(--line)"/>
+    <line x1="${padL}" y1="${padT+ih*0.75}" x2="${w-padR}" y2="${padT+ih*0.75}" stroke="var(--line)"/>
+    <line x1="${padL}" y1="${h-padB}" x2="${w-padR}" y2="${h-padB}" stroke="var(--line)"/>
+    <text x="${padL-4}" y="${padT+4}" text-anchor="end" font-size="9" fill="var(--muted)">5</text>
+    <text x="${padL-4}" y="${padT+ih*0.5+3}" text-anchor="end" font-size="9" fill="var(--muted)">3</text>
+    <text x="${padL-4}" y="${h-padB+2}" text-anchor="end" font-size="9" fill="var(--muted)">0</text>
+  `;
+  // 折线（跳过0值）
+  const step=data.length>1?iw/(data.length-1):0;
+  let path="",dots="";
+  data.forEach((d,i)=>{
+    const x=padL+i*step;
+    if(d.value>0){
+      const y=padT+ih-(d.value/max)*ih;
+      if(path)path+="L";else path="M";
+      path+=x.toFixed(1)+" "+y.toFixed(1);
+      dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="var(--warm)"/>`;
+    }
+  });
+  if(path){
+    svg+=`<path d="${path}" fill="none" stroke="var(--warm)" stroke-width="2" stroke-linejoin="round"/>`;
+    svg+=dots;
+  }
+  // 底部日期标签（每5天一个）
+  data.forEach((d,i)=>{
+    if(i%5===0||i===data.length-1){
+      const x=padL+i*step;
+      svg+=`<text x="${x.toFixed(1)}" y="${h-6}" font-size="9" text-anchor="middle" fill="var(--muted)">${d.label}</text>`;
+    }
+  });
+  svg+=`</svg>`;
+  const avg=data.filter(d=>d.value>0);
+  const avgVal=avg.length?(avg.reduce((s,d)=>s+d.value,0)/avg.length).toFixed(1):"--";
+  const recordDays=avg.length;
+  return svg+`<div style="margin-top:6px;font-size:11px;color:var(--muted);display:flex;gap:14px">
+    <span>📊 30 天平均情绪：${avgVal}/5</span>
+    <span>📝 有记录：${recordDays}/30 天</span>
+  </div>`;
 }
 
 /* ---- 底部快捷工具（仍是同页面，按钮触发小卡） ---- */
