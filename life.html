@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" style="background:#E8C8A8;">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -7,13 +7,40 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="人生工作台" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#1F1B17" />
+<meta name="theme-color" content="#E8C8A8" id="meta-theme-color" />
 <meta name="description" content="鹿7铭 · 人生工作台 — 学习、健康、资产、关系、课程、项目、思考、复盘一站式记录" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+<script>
+/* 防刷新白边：在 CSS 加载前提前设置主题色 */
+try{
+  var s=JSON.parse(localStorage.getItem("life_settings_v1")||"{}");
+  var theme=s.theme||"light";
+  var pal=s.palette||"default";
+  var dark=theme==="dark";
+  var bgMap={
+    "default":dark?"#1A1825":"#E8C8A8",
+    "forest":dark?"#0F1810":"#B8D9A8",
+    "ocean":dark?"#0F1E30":"#A8C8E8",
+    "sunset":dark?"#1A0E08":"#E8B898",
+    "lavender":dark?"#0E0A18":"#C8B0E0"
+  };
+  var bg=bgMap[pal]||(dark?"#1A1825":"#E8C8A8");
+  document.documentElement.style.background=bg;
+  document.documentElement.setAttribute("data-theme",theme);
+  if(pal!=="default")document.documentElement.setAttribute("data-palette",pal);
+  var m=document.getElementById("meta-theme-color");
+  if(m)m.setAttribute("content",bg);
+}catch(e){}
+</script>
 <title>鹿7铭 · 人生工作台</title>
+<style>
+/* 防刷新白边：在 CSS 变量加载前就铺好背景 */
+html{background:#E8C8A8 no-repeat fixed;background-size:cover;}
+html[data-theme="dark"]{background:#1A1825 no-repeat fixed;background-size:cover;}
+</style>
 <style>
 /* ================== Theme variables ================== */
 :root{
@@ -157,10 +184,9 @@ body[data-theme="dark"][data-palette="lavender"]{
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;min-height:100vh;min-height:-webkit-fill-available;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
-html{background:var(--body-gradient);background-attachment:fixed;-webkit-background-attachment:fixed;}
-body{background:transparent;}
-.app,.sidebar,.main,.scroll{background:transparent;}
-.sidebar{background:var(--glass-bg-soft);}
+html{background:var(--body-gradient) no-repeat fixed;background-size:cover;}
+body{background:var(--body-gradient) no-repeat fixed;background-size:cover;}
+.app{background:var(--body-gradient) no-repeat fixed;background-size:cover;}
 button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
 
@@ -1963,8 +1989,28 @@ function renderTop(){
 }
 function applyTheme(){
   document.body.setAttribute("data-theme",settings.theme);
-  if(settings.palette&&settings.palette!=="default")document.body.setAttribute("data-palette",settings.palette);
-  else document.body.removeAttribute("data-palette");
+  document.documentElement.setAttribute("data-theme",settings.theme);
+  if(settings.palette&&settings.palette!=="default"){
+    document.body.setAttribute("data-palette",settings.palette);
+    document.documentElement.setAttribute("data-palette",settings.palette);
+  }else{
+    document.body.removeAttribute("data-palette");
+    document.documentElement.removeAttribute("data-palette");
+  }
+  // 同步底部背景色，防止刷新白边
+  var dark=settings.theme==="dark";
+  var pal=settings.palette||"default";
+  var bgMap={
+    "default":dark?"#1A1825":"#E8C8A8",
+    "forest":dark?"#0F1810":"#B8D9A8",
+    "ocean":dark?"#0F1E30":"#A8C8E8",
+    "sunset":dark?"#1A0E08":"#E8B898",
+    "lavender":dark?"#0E0A18":"#C8B0E0"
+  };
+  var bg=bgMap[pal]||(dark?"#1A1825":"#E8C8A8");
+  document.documentElement.style.background=bg;
+  var m=document.getElementById("meta-theme-color");
+  if(m)m.setAttribute("content",bg);
 }
 function toggleTheme(){settings.theme=settings.theme==="dark"?"light":"dark";applyTheme();saveSettings();renderTop();}
 
