@@ -851,6 +851,20 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .alarm-repeat{font-size:11px;color:var(--muted);}
 .alarm-toggle{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--card-soft);color:var(--muted);}
 .alarm-toggle.on{background:var(--good);color:#fff;}
+.word-item{display:flex;align-items:center;gap:8px;padding:8px 10px;}
+.word-main{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.word-text{font-size:15px;}
+.word-meaning{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.word-cat{font-size:11px;color:var(--warm);padding:2px 6px;background:var(--card-soft);border-radius:4px;white-space:nowrap;}
+.word-state{font-size:12px;padding:4px 8px;border-radius:6px;cursor:pointer;background:var(--card-soft);white-space:nowrap;}
+.word-state.familiar{color:var(--warm);}
+.word-state.mastered{color:var(--good);}
+.quiz-card{padding:14px;background:var(--card-soft);border-radius:12px;margin-bottom:8px;cursor:pointer;text-align:center;transition:all 0.2s;}
+.quiz-card:hover{transform:scale(1.02);}
+.quiz-front b{font-size:18px;}
+.quiz-back{font-size:15px;color:var(--warm);font-weight:600;}
+
+/* ---- 通用 chip ---- */
 
 /* ---- Habit week card (首页) ---- */
 .habit-week-card{padding:16px 18px;}
@@ -2082,6 +2096,7 @@ const NAV_ITEMS=[
  {id:"board",l:"看板",ico:"📈"},
  {id:"tree",l:"生命树",ico:"🌳"},
  {id:"sound",l:"声音",ico:"🎵"},
+ {id:"library",l:"储备库",ico:"📦"},
  {id:"trends",l:"趋势",ico:"📊"}
 ];
 function renderTop(){
@@ -4045,6 +4060,190 @@ function viewSound(){
 }
 let soundTab="noise";
 
+/* ============== 综合储备库 ============== */
+let libraryTab="words";
+let wordDB=null;
+let wordCache=[]; // 内存缓存
+
+async function ensureWordStore(){
+  // 复用已有的 idbDB 连接，如果版本不够则升级
+  return new Promise((resolve)=>{
+    if(wordDB&&wordDB.objectStoreNames.contains("words")){resolve(wordDB);return;}
+    try{
+      const dbName="life_workbench";
+      const version=idbDB?idbDB.version+1:2;
+      // 如果 idbDB 已存在但没 words store，需要升级版本号
+      if(idbDB){
+        if(idbDB.objectStoreNames.contains("words")){wordDB=idbDB;resolve(wordDB);return;}
+        // 关闭旧连接，用新版本打开
+        idbDB.close();
+      }
+      const req=indexedDB.open(dbName,version);
+      req.onupgradeneeded=(e)=>{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains("kv"))db.createObjectStore("kv");
+        if(!db.objectStoreNames.contains("words")){
+          const store=db.createObjectStore("words",{keyPath:"id"});
+          store.createIndex("word","word",{unique:false});
+          store.createIndex("category","category",{unique:false});
+          store.createIndex("mastered","mastered",{unique:false});
+        }
+      };
+      req.onsuccess=(e)=>{
+        wordDB=e.target.result;
+        idbDB=wordDB; // 更新全局引用
+        resolve(wordDB);
+      };
+      req.onerror=()=>resolve(null);
+    }catch(e){resolve(null);}
+  });
+}
+
+async function loadWords(){
+  await ensureWordStore();
+  if(!wordDB)return [];
+  return new Promise((resolve)=>{
+    try{
+      const tx=wordDB.transaction("words","readonly");
+      const req=tx.objectStore("words").getAll();
+      req.onsuccess=()=>{wordCache=req.result||[];resolve(wordCache);};
+      req.onerror=()=>resolve([]);
+    }catch(e){resolve([]);}
+  });
+}
+
+async function saveWord(word){
+  await ensureWordStore();
+  if(!wordDB)return;
+  return new Promise((resolve)=>{
+    try{
+      const tx=wordDB.transaction("words","readwrite");
+      tx.objectStore("words").put(word);
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>resolve();
+    }catch(e){resolve();}
+  });
+}
+
+async function deleteWord(id){
+  await ensureWordStore();
+  if(!wordDB)return;
+  return new Promise((resolve)=>{
+    try{
+      const tx=wordDB.transaction("words","readwrite");
+      tx.objectStore("words").delete(id);
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>resolve();
+    }catch(e){resolve();}
+  });
+}
+
+async function bulkImportWords(words){
+  await ensureWordStore();
+  if(!wordDB)return 0;
+  return new Promise((resolve)=>{
+    let count=0;
+    try{
+      const tx=wordDB.transaction("words","readwrite");
+      words.forEach(w=>{tx.objectStore("words").put(w);count++;});
+      tx.oncomplete=()=>resolve(count);
+      tx.onerror=()=>resolve(0);
+    }catch(e){resolve(0);}
+  });
+}
+
+const WORD_CATEGORIES=["四六级","托福","雅思","GRE","专业","日常","其他"];
+
+function viewLibrary(){
+  const tab=libraryTab||"words";
+  const words=wordCache;
+  const wTotal=words.length;
+  const wMastered=words.filter(w=>w.mastered===2).length;
+  const wFamiliar=words.filter(w=>w.mastered===1).length;
+  const wRate=wTotal?Math.round(wMastered*100/wTotal):0;
+  // 分类统计
+  const catStats={};
+  words.forEach(w=>{catStats[w.category]=(catStats[w.category]||0)+1;});
+
+  // 单词列表
+  const wordList=words.length?words.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,200).map(w=>`
+    <div class="list-item word-item">
+      <div class="word-main">
+        <b class="word-text">${esc(w.word)}</b>
+        <span class="word-meaning">${esc(w.meaning)}</span>
+      </div>
+      <span class="word-cat">${esc(w.category)}</span>
+      <div class="word-state ${w.mastered===2?"mastered":w.mastered===1?"familiar":""}" data-word-cycle="${w.id}">
+        ${w.mastered===2?"✅ 已掌握":w.mastered===1?"🔸 熟悉":"🔹 未掌握"}
+      </div>
+      <button class="check-del" data-word-del="${w.id}">✕</button>
+    </div>`).join(""):`<div class="empty">还没有单词，添加第一个吧</div>`;
+
+  // 笔记汇总
+  const notes=state.notes||[];
+  const quotes=state.quotes||[];
+  const refls=[];
+  Object.keys(state.reflections||{}).forEach(d=>{(state.reflections[d]||[]).forEach(r=>{if(r.mood==="✨")refls.push({...r,date:d});});});
+
+  const noteList=notes.slice(0,10).map(n=>`<div class="list-item" style="padding:6px 10px"><span class="note-badge">${(NOTE_TYPES.find(t=>t.k===n.type)||{ico:"📄"}).ico}</span> <b>${esc(n.title||"无标题")}</b> <span style="color:var(--muted);font-size:12px">${esc((n.content||"").slice(0,60))}</span></div>`).join("");
+  const quoteList=quotes.slice(0,10).map(q=>`<div class="list-item" style="padding:6px 10px"><span class="quote-badge q-${q.sourceType}">${q.sourceType}</span> <b>${esc(q.source||"")}</b> <span style="color:var(--muted);font-size:12px">${esc((q.excerpt||"").slice(0,50))}</span></div>`).join("");
+  const reflList=refls.slice(0,10).map(r=>`<div class="list-item" style="padding:6px 10px">✨ <span style="color:var(--muted);font-size:11px">${r.date}</span> ${esc((r.text||"").slice(0,80))}</div>`).join("");
+
+  return `<div class="card">
+    <div class="section-eyebrow">LIBRARY</div>
+    <div class="section-title">📦 储备库</div>
+    <p class="section-desc">单词本 · 音效收藏 · 综合资料汇总 · 单词存 IndexedDB，不限容量</p>
+    <div class="scope-tabs" style="margin-top:10px">
+      <button class="scope-tab ${tab==="words"?"active":""}" data-lib-tab="words">📖 单词本</button>
+      <button class="scope-tab ${tab==="resource"?"active":""}" data-lib-tab="resource">📚 资料汇总</button>
+    </div>
+
+    ${tab==="words"?`
+      <div style="display:flex;gap:10px;margin:12px 0;flex-wrap:wrap">
+        <div style="flex:1;min-width:70px;background:var(--card-soft);border-radius:10px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700">${wTotal}</div><div style="font-size:11px;color:var(--muted)">总数</div></div>
+        <div style="flex:1;min-width:70px;background:var(--card-soft);border-radius:10px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--good)">${wMastered}</div><div style="font-size:11px;color:var(--muted)">已掌握</div></div>
+        <div style="flex:1;min-width:70px;background:var(--card-soft);border-radius:10px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--warm)">${wFamiliar}</div><div style="font-size:11px;color:var(--muted)">熟悉</div></div>
+        <div style="flex:1;min-width:70px;background:var(--card-soft);border-radius:10px;padding:8px;text-align:center"><div style="font-size:20px;font-weight:700">${wRate}%</div><div style="font-size:11px;color:var(--muted)">掌握率</div></div>
+      </div>
+
+      ${wTotal?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${Object.keys(catStats).map(c=>`<span class="chip">${c}: ${catStats[c]}</span>`).join("")}</div>`:""}
+
+      <div class="input-row">
+        <input class="tl-input" id="wordInput" placeholder="单词" style="flex:1"/>
+        <input class="tl-input" id="meaningInput" placeholder="释义" style="flex:2"/>
+        <select class="tl-input" id="wordCat" style="width:100px">${WORD_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>
+        <button class="btn" data-action="add-word">添加</button>
+      </div>
+
+      <div class="input-row" style="margin-top:6px">
+        <input class="tl-input" id="wordSearch" placeholder="搜索单词或释义…" data-word-search/>
+        <button class="btn-ghost" data-action="word-quiz">🎲 随机抽查</button>
+      </div>
+
+      <div class="section-eyebrow" style="margin-top:10px">📋 单词列表（最近 ${Math.min(wTotal,200)} 条）</div>
+      <div class="list" style="margin-top:6px" id="wordListContainer">${wordList}</div>
+
+      <div class="section-eyebrow" style="margin-top:14px">📥 批量导入</div>
+      <textarea class="big-text" rows="4" id="wordBulkImport" placeholder="每行一个，格式：单词,释义&#10;如：&#10;serendipity,意外发现美好事物的能力&#10;ephemeral,短暂的" style="margin-top:6px"></textarea>
+      <div class="input-row" style="margin-top:6px">
+        <select class="tl-input" id="bulkCat" style="width:100px">${WORD_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join("")}</select>
+        <button class="btn" data-action="bulk-import">批量导入</button>
+      </div>
+    `:""}
+
+    ${tab==="resource"?`
+      <div class="section-eyebrow" style="margin-top:14px">📝 笔记汇总（${notes.length} 条）</div>
+      <div class="list" style="margin-top:6px">${noteList||`<div class="empty">暂无笔记</div>`}</div>
+
+      <div class="section-eyebrow" style="margin-top:14px">✒️ 摘抄汇总（${quotes.length} 条）</div>
+      <div class="list" style="margin-top:6px">${quoteList||`<div class="empty">暂无摘抄</div>`}</div>
+
+      <div class="section-eyebrow" style="margin-top:14px">✨ 思考精华（${refls.length} 条灵光）</div>
+      <div class="list" style="margin-top:6px">${reflList||`<div class="empty">暂无 ✨ 灵光记录</div>`}</div>
+    `:""}
+  </div>`;
+}
+
 /* ---- 趋势 / 数据回看 ---- */
 function viewTrends(){
   const now=new Date();
@@ -4810,6 +5009,7 @@ function render(){
    case"board":html=viewBoard();break;
    case"tree":html=viewTree();break;
    case"sound":html=viewSound();break;
+   case"library":html=viewLibrary();break;
    case"trends":html=viewTrends();break;
    default:html=viewHome();
   }
@@ -5198,6 +5398,57 @@ function onClick(e){
   if(t.dataset.presetDel!=null){
     state.soundPresets=state.soundPresets.filter(x=>x.id!==t.dataset.presetDel);save();render();return;
   }
+  /* ---- 储备库 ---- */
+  if(t.dataset.libTab!=null){
+    libraryTab=t.dataset.libTab;render();return;
+  }
+  if(t.dataset.action==="add-word"){
+    const w=document.getElementById("wordInput"),m=document.getElementById("meaningInput"),c=document.getElementById("wordCat");
+    if(!w.value.trim()){toast("请输入单词");return;}
+    const word={id:uid(),word:w.value.trim(),meaning:m.value.trim(),category:c.value,mastered:0,createdAt:Date.now()};
+    saveWord(word).then(()=>{wordCache.push(word);w.value="";m.value="";render();toast("单词已添加");});
+    return;
+  }
+  if(t.dataset.wordDel!=null){
+    deleteWord(t.dataset.wordDel).then(()=>{
+      wordCache=wordCache.filter(w=>w.id!==t.dataset.wordDel);
+      render();toast("已删除");
+    });
+    return;
+  }
+  if(t.dataset.wordCycle!=null){
+    const w=wordCache.find(x=>x.id===t.dataset.wordCycle);
+    if(w){w.mastered=((w.mastered||0)+1)%3;saveWord(w).then(()=>render());}
+    return;
+  }
+  if(t.dataset.action==="bulk-import"){
+    const ta=document.getElementById("wordBulkImport"),cat=document.getElementById("bulkCat");
+    const lines=ta.value.trim().split("\n").filter(l=>l.trim());
+    if(!lines.length){toast("请输入内容");return;}
+    const words=lines.map(l=>{const [w,m]=l.split(/[,，]/);return {id:uid(),word:(w||"").trim(),meaning:(m||"").trim(),category:cat.value,mastered:0,createdAt:Date.now()};}).filter(w=>w.word);
+    bulkImportWords(words).then(n=>{wordCache=[];loadWords().then(()=>{ta.value="";render();toast("导入 "+n+" 个单词");});});
+    return;
+  }
+  if(t.dataset.action==="word-quiz"){
+    const unmastered=wordCache.filter(w=>w.mastered!==2);
+    if(unmastered.length<3){toast("至少需要 3 个未掌握单词");return;}
+    const quiz=unmastered.sort(()=>Math.random()-0.5).slice(0,Math.min(10,unmastered.length));
+    const qHtml=quiz.map((w,i)=>`<div class="quiz-card" data-quiz-flip="${i}">
+      <div class="quiz-front"><b>${esc(w.word)}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">点击翻牌</div></div>
+      <div class="quiz-back" style="display:none">${esc(w.meaning)}</div>
+    </div>`).join("");
+    const overlay=document.createElement("div");
+    overlay.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+    overlay.innerHTML=`<div style="background:var(--card);border-radius:16px;padding:20px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>🎲 随机抽查（${quiz.length} 个）</b><button class="check-del" id="quizClose">✕</button></div>${qHtml}</div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#quizClose").onclick=()=>overlay.remove();
+    overlay.addEventListener("click",(e)=>{
+      const c=e.target.closest("[data-quiz-flip]");
+      if(c){const f=c.querySelector(".quiz-front"),b=c.querySelector(".quiz-back");const show=b.style.display!=="none";f.style.display=show?"":"none";b.style.display=show?"none":"";}
+      if(e.target===overlay)overlay.remove();
+    });
+    return;
+  }
   /* ---- 笔记 ---- */
   if(t.dataset.action==="add-note"){
     const ty=document.getElementById("nType"),ttl=document.getElementById("nTitle"),ct=document.getElementById("nContent"),tg=document.getElementById("nTags");
@@ -5320,6 +5571,16 @@ function onInput(e){
   const t=e.target;
   if(t.dataset.soundVol!=null){setVolume(+t.value);const s=t.parentElement.querySelector("span:last-child");if(s)s.textContent=Math.round(+t.value*100)+"%";return;}
   if(t.dataset.autoSound!=null){state.soundSettings[t.dataset.autoSound]=t.value;save();return;}
+  if(t.dataset.wordSearch!=null){
+    const q=t.value.trim().toLowerCase();
+    const container=document.getElementById("wordListContainer");
+    if(!container)return;
+    const filtered=q?wordCache.filter(w=>(w.word||"").toLowerCase().includes(q)||(w.meaning||"").toLowerCase().includes(q)):wordCache;
+    container.innerHTML=filtered.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,200).map(w=>
+      `<div class="list-item word-item"><div class="word-main"><b class="word-text">${esc(w.word)}</b><span class="word-meaning">${esc(w.meaning)}</span></div><span class="word-cat">${esc(w.category)}</span><div class="word-state ${w.mastered===2?"mastered":w.mastered===1?"familiar":""}" data-word-cycle="${w.id}">${w.mastered===2?"✅ 已掌握":w.mastered===1?"🔸 熟悉":"🔹 未掌握"}</div><button class="check-del" data-word-del="${w.id}">✕</button></div>`
+    ).join("")||`<div class="empty">未找到匹配</div>`;
+    return;
+  }
   if(t.dataset.taskText!=null){getDay(currentDate).tasks[+t.dataset.taskText].text=t.value;markSaved();return;}
   if(t.dataset.review!=null){getDay(currentDate).review.text=t.value;markSaved();return;}
   if(t.dataset.growth!=null){getDay(currentDate).growth.text=t.value;markSaved();return;}
@@ -6881,6 +7142,8 @@ async function init(){
   updateTreeData();
   // 初始化闹钟检查
   initAlarms();
+  // 异步加载单词本
+  loadWords();
   // 初始化推送提醒
   setTimeout(()=>{try{initNotifications();}catch(e){}},2000);
   // 异步获取天气（不阻塞渲染）
