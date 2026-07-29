@@ -1082,8 +1082,10 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
     <div class="main-top">
       <div class="top-search">
         <div id="topDate" style="font-weight:600;font-size:13px;color:var(--ink-2)">—</div>
+        <div id="saveIndicator" style="font-size:11px;color:var(--muted);opacity:0;transition:opacity 0.3s">已保存</div>
       </div>
       <div style="display:flex;gap:8px">
+        <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
@@ -1160,6 +1162,19 @@ const CATS=[
  {id:"C",n:"C 层 · 消耗型"},
  {id:"D",n:"D 层 · 深层情感"}
 ];
+
+/* 统一心情映射表 (emoji → {val:1-5, text:中文描述}) */
+const MOOD_MAP={
+ "😊":{val:5,text:"开心"},"😄":{val:5,text:"开心"},"😁":{val:5,text:"开心"},"😃":{val:5,text:"开心"},"😀":{val:5,text:"开心"},
+ "✨":{val:5,text:"灵光"},
+ "🙂":{val:4,text:"平静"},"😌":{val:4,text:"平静"},
+ "😐":{val:3,text:"一般"},"😑":{val:3,text:"一般"},"🤔":{val:3,text:"思考"},
+ "😟":{val:2,text:"低落"},"😔":{val:2,text:"低落"},"😞":{val:2,text:"低落"},"😣":{val:2,text:"低落"},"😤":{val:2,text:"烦躁"},
+ "😢":{val:1,text:"难过"},"😭":{val:1,text:"难过"},
+ "😡":{val:1,text:"愤怒"},"😠":{val:1,text:"愤怒"}
+};
+function moodVal(emoji){return (MOOD_MAP[emoji]||{val:3}).val;}
+function moodText(emoji){return (MOOD_MAP[emoji]||{text:emoji}).text;}
 
 const VOCAL_REC=[
  {k:"vocal_time",l:"练习时长",u:"分钟"},
@@ -2059,6 +2074,24 @@ function renderTop(){
   }
   document.getElementById("mobTitle").textContent=(NAV_ITEMS.find(x=>x.id===activeNav)||{}).l || "工作台";
 
+  // mini 计时器（番茄钟/冥想运行时显示在顶栏）
+  const mini=document.getElementById("miniTimer");
+  if(mini){
+    if(pomoRunning&&pomoRemain>0){
+      const m=Math.floor(pomoRemain/60),s=pomoRemain%60;
+      mini.innerHTML=`🍅 ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      mini.style.display="block";
+      mini.onclick=()=>{activeNav="learn";render();};
+    }else if(medRunning&&medRemain>0){
+      const m=Math.floor(medRemain/60),s=medRemain%60;
+      mini.innerHTML=`🧘 ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      mini.style.display="block";
+      mini.onclick=()=>{activeNav="health";render();};
+    }else{
+      mini.style.display="none";
+    }
+  }
+
   const nav=document.getElementById("sbNav");
   nav.innerHTML=NAV_ITEMS.map(n=>`<div class="nav-item ${n.id===activeNav?"active":""}" data-nav="${n.id}"><span class="ni">${n.ico}</span><span>${n.l}</span></div>`).join("");
 }
@@ -2120,6 +2153,46 @@ function checkAllHtml(){
     <div class="pc-h"><b>📊 今日完成度</b><span class="pc-n">${dn}/${total} · ${pct}%</span></div>
     <div class="pc-bar"><i style="width:${pct}%"></i></div>
   </div>${all}`;
+}
+
+/* ---- 局部更新：打卡进度 ---- */
+function updateCheckProgress(){
+  const r=getDay(currentDate);
+  const total=CHECK_TPL.reduce((a,c)=>a+c.items.length,0);
+  let dn=0;CHECK_TPL.forEach(c=>c.items.forEach(it=>{if(r.checks[c.cat+"-"+it])dn++;}));
+  const pct=total?Math.round(dn*100/total):0;
+  const pcN=document.querySelector(".progress-card .pc-n");
+  const pcBar=document.querySelector(".progress-card .pc-bar i");
+  if(pcN)pcN.textContent=`${dn}/${total} · ${pct}%`;
+  if(pcBar)pcBar.style.width=pct+"%";
+}
+
+/* ---- 局部更新：喝水进度 ---- */
+function updateWaterProgress(){
+  const r=getDay(currentDate);
+  const w=r.health.water;
+  const cups=Object.values(w).filter(v=>v===true).length;
+  const ml=cups*250;
+  const target=2000;
+  const pct=Math.min(100,Math.round(ml*100/target));
+  // SVG 圆环
+  const svg=document.querySelector(".card svg circle[stroke=\"var(--ink)\"]");
+  if(svg){const C=2*Math.PI*80;svg.setAttribute("stroke-dashoffset",C*(1-pct/100));}
+  // 数字
+  const texts=document.querySelectorAll(".card svg text");
+  if(texts.length>=3)texts[1].textContent=ml; // y=120 的数字
+  // 还需饮水
+  const needEl=document.querySelectorAll(".card div div");
+  needEl.forEach(el=>{
+    if(el.textContent.includes("还需饮水")&&el.nextElementSibling){
+      el.nextElementSibling.innerHTML=`${Math.max(0,target-ml)}<span style="font-size:11px;color:var(--muted)"> ml</span>`;
+    }
+  });
+}
+
+/* ---- 振动反馈 ---- */
+function haptic(pattern){
+  try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
 }
 
 /* ---- 倒计时 ---- */
@@ -2512,6 +2585,7 @@ function viewHealthModule(){
          <input class="tl-input" type="number" step="0.1" data-metric="bodyFat" value="${(state.metrics[currentDate]&&state.metrics[currentDate].bodyFat)||""}" placeholder="体脂率 (%)"/>
        </div></div>
      </div>
+     ${(()=>{const now=new Date();const pts=[];for(let i=13;i>=0;i--){const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));const m=state.metrics[ds];if(m&&m.weight)pts.push({label:ds.slice(5),weight:m.weight});}if(pts.length<2)return"";return `<div style="margin-top:10px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">📈 近 14 天体重趋势</div>${weightSvg(pts)}</div>`;})()}
    </div>
 
    <div class="card">
@@ -2695,12 +2769,54 @@ function viewFinance(){
        const hist=getMonthBalanceHistory(6);
        return hist.length?`<div class="chart-box">${svgLineChart(hist,400,160)}</div>`:`<div class="empty">暂无数据</div>`;
      })()}
+
+     <div class="section-eyebrow" style="margin-top:18px">📊 近 30 天收支趋势</div>
+     ${(()=>{
+       const now=new Date();const data=[];
+       for(let i=29;i>=0;i--){
+         const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
+         const en=state.entries[ds];
+         let inc=0,exp=0;
+         if(en&&en.finance){(en.finance.in||[]).forEach(x=>inc+=+x.amount||0);(en.finance.out||[]).forEach(x=>exp+=+x.amount||0);}
+         data.push({label:ds.slice(8),income:inc,expense:exp});
+       }
+       const maxVal=Math.max(...data.map(d=>Math.max(d.income,d.expense)),1);
+       const w=400,h=120,bw=w/data.length;
+       const bars=data.map((d,i)=>{
+         const ih=d.income/maxVal*(h-20),eh=d.expense/maxVal*(h-20);
+         return `<rect x="${i*bw+bw*0.15}" y="${h-ih-15}" width="${bw*0.3}" height="${ih}" fill="#7BA89C" rx="1"/>`+
+                `<rect x="${i*bw+bw*0.55}" y="${h-eh-15}" width="${bw*0.3}" height="${eh}" fill="#C88A7A" rx="1"/>`;
+       }).join("");
+       return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:400px;display:block;margin:0 auto">
+         <line x1="0" y1="${h-15}" x2="${w}" y2="${h-15}" stroke="var(--border)" stroke-width="1"/>
+         ${bars}
+         <text x="${w-60}" y="10" font-size="9" fill="#7BA89C">● 收入</text>
+         <text x="${w-20}" y="10" font-size="9" fill="#C88A7A">● 支出</text>
+       </svg>`;
+     })()}
    </div>
   `;
 }
 
 /* ---- 关系 ---- */
 function viewRelate(){
+  // ABCD 分布统计
+  const dist=CATS.map(cat=>{
+    const list=state.contacts.filter(x=>x.category===cat.id);
+    const avgHealth=list.length?Math.round(list.reduce((s,c)=>s+contactHealthScore(c),0)/list.length):0;
+    return {id:cat.id,n:cat.n,count:list.length,avgHealth};
+  });
+  const totalCount=dist.reduce((s,d)=>s+d.count,0);
+  const overallHealth=totalCount?Math.round(dist.reduce((s,d)=>s+d.avgHealth*d.count,0)/totalCount):0;
+  // 分布饼图
+  const pieColors={A:"#7BA89C",B:"#7E8FAF",C:"#B88A9A",D:"#C8A780"};
+  let pieArc="";
+  if(totalCount){
+    let acc=0;
+    dist.forEach(d=>{if(d.count){const pct=d.count/totalCount;const ang=pct*Math.PI*2;const x1=50+40*Math.cos(acc-Math.PI/2),y1=50+40*Math.sin(acc-Math.PI/2);acc+=ang;const x2=50+40*Math.cos(acc-Math.PI/2),y2=50+40*Math.sin(acc-Math.PI/2);const large=ang>Math.PI?1:0;pieArc+=`<path d="M50,50 L${x1.toFixed(1)},${y1.toFixed(1)} A40,40 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${pieColors[d.id]}" opacity="0.8"/>`;}});
+  }
+  const distPie=totalCount?`<svg viewBox="0 0 100 100" width="100" height="100">${pieArc}<circle cx="50" cy="50" r="22" fill="var(--card)"/><text x="50" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${totalCount}</text><text x="50" y="60" text-anchor="middle" font-size="7" fill="var(--muted)">人</text></svg>`:"";
+
   const sec=CATS.map(cat=>{
     const list=state.contacts.filter(x=>x.category===cat.id).map(ct=>{
       const interactions=ct.interactions||[];
@@ -2708,6 +2824,15 @@ function viewRelate(){
       const followDays=suggestedFollowUpDays(ct.category);
       const lastIx=interactions.length?interactions.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
       const healthColor=health>=60?"var(--good)":health>=30?"var(--warm)":"var(--warn)";
+      // mini 环形图
+      const C=2*Math.PI*12;
+      const ringSvg=`<svg width="32" height="32" viewBox="0 0 32 32" style="flex-shrink:0">
+        <circle cx="16" cy="16" r="12" stroke="var(--card-soft)" stroke-width="3" fill="none"/>
+        <circle cx="16" cy="16" r="12" stroke="${healthColor}" stroke-width="3" fill="none"
+          stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-health/100)}"
+          transform="rotate(-90 16 16)"/>
+        <text x="16" y="19" text-anchor="middle" font-size="9" font-weight="700" fill="${healthColor}">${health}</text>
+      </svg>`;
       const ixHtml=interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((ix,i)=>`
         <div class="list-item" style="background:var(--card);margin-bottom:4px;padding:8px 10px">
           <div class="li-row" style="align-items:center;flex-wrap:wrap;gap:6px">
@@ -2731,6 +2856,7 @@ function viewRelate(){
         <div class="li-row">
           <input class="tl-input" data-contact="${ct.id}" data-field="name" value="${esc(ct.name)}" placeholder="姓名"/>
           <input class="tl-input" type="date" data-contact="${ct.id}" data-field="time" value="${esc(ct.time||"")}"/>
+          ${ringSvg}
         </div>
         <div class="li-row">
           <input class="tl-input" data-contact="${ct.id}" data-field="note" value="${esc(ct.note||"")}" placeholder="备注"/>
@@ -2749,7 +2875,7 @@ function viewRelate(){
       </div>`;
     }).join("");
     return `<div class="cat-${cat.id}">
-      <div class="cat-h">${cat.n} <span class="pill">${cat.id}</span></div>
+      <div class="cat-h">${cat.n} <span class="pill">${cat.id}</span> <span style="font-size:12px;color:var(--muted)">${dist.find(d=>d.id===cat.id).count} 人 · 均健康度 ${dist.find(d=>d.id===cat.id).avgHealth}%</span></div>
       <div class="list">${list||`<div class="empty">暂无</div>`}</div>
       <div class="input-row"><input class="tl-input" id="newContact-${cat.id}" placeholder="姓名 / 备注…"/><button class="btn" data-action="add-contact" data-cat="${cat.id}">添加</button></div>
     </div>`;
@@ -2758,6 +2884,17 @@ function viewRelate(){
     <div class="section-eyebrow">RELATIONSHIP</div>
     <div class="section-title">🤝 联系人管理</div>
     <p class="section-desc">A 资源 · B 认知 · C 消耗 · D 深层情感 · 点击「互动记录」展开历史</p>
+    ${totalCount?`<div style="display:flex;gap:16px;align-items:center;margin:12px 0;padding:12px;background:var(--card-soft);border-radius:12px">
+      ${distPie}
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--muted)">总联系人数</div>
+        <div style="font-size:24px;font-weight:700">${totalCount} 人</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">整体健康度: <b style="color:${overallHealth>=60?'var(--good)':overallHealth>=30?'var(--warm)':'var(--warn)'}">${overallHealth}%</b></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${dist.map(d=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:10px;height:10px;border-radius:2px;background:${pieColors[d.id]}"></span>${d.id}: ${d.count}人</div>`).join("")}
+      </div>
+    </div>`:""}
     ${sec}
   </div>`;
 }
@@ -2796,6 +2933,14 @@ function viewBooks(){
     <div class="section-eyebrow">LIBRARY</div>
     <div class="section-title">📚 我的书架</div>
     <p class="section-desc">想读、在读、已读完，一目了然</p>
+    ${(()=>{const yr=new Date().getFullYear();const read=state.books.filter(b=>b.status==="read");const reading=state.books.filter(b=>b.status==="reading");const want=state.books.filter(b=>b.status==="want");const avgProgress=reading.length?Math.round(reading.reduce((s,b)=>s+(+b.progress||0),0)/reading.length):0;const readThisYear=read.filter(b=>b.end&&b.end.startsWith(yr)).length;const monthData=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);const m=d.getMonth()+1;const cnt=read.filter(b=>b.end&&b.end.startsWith(d.getFullYear()+"-"+String(m).padStart(2,"0"))).length;monthData.push({label:m+"月",value:cnt});}const maxM=Math.max(...monthData.map(d=>d.value),1);return `<div style="display:flex;gap:10px;margin:10px 0;flex-wrap:wrap">
+      <div style="flex:1;min-width:80px;background:var(--card-soft);border-radius:10px;padding:10px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--good)">${read.length}</div><div style="font-size:11px;color:var(--muted)">已读完</div></div>
+      <div style="flex:1;min-width:80px;background:var(--card-soft);border-radius:10px;padding:10px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--warm)">${reading.length}</div><div style="font-size:11px;color:var(--muted)">在读</div></div>
+      <div style="flex:1;min-width:80px;background:var(--card-soft);border-radius:10px;padding:10px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--ink-2)">${want.length}</div><div style="font-size:11px;color:var(--muted)">想读</div></div>
+      <div style="flex:1;min-width:80px;background:var(--card-soft);border-radius:10px;padding:10px;text-align:center"><div style="font-size:24px;font-weight:700">${readThisYear}</div><div style="font-size:11px;color:var(--muted)">今年读完</div></div>
+      <div style="flex:1;min-width:80px;background:var(--card-soft);border-radius:10px;padding:10px;text-align:center"><div style="font-size:24px;font-weight:700">${avgProgress}%</div><div style="font-size:11px;color:var(--muted)">在读均进度</div></div>
+    </div>
+    <div style="margin:8px 0"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">📖 近 6 个月读完数量</div><svg viewBox="0 0 180 50" width="100%" style="max-width:180px;display:block;margin:0 auto">${monthData.map((d,i)=>`<rect x="${i*30+5}" y="${50-d.value/maxM*35}" width="20" height="${d.value/maxM*35}" fill="var(--good)" rx="2" opacity="0.8"/><text x="${i*30+15}" y="48" text-anchor="middle" font-size="8" fill="var(--muted)">${d.label}</text>${d.value?`<text x="${i*30+15}" y="${45-d.value/maxM*35}" text-anchor="middle" font-size="8" fill="var(--ink)" font-weight="700">${d.value}</text>`:""}`).join("")}</svg></div>`;})()}
     <div class="input-row">
       <input class="tl-input" id="newBookTitle" placeholder="书名"/>
       <input class="tl-input" id="newBookAuthor" placeholder="作者"/>
@@ -2838,10 +2983,18 @@ function summarizeRange(start,end){
     if(en.finance){(en.finance.in||[]).forEach(x=>inSum+=+x.amount||0);(en.finance.out||[]).forEach(x=>outSum+=+x.amount||0);}
     if(en.tasks){tasksDone+=en.tasks.filter(t=>t.done).length;tasksTotal+=en.tasks.length;}
     if(en.review&&en.review.text)allReview.push({date:k,text:en.review.text});
+    // 八问数据纳入关键词提取
+    if(en.questions){Object.values(en.questions).forEach(q=>{if(q)allReview.push({date:k,text:q});});}
   });
   const keywords=extractKeywords(allReview.map(r=>r.text).join(" "));
   const contactsCount=state.contacts.filter(c=>c.time&&c.time>=start&&c.time<=end).length;
-  return {start,end,checkinDays,vocalMinutes:vocal,englishWords:english.words,englishRead:english.read,englishListen:english.listen,inSum,outSum,tasksDone,tasksTotal,reviews:allReview,keywords,contactsCount};
+  // 八问统计
+  let qCount=0;const qAnswers=[];
+  Object.keys(state.entries).filter(k=>{const d=parseDate(k);return d>=s&&d<=e;}).forEach(k=>{
+    const q=state.entries[k].questions||{};
+    Object.keys(q).forEach(i=>{if(q[i]){qCount++;qAnswers.push({date:k,idx:i,text:q[i]});}});
+  });
+  return {start,end,checkinDays,vocalMinutes:vocal,englishWords:english.words,englishRead:english.read,englishListen:english.listen,inSum,outSum,tasksDone,tasksTotal,reviews:allReview,keywords,contactsCount,questionCount:qCount,questionAnswers:qAnswers};
 }
 function viewReview(){
   const scope=reviewScope;
@@ -2876,6 +3029,7 @@ function viewReview(){
       <div class="rg-row"><span>结余</span><span class="v">¥ ${gen.inSum-gen.outSum}</span></div>
       <div class="rg-row"><span>任务完成</span><span class="v">${gen.tasksDone} / ${gen.tasksTotal}</span></div>
       <div class="rg-row"><span>联系互动</span><span class="v">${gen.contactsCount} 位</span></div>
+      <div class="rg-row"><span>八问记录</span><span class="v">${gen.questionCount} 条</span></div>
       ${scope==="week"?`<div class="heat-grid" style="margin-top:10px">${weekDaysHtml}</div>`:""}
       ${gen.keywords.length?`<div class="rg-kw" style="margin-top:10px"><span style="font-size:12px;color:var(--muted);align-self:center">关键词：</span>${gen.keywords.map(k=>`<span class="chip">${esc(k)}</span>`).join("")}</div>`:""}
     </div>
@@ -2885,6 +3039,11 @@ function viewReview(){
 
     <div class="section-eyebrow" style="margin-top:14px">🎯 下${scopeLabel}三件事</div>
     <textarea class="big-text" rows="3" data-review-period="${key}" data-field="actions" placeholder="1. …&#10;2. …&#10;3. …">${esc(saved.actions||"")}</textarea>
+
+    ${gen.questionAnswers.length?`<div class="section-eyebrow" style="margin-top:14px">❓ 八问回顾（${gen.questionAnswers.length} 条）</div>
+    <div class="rg-kw" style="margin-top:6px;max-height:200px;overflow-y:auto">
+      ${gen.questionAnswers.slice(-20).map(q=>`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:11px">${q.date}</span> ${esc(q.text.slice(0,100))}${q.text.length>100?"…":""}</div>`).join("")}
+    </div>`:""}
 
     <div class="section-eyebrow" style="margin-top:14px">📝 自由复盘</div>
     <textarea class="big-text" rows="5" data-review-period="${key}" data-field="text" placeholder="这段${scopeLabel}的整体感受、关键事件、情绪变化…">${esc(saved.text||"")}</textarea>
@@ -3147,7 +3306,7 @@ function habitHeatmapHtml(){
   }
   html+='</div><div class="hhm-cells">';
   days.forEach(d=>{
-    html+=`<div class="hhm-cell lvl-${d.level} ${d.isToday?'today':''}" title="${d.ds}"></div>`;
+    html+=`<div class="hhm-cell lvl-${d.level} ${d.isToday?'today':''}" title="${d.ds}" data-jump-date="${d.ds}" style="cursor:pointer"></div>`;
   });
   html+='</div></div>';
   // 统计
@@ -3296,6 +3455,14 @@ function viewNotes(){
        <div class="li-row" style="margin-top:6px">
          <input class="tl-input" id="nTags" placeholder="标签，用空格或逗号分隔（如：声乐 呼吸训练）"/>
        </div>
+       ${state.projects.length?`<div class="li-row" style="margin-top:6px;flex-wrap:wrap;gap:4px">
+         <span style="font-size:12px;color:var(--muted);min-width:60px">关联项目：</span>
+         ${state.projects.map(p=>`<label style="font-size:12px;display:flex;align-items:center;gap:2px;cursor:pointer"><input type="checkbox" class="nRelProj" value="${p.id}" style="width:auto">${esc(p.name)}</label>`).join("")}
+       </div>`:""}
+       ${state.goals.length?`<div class="li-row" style="margin-top:4px;flex-wrap:wrap;gap:4px">
+         <span style="font-size:12px;color:var(--muted);min-width:60px">关联目标：</span>
+         ${state.goals.map(g=>`<label style="font-size:12px;display:flex;align-items:center;gap:2px;cursor:pointer"><input type="checkbox" class="nRelGoal" value="${g.id}" style="width:auto">${esc(g.title)}</label>`).join("")}
+       </div>`:""}
        <div class="input-row" style="margin-top:8px"><button class="btn" data-action="add-note">保存笔记</button></div>
      </div>
 
@@ -3614,11 +3781,12 @@ function viewTrends(){
   </div>`;
 }
 function weightSvg(pts){
+  pts=pts.filter(p=>p&&p.weight!=null&&isFinite(p.weight));
+  if(pts.length<2)return "";
   const w=300,h=120,pad=20;
-  const xs=pts.map((p,i)=>pad+i*(w-2*pad)/(pts.length-1));
-  const ys=pts.map(p=>h-pad-(p.weight-minW)*((h-2*pad)/(maxW-minW)));
   const minW=Math.min(...pts.map(p=>p.weight))-1;
   const maxW=Math.max(...pts.map(p=>p.weight))+1;
+  const xs=pts.map((p,i)=>pad+i*(w-2*pad)/(pts.length-1));
   const path=pts.map((p,i)=>(i===0?"M":"L")+xs[i]+" "+(h-pad-(p.weight-minW)*((h-2*pad)/(maxW-minW)))).join(" ");
   const last=pts[pts.length-1];
   return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
@@ -3686,7 +3854,7 @@ function studyYearHeatmap(){
       }else{
         const ds=fmtDate(new Date(y,m,d));
         const mins=days.find(x=>x.date===ds).mins;
-        html+=`<div title="${ds}: ${mins} 分钟" style="width:14px;height:14px;border-radius:2px;background:${getColor(mins)}"></div>`;
+        html+=`<div title="${ds}: ${mins} 分钟" data-jump-date="${ds}" style="width:14px;height:14px;border-radius:2px;background:${getColor(mins)};cursor:pointer"></div>`;
       }
     }
     html+=`</div></div>`;
@@ -3710,21 +3878,12 @@ function studyYearHeatmap(){
 function moodLineChart(){
   const now=new Date();
   const data=[];
-  const moodVal={
-    "😊":5,"😄":5,"😁":5,"😃":5,"😀":5,
-    "🙂":4,"😌":4,
-    "😐":3,"😑":3,
-    "🤔":3,
-    "😟":2,"😔":2,"😞":2,"😣":2,"😤":2,
-    "😢":1,"😭":1,
-    "😡":1,"😠":1
-  };
   for(let i=29;i>=0;i--){
     const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
     const rfs=state.reflections[ds]||[];
     let avg=null;
     if(rfs.length){
-      const vals=rfs.map(r=>moodVal[r.mood]||3).filter(v=>v);
+      const vals=rfs.map(r=>moodVal(r.mood)).filter(v=>v);
       if(vals.length)avg=vals.reduce((a,b)=>a+b,0)/vals.length;
     }
     data.push({label:ds.slice(5),value:avg===null?0:Math.round(avg*10)/10,date:ds});
@@ -3987,8 +4146,12 @@ function viewQuotes(){
      <div class="section-title">✒️ 摘抄 · 观后感</div>
      <p class="section-desc">看完一部电影、一本书或一段话，记下原文摘抄与你的感悟。务必标注来源名称。</p>
      <div class="input-row">
-       <select class="tl-input" id="qType" style="width:110px">${types.map(t=>`<option value="${t.k}">${t.l}</option>`).join("")}</select>
+       <select class="tl-input" id="qType" style="width:110px" data-quote-type>${types.map(t=>`<option value="${t.k}">${t.l}</option>`).join("")}</select>
        <input class="tl-input" id="qSource" placeholder="片名 / 书名 / 出处"/>
+       ${state.books.length?`<select class="tl-input" id="qBookSelect" style="display:none;width:100%">
+         <option value="">— 选择书架中的书 —</option>
+         ${state.books.map(b=>`<option value="${b.id}">${esc(b.title)}${b.author?" - "+esc(b.author):""}</option>`).join("")}
+       </select>`:""}
      </div>
      <div class="section-eyebrow" style="margin-top:12px">📋 原文摘抄</div>
      <textarea id="qExcerpt" class="big-text" rows="3" placeholder="打动你的原句、台词、段落…"></textarea>
@@ -3998,13 +4161,17 @@ function viewQuotes(){
    </div>
    <div class="card">
      <div class="section-title" style="font-size:18px">📚 我的摘抄（${list.length}）</div>
-     ${list.length?list.map(q=>`
+     ${list.length?list.map(q=>{
+       const book=q.bookId?state.books.find(b=>b.id===q.bookId):null;
+       const srcDisplay=book?`📖 <span data-jump="book" style="cursor:pointer;text-decoration:underline">${esc(book.title)}</span>`:esc(q.source||"未命名");
+       return `
        <div class="quote-card">
-         <div class="quote-head"><span class="quote-badge q-${q.sourceType}">${q.sourceType}</span><b class="quote-src">${esc(q.source||"未命名")}</b><button class="refl-del" data-quote-del="${q.id}">✕</button></div>
+         <div class="quote-head"><span class="quote-badge q-${q.sourceType}">${q.sourceType}</span><b class="quote-src">${srcDisplay}</b><button class="refl-del" data-quote-del="${q.id}">✕</button></div>
          ${q.excerpt?`<div class="quote-excerpt">“${esc(q.excerpt)}”</div>`:""}
          ${q.reflection?`<div class="quote-reflection">${esc(q.reflection)}</div>`:""}
          <div class="quote-date">${q.date}</div>
-       </div>`).join(""):`<div class="empty">还没有摘抄，看完东西来记一笔吧</div>`}
+       </div>`;
+     }).join(""):`<div class="empty">还没有摘抄，看完东西来记一笔吧</div>`}
    </div>`;
 }
 
@@ -4370,7 +4537,15 @@ function onClick(e){
     const k=t.dataset.check;
     const r=getDay(currentDate);
     r.checks[k]=!r.checks[k];
-    save();render();
+    const on=!!r.checks[k];
+    // 局部更新：翻转 checkbox + 文本样式
+    t.classList.toggle("on",on);
+    const txtEl=t.parentElement.querySelector(".check-text");
+    if(txtEl)txtEl.classList.toggle("done",on);
+    // 局部更新进度卡
+    updateCheckProgress();
+    haptic(10);
+    save();
     return;
   }
   if(t.dataset.checkDel!=null){
@@ -4380,11 +4555,25 @@ function onClick(e){
   if(t.dataset.water!=null){
     const r=getDay(currentDate);
     r.health.water[t.dataset.water]=!r.health.water[t.dataset.water];
-    save();render();return;
+    const on=!!r.health.water[t.dataset.water];
+    t.classList.toggle("on",on);
+    // 局部更新喝水进度
+    updateWaterProgress();
+    haptic(10);
+    save();
+    return;
   }
   if(t.dataset.task!=null){
-    getDay(currentDate).tasks[+t.dataset.task].done=!getDay(currentDate).tasks[+t.dataset.task].done;
-    save();render();return;
+    const idx=+t.dataset.task;
+    const r=getDay(currentDate);
+    r.tasks[idx].done=!r.tasks[idx].done;
+    const on=r.tasks[idx].done;
+    t.classList.toggle("on",on);
+    const txtEl=t.parentElement.querySelector(".task-text");
+    if(txtEl)txtEl.classList.toggle("done",on);
+    haptic(10);
+    save();
+    return;
   }
   if(t.dataset.taskDel!=null){
     getDay(currentDate).tasks.splice(+t.dataset.taskDel,1);
@@ -4554,8 +4743,16 @@ function onClick(e){
   }
   if(t.dataset.action==="add-quote"){
     const ty=document.getElementById("qType"),src=document.getElementById("qSource"),ex=document.getElementById("qExcerpt"),rf=document.getElementById("qReflection");
-    if(!src.value.trim()&&!ex.value.trim()&&!rf.value.trim()){toast("至少写点什么吧");return;}
-    state.quotes.push({id:uid(),sourceType:ty.value,source:src.value.trim(),excerpt:ex.value.trim(),reflection:rf.value.trim(),date:currentDate,createdAt:Date.now()});
+    const bookSel=document.getElementById("qBookSelect");
+    // 如果选了书类型且有书籍选择器，使用 bookId
+    let bookId=null,sourceText=src.value.trim();
+    if(ty.value==="书"&&bookSel&&bookSel.value){
+      bookId=bookSel.value;
+      const book=state.books.find(b=>b.id===bookId);
+      if(book&&!sourceText)sourceText=book.title;
+    }
+    if(!sourceText&&!ex.value.trim()&&!rf.value.trim()){toast("至少写点什么吧");return;}
+    state.quotes.push({id:uid(),sourceType:ty.value,source:sourceText,excerpt:ex.value.trim(),reflection:rf.value.trim(),date:currentDate,createdAt:Date.now(),bookId});
     save();render();return;
   }
   if(t.dataset.capDel!=null){
@@ -4599,11 +4796,18 @@ function onClick(e){
   if(t.dataset.jumpDate!=null){
     currentDate=t.dataset.jumpDate;activeNav="home";render();return;
   }
+  // 摘抄中点击书名跳转书架
+  if(t.dataset.jump==="book"){
+    activeNav="book";render();return;
+  }
   /* ---- 笔记 ---- */
   if(t.dataset.action==="add-note"){
     const ty=document.getElementById("nType"),ttl=document.getElementById("nTitle"),ct=document.getElementById("nContent"),tg=document.getElementById("nTags");
     if(!ct.value.trim()){toast("内容不能为空");return;}
-    state.notes.push({id:uid(),type:ty.value,title:ttl.value.trim(),content:ct.value.trim(),tags:tg.value.trim().split(/[,，\s]+/).filter(Boolean),related:{projects:[],goals:[],contacts:[]},created_at:new Date().toISOString()});
+    // 收集关联选择
+    const relProj=(Array.from(document.querySelectorAll(".nRelProj:checked")||[])).map(c=>c.value);
+    const relGoal=(Array.from(document.querySelectorAll(".nRelGoal:checked")||[])).map(c=>c.value);
+    state.notes.push({id:uid(),type:ty.value,title:ttl.value.trim(),content:ct.value.trim(),tags:tg.value.trim().split(/[,，\s]+/).filter(Boolean),related:{projects:relProj,goals:relGoal,contacts:[]},created_at:new Date().toISOString()});
     save();render();toast("笔记已保存");return;
   }
   if(t.dataset.noteDel!=null){
@@ -4627,9 +4831,18 @@ function onClick(e){
     save();render();return;
   }
   if(t.dataset.courseDel!=null){
+    // 二次确认：首次点击提示，3秒内再点才删除
+    if(t.dataset.confirming!=="1"){
+      t.dataset.confirming="1";
+      t.style.opacity="0.6";
+      toast("再次点击确认删除此课程");
+      setTimeout(()=>{if(t.dataset.confirming==="1"){t.dataset.confirming="0";t.style.opacity="1";}},3000);
+      return;
+    }
     const [day,id]=t.dataset.courseDel.split(":");
     state.courses[day]=(state.courses[day]||[]).filter(c=>c.id!==id);
     if(!state.courses[day].length)delete state.courses[day];
+    haptic(30);
     save();render();return;
   }
   if(t.dataset.action==="add-override"){
@@ -4693,7 +4906,18 @@ function onClick(e){
     reviewScope=t.dataset.reviewScope;render();return;
   }
 }
-const markSaved=debounce(()=>save(),350);
+let _saveIndicatorT;
+const markSaved=debounce(()=>{
+  save();
+  // 显示"已保存"指示器
+  const ind=document.getElementById("saveIndicator");
+  if(ind){
+    ind.textContent="✓ 已保存";
+    ind.style.opacity="1";
+    clearTimeout(_saveIndicatorT);
+    _saveIndicatorT=setTimeout(()=>{ind.style.opacity="0";},2000);
+  }
+},350);
 function onInput(e){
   const t=e.target;
   if(t.dataset.taskText!=null){getDay(currentDate).tasks[+t.dataset.taskText].text=t.value;markSaved();return;}
@@ -4819,7 +5043,19 @@ function onInput(e){
     if(!state.reviews[wk])state.reviews[wk]={};
     if(!state.reviews[wk].radar)state.reviews[wk].radar={};
     state.reviews[wk].radar[dim]=+t.value||1;
-    save();render();return;
+    // 局部更新雷达图 SVG，不触发 render
+    const radarSvg=document.querySelector(".review-gen svg, .card svg.radar-chart");
+    if(radarSvg){
+      const dims=[{k:"study",l:"学习"},{k:"health",l:"健康"},{k:"finance",l:"资产"},{k:"relate",l:"关系"},{k:"growth",l:"成长"}];
+      const vals=dims.map(d=>state.reviews[wk].radar[d.k]||1);
+      const cx=100,cy=95,R=65;
+      const pts=vals.map((v,i)=>{const ang=-Math.PI/2+i*Math.PI*2/5;return [cx+Math.cos(ang)*R*v/5,cy+Math.sin(ang)*R*v/5];});
+      const poly=pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+      const polyEl=radarSvg.querySelector("polygon:last-of-type");
+      if(polyEl)polyEl.setAttribute("points",poly);
+    }
+    save();
+    return;
   }
   if(t.dataset.focusEdit!=null){
     const arr=getFocusThree();
@@ -4837,6 +5073,17 @@ function onChange(e){
     if(idx>=0&&r.tasks[idx]){pomoTaskRef={taskIndex:idx,taskText:r.tasks[idx].text};}
     else{pomoTaskRef=null;}
     updatePomoDisplay();
+    return;
+  }
+  // 摘抄类型切换：选"书"时显示书架选择器
+  if(t.dataset.quoteType!=null){
+    const bookSel=document.getElementById("qBookSelect");
+    const srcInput=document.getElementById("qSource");
+    if(bookSel){
+      const isBook=t.value==="书";
+      bookSel.style.display=isBook?"block":"none";
+      if(srcInput)srcInput.style.display=isBook?"none":"";
+    }
     return;
   }
 }
@@ -5089,13 +5336,13 @@ function aiDailySummary(){
   fs.forEach(s=>{studyMin+=Math.round((s.duration||0)/60);});
   // 情绪
   const refls=state.reflections[currentDate]||[];
-  let moodText="未记录情绪";
+  let moodLabel="未记录情绪";
   if(refls.length){
     const m=refls[0].mood;
-    if(m){const mv={"😊":"开心","🙂":"平静","😐":"一般","😟":"低落","😢":"难过"};moodText=mv[m]||m;}
+    if(m){moodLabel=moodText(m);}
   }
   // 拼接小结
-  let summary=`<p>📊 <b>今日数据</b>：打卡 ${dn}/${total}（${pct}%），任务 ${tasksDone}/${tasksTotal}，专注 ${pomoCount} 个番茄（${pomoMin} 分钟），情绪：${moodText}。</p>`;
+  let summary=`<p>📊 <b>今日数据</b>：打卡 ${dn}/${total}（${pct}%），任务 ${tasksDone}/${tasksTotal}，专注 ${pomoCount} 个番茄（${pomoMin} 分钟），情绪：${moodLabel}。</p>`;
   if(undone.length){
     summary+=`<p>📌 <b>未完成任务</b>：${undone.slice(0,3).map(t=>esc(t.text)).join("、")}${undone.length>3?"等":""}。</p>`;
   }else if(tasksTotal>0){
@@ -5146,8 +5393,7 @@ function smartSuggestions(){
     const d=addDays(today,-i);
     const refls=state.reflections[d]||[];
     if(refls.length&&refls[0].mood){
-      const mv={"😊":5,"🙂":4,"😐":3,"😟":2,"😢":1};
-      if((mv[refls[0].mood]||3)<=2)moodLow++;
+      if(moodVal(refls[0].mood)<=2)moodLow++;
     }
   }
   if(moodLow>=2)sugs.push({icon:"🌧️",text:"近 3 天情绪偏低，建议出门散步或做点喜欢的事"});
@@ -5252,8 +5498,7 @@ function yearReportCard(){
     const refls=state.reflections[d]||[];
     reflectionsCount+=refls.length;
     if(refls.length&&refls[0].mood){
-      const mv={"😊":5,"🙂":4,"😐":3,"😟":2,"😢":1};
-      moodSum+=mv[refls[0].mood]||3;
+      moodSum+=moodVal(refls[0].mood);
       moodDays++;
     }
   });
@@ -5326,7 +5571,7 @@ function exportYearReportImage(){
   Object.keys(state.reflections).forEach(d=>{
     const dt=parseDate(d);if(dt.getFullYear()!==year)return;
     const refls=state.reflections[d]||[];reflectionsCount+=refls.length;
-    if(refls.length&&refls[0].mood){const mv={"😊":5,"🙂":4,"😐":3,"😟":2,"😢":1};moodSum+=mv[refls[0].mood]||3;moodDays++;}
+    if(refls.length&&refls[0].mood){moodSum+=moodVal(refls[0].mood);moodDays++;}
   });
   const avgMood=moodDays?(moodSum/moodDays).toFixed(1):"—";
   const maxStudy=Math.max(...monthStudy,1);
@@ -5969,6 +6214,15 @@ function updatePomoDisplay(){
   }
   const taskLabel=document.getElementById("pomoTaskLabel");
   if(taskLabel)taskLabel.textContent=pomoTaskRef?"关联任务: "+pomoTaskRef.taskText:"未关联任务";
+  // 同步顶栏 mini 计时器
+  const mini=document.getElementById("miniTimer");
+  if(mini&&pomoRunning&&pomoRemain>0){
+    mini.innerHTML=`🍅 ${fmtPomoTime(pomoRemain)}`;
+    mini.style.display="block";
+    mini.onclick=()=>{activeNav="learn";render();};
+  }else if(mini&&!(medRunning&&medRemain>0)){
+    mini.style.display="none";
+  }
 }
 function startPomo(){
   if(pomoRunning)return;
@@ -6001,6 +6255,7 @@ function startPomo(){
       pomoStartTime=null;
       save();
       toast("🍅 番茄完成！休息一下吧");
+      haptic([100,50,100]);
       updatePomoDisplay();
       render();
       // 播放提示音（简单 beep）
@@ -6051,6 +6306,15 @@ function updateMeditateDisplay(){
   if(startBtn&&stopBtn){
     startBtn.style.display=medRunning?"none":"inline-block";
     stopBtn.style.display=medRunning?"inline-block":"none";
+  }
+  // 同步顶栏 mini 计时器
+  const mini=document.getElementById("miniTimer");
+  if(mini&&medRunning&&medRemain>0){
+    mini.innerHTML=`🧘 ${fmtMedTime(medRemain)}`;
+    mini.style.display="block";
+    mini.onclick=()=>{activeNav="health";render();};
+  }else if(mini&&!(pomoRunning&&pomoRemain>0)){
+    mini.style.display="none";
   }
 }
 function updateBreathPhase(){
@@ -6106,6 +6370,9 @@ function stopMeditate(completed){
     r.checks["健康-运动"]=true;
     save();
     toast("🧘 冥想完成 "+Math.round(medDuration/60)+" 分钟，身心放松");
+    haptic(200);
+    // 冥想完成提示音（柔和低频）
+    try{const ac=new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.frequency.value=440;o.connect(ac.destination);o.start();setTimeout(()=>{o.stop();ac.close();},500);}catch(e){}
   }
   medRemain=medDuration;
   medBreathPhase=0;
