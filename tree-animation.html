@@ -125,9 +125,10 @@ function lerpColor(c1,c2,t){
 
 // === 树 SVG 生成（支持浮点 level 平滑过渡）===
 function treeSVG(level, size, skyData){
-  const w = size || 400, h = size || 400;
+  // 使用更大尺寸，让画面填满 800x800
+  const w = size || 800, h = size || 800;
   const cx = w / 2;
-  const groundY = h - 45;
+  const groundY = h - 90;
   const sc = skyData;
   const isNight = sc.isNight;
 
@@ -243,39 +244,39 @@ function treeSVG(level, size, skyData){
   const growT = levelFrac; // 0→1 在当前等级内的成长进度
 
   if(levelInt === 1){
-    // 种子 → 嫩芽过渡
-    const sproutH = lerp(0, 40, growT);
+    // 种子 → 嫩芽过渡（放大到画面合适尺寸）
+    const sproutH = lerp(0, 80, growT);
     svg += `<g class="trunk" filter="url(#soft-shadow)">`;
-    // 种子
-    svg += `<ellipse cx="${cx}" cy="${groundY-3}" rx="${lerp(16,10,growT)}" ry="${lerp(11,7,growT)}" fill="url(#trunk-grad)" opacity="${1-growT*0.3}"/>`;
-    svg += `<ellipse cx="${cx-3}" cy="${groundY-6}" rx="${lerp(10,6,growT)}" ry="${lerp(6,4,growT)}" fill="rgba(255,255,255,0.1)"/>`;
+    // 种子（放大）
+    svg += `<ellipse cx="${cx}" cy="${groundY-15}" rx="${lerp(28,18,growT)}" ry="${lerp(20,12,growT)}" fill="url(#trunk-grad)" opacity="${1-growT*0.3}"/>`;
+    svg += `<ellipse cx="${cx-5}" cy="${groundY-20}" rx="${lerp(18,10,growT)}" ry="${lerp(11,7,growT)}" fill="rgba(255,255,255,0.18)"/>`;
     // 嫩芽逐渐长出
     if(growT > 0.2){
       const t2 = (growT - 0.2) / 0.8;
-      svg += `<path d="M${cx},${groundY-2} Q${cx-1},${groundY-sproutH*0.6} ${cx},${groundY-sproutH}" stroke="url(#trunk-grad)" stroke-width="${lerp(2,4,t2)}" fill="none" stroke-linecap="round" opacity="${t2}"/>`;
+      svg += `<path d="M${cx},${groundY-10} Q${cx-1},${groundY-sproutH*0.6} ${cx},${groundY-sproutH}" stroke="url(#trunk-grad)" stroke-width="${lerp(2,8,t2)}" fill="none" stroke-linecap="round" opacity="${t2}"/>`;
       if(growT > 0.5){
         const t3 = (growT - 0.5) / 0.5;
-        svg += `<ellipse cx="${cx-11*t3}" cy="${groundY-35*t3}" rx="${13*t3}" ry="${8*t3}" fill="url(#leaf-light)" transform="rotate(-35 ${cx-11*t3} ${groundY-35*t3})" opacity="${t3}"/>`;
-        svg += `<ellipse cx="${cx+11*t3}" cy="${groundY-35*t3}" rx="${13*t3}" ry="${8*t3}" fill="url(#leaf-light)" transform="rotate(35 ${cx+11*t3} ${groundY-35*t3})" opacity="${t3}"/>`;
+        svg += `<ellipse cx="${cx-22*t3}" cy="${groundY-70*t3}" rx="${26*t3}" ry="${16*t3}" fill="url(#leaf-light)" transform="rotate(-35 ${cx-22*t3} ${groundY-70*t3})" opacity="${t3}"/>`;
+        svg += `<ellipse cx="${cx+22*t3}" cy="${groundY-70*t3}" rx="${26*t3}" ry="${16*t3}" fill="url(#leaf-light)" transform="rotate(35 ${cx+22*t3} ${groundY-70*t3})" opacity="${t3}"/>`;
       }
     }
     svg += `</g>`;
   } else if(levelInt === 2 || (levelInt === 1 && growT > 0.8)){
-    // 嫩芽阶段
+    // 嫩芽阶段（放大版）
     const t = levelInt === 1 ? (growT - 0.8) / 0.2 : (levelInt === 2 ? 1 : 0);
     svg += `<g class="trunk" filter="url(#soft-shadow)">`;
-    svg += `<path d="M${cx},${groundY} Q${cx-1},${groundY-25} ${cx},${groundY-40}" stroke="url(#trunk-grad)" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-    svg += `<ellipse cx="${cx-11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(-35 ${cx-11} ${groundY-35})"/>`;
-    svg += `<ellipse cx="${cx+11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(35 ${cx+11} ${groundY-35})"/>`;
-    svg += `<ellipse cx="${cx-11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(-35 ${cx-11} ${groundY-36})"/>`;
-    svg += `<ellipse cx="${cx+11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(35 ${cx+11} ${groundY-36})"/>`;
-    svg += `<circle cx="${cx}" cy="${groundY-42}" r="3" fill="#A8D88A"/>`;
+    svg += `<path d="M${cx},${groundY-10} Q${cx-1},${groundY-50} ${cx},${groundY-80}" stroke="url(#trunk-grad)" stroke-width="8" fill="none" stroke-linecap="round"/>`;
+    svg += `<ellipse cx="${cx-22}" cy="${groundY-70}" rx="26" ry="16" fill="url(#leaf-light)" transform="rotate(-35 ${cx-22} ${groundY-70})"/>`;
+    svg += `<ellipse cx="${cx+22}" cy="${groundY-70}" rx="26" ry="16" fill="url(#leaf-light)" transform="rotate(35 ${cx+22} ${groundY-70})"/>`;
+    svg += `<ellipse cx="${cx-22}" cy="${groundY-72}" rx="20" ry="10" fill="url(#leaf-highlight)" transform="rotate(-35 ${cx-22} ${groundY-72})"/>`;
+    svg += `<ellipse cx="${cx+22}" cy="${groundY-72}" rx="20" ry="10" fill="url(#leaf-highlight)" transform="rotate(35 ${cx+22} ${groundY-72})"/>`;
+    svg += `<circle cx="${cx}" cy="${groundY-84}" r="6" fill="#A8D88A"/>`;
     svg += `</g>`;
   }
 
   if(levelInt >= 2){
-    // 树干 + 树冠（level 2+），用 scale 参数平滑过渡
-    const scale = 0.3 + (level - 1) * 0.13; // level=2:0.43, level=7:1.08
+    // 树干 + 树冠（level 2+），用 scale 参数平滑过渡（适配 800x800 画面）
+    const scale = 0.55 + (level - 2) * 0.13; // level=2:0.55, level=7:1.20
     const trunkH = 140 * scale;
     const trunkBaseW = 14 * scale;
     const trunkTopW = 7 * scale;
@@ -490,10 +491,15 @@ function getFrameState(frame){
     if(state.phase > 0.5) state.phase = 1 - state.phase; // 来回
   }
 
-  // 养分数字（随等级增长）
-  state.water = Math.round(state.level * 800);
-  state.sunlight = Math.round(state.level * 600);
-  state.fertilizer = Math.round(state.level * 500);
+  // 养分数字（随等级增长，从 0 开始累积）
+  if(state.level < 1.5){
+    state.water = 0; state.sunlight = 0; state.fertilizer = 0;
+  } else {
+    const lvGrow = state.level - 1;
+    state.water = Math.round(lvGrow * 1000);
+    state.sunlight = Math.round(lvGrow * 800);
+    state.fertilizer = Math.round(lvGrow * 600);
+  }
 
   return state;
 }
