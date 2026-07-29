@@ -786,7 +786,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
     <div class="mob-bar">
       <button class="mob-btn" id="mobBtn">☰</button>
       <div class="mob-title" id="mobTitle">工作台</div>
-      <button class="mob-act" data-top="search">🔍</button>
+      <button class="mob-act" data-top="refresh" title="刷新">🔄</button>
     </div>
     <div class="main-top">
       <div class="top-search">
@@ -795,6 +795,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
       <div style="display:flex;gap:8px">
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="data" title="数据">💾</button>
+        <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
         <button class="top-icon" data-top="theme" title="主题" id="themeBtn">☀️</button>
       </div>
     </div>
@@ -4188,6 +4189,20 @@ function bind(){
   if(a==="search")openSearch("");
   else if(a==="data")openData();
   else if(a==="theme")toggleTheme();
+  else if(a==="refresh"){
+    // 按钮转圈反馈
+    el.style.transition="transform .6s";
+    el.style.transform="rotate(360deg)";
+    setTimeout(()=>{el.style.transform="";},600);
+    // 注销 Service Worker 缓存后强制刷新（拉最新版本）
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.getRegistrations().then(regs=>{
+        Promise.all(regs.map(r=>r.unregister())).then(()=>location.reload(true));
+      });
+    }else{
+      location.reload(true);
+    }
+  }
  }));
  document.getElementById("mobBtn").onclick=()=>{
   document.getElementById("sidebar").classList.toggle("open");
