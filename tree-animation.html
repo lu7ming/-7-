@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命之树 · 成长之旅</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;}
+  #stage{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;position:relative;}
+  #tree-container{width:min(90vw,90vh);height:min(90vw,90vh);position:relative;}
+  #title-overlay{
+    position:absolute;top:5%;left:0;right:0;text-align:center;
+    color:#FFF;text-shadow:0 2px 20px rgba(0,0,0,0.8);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    z-index:10;pointer-events:none;
+  }
+  #level-name{font-size:clamp(24px,5vw,48px);font-weight:700;letter-spacing:2px;}
+  #level-sub{font-size:clamp(12px,2vw,18px);opacity:0.8;margin-top:6px;}
+  #progress-bar{
+    position:absolute;bottom:8%;left:50%;transform:translateX(-50%);
+    width:min(60vw,400px);height:6px;background:rgba(255,255,255,0.15);
+    border-radius:3px;overflow:hidden;z-index:10;
+  }
+  #progress-fill{height:100%;background:linear-gradient(90deg,#7FB069,#A8D88A,#FFE060);
+    border-radius:3px;transition:width 0.3s ease;width:0%;}
+  #nutrient-info{
+    position:absolute;bottom:14%;left:50%;transform:translateX(-50%);
+    color:#FFF;text-shadow:0 1px 8px rgba(0,0,0,0.8);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+    font-size:clamp(11px,1.8vw,15px);z-index:10;display:flex;gap:20px;
+  }
+  .nut-item{display:flex;align-items:center;gap:5px;}
+  .nut-dot{width:8px;height:8px;border-radius:50%;}
+  .nut-water{background:#5BA3E0;}
+  .nut-sun{background:#FFD560;}
+  .nut-fert{background:#8BC34A;}
+  #tree-svg{width:100%;height:100%;}
+  .tree-svg .trunk{animation:sway 6s ease-in-out infinite alternate;transform-origin:50% 100%;}
+  .tree-svg .leaf-cluster{animation:breathe 4s ease-in-out infinite alternate;transform-origin:50% 60%;}
+  @keyframes sway{0%{transform:rotate(-0.6deg);}100%{transform:rotate(0.6deg);}}
+  @keyframes breathe{0%{transform:scale(1);}100%{transform:scale(1.04);}}
+  .particle{animation:float-up 3s ease-in-out infinite;}
+  @keyframes float-up{0%{opacity:0;transform:translateY(0);}30%{opacity:1;}70%{opacity:1;}100%{opacity:0;transform:translateY(-40px);}}
+  .star-twinkle{animation:twinkle 2s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:0.3;}50%{opacity:1;}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="title-overlay">
+    <div id="level-name">种子</div>
+    <div id="level-sub">Lv.1 · 一切始于一颗种子</div>
+  </div>
+  <div id="tree-container">
+    <div id="tree-svg"></div>
+  </div>
+  <div id="nutrient-info">
+    <div class="nut-item"><span class="nut-dot nut-water"></span><span id="nut-water">0</span> 水</div>
+    <div class="nut-item"><span class="nut-dot nut-sun"></span><span id="nut-sun">0</span> 阳光</div>
+    <div class="nut-item"><span class="nut-dot nut-fert"></span><span id="nut-fert">0</span> 养分</div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+</div>
+<script>
+// === 动画状态 ===
+// currentLevel: 浮点数 1.0 ~ 7.0，驱动 treeSVG 的渲染
+// phase: 日夜循环 0~1 (0=夜, 0.5=正午, 1=夜)
+const STATE = {
+  level: 1,
+  phase: 0,
+  water: 0,
+  sunlight: 0,
+  fertilizer: 0,
+};
+
+const TREE_LEVELS = [
+  {lv:1,name:"种子",sub:"一切始于一颗种子",min:0},
+  {lv:2,name:"嫩芽",sub:"破土而出，向阳而生",min:50},
+  {lv:3,name:"小苗",sub:"分枝展叶，茁壮成长",min:150},
+  {lv:4,name:"小树",sub:"初结果实，亭亭玉立",min:400},
+  {lv:5,name:"茂盛之树",sub:"枝繁叶茂，生机盎然",min:1000},
+  {lv:6,name:"开花大树",sub:"繁花似锦，芳香四溢",min:2500},
+  {lv:7,name:"繁茂古树",sub:"参天之木，生命之巅",min:6000},
+];
+
+function lerp(a,b,t){return a+(b-a)*t;}
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+// === 日夜配色 ===
+function getSkyColors(phase){
+  // phase: 0=深夜, 0.25=黎明, 0.5=正午, 0.75=黄昏, 1=深夜
+  const palettes = [
+    // 深夜
+    {sky:["#0D0D1A","#1A1A2E","#16132B"],ground:["#1a1a1a","#0D0D0D"],sun:"#E8E8F0",isNight:true},
+    // 黎明
+    {sky:["#FFB088","#FFCBA8","#E8D5C0"],ground:["#5A6B4A","#3A4A30"],sun:"#FF9E5A",isNight:false},
+    // 正午
+    {sky:["#A8D8F0","#C8E8FF","#E8F4FF"],ground:["#7FB069","#5A8A4A"],sun:"#FFEF8A",isNight:false},
+    // 黄昏
+    {sky:["#FFB07C","#FF9E5A","#E87A3A"],ground:["#6B7B4A","#4A5A30"],sun:"#FF6B3A",isNight:false},
+    // 夜晚
+    {sky:["#0D1B2A","#1B2838","#2C3E50"],ground:["#1a2a1a","#0D1a0D"],sun:"#E8E8E8",isNight:true},
+  ];
+  const segments = palettes.length - 1;
+  const pos = phase * segments;
+  const idx = Math.floor(pos);
+  const t = pos - idx;
+  if(idx >= segments) return palettes[segments];
+  const a = palettes[idx], b = palettes[idx+1];
+  return {
+    sky: a.sky.map((c,i)=>lerpColor(c,b.sky[i],t)),
+    ground: a.ground.map((c,i)=>lerpColor(c,b.ground[i],t)),
+    sun: lerpColor(a.sun,b.sun,t),
+    isNight: t < 0.5 ? a.isNight : b.isNight,
+  };
+}
+
+function lerpColor(c1,c2,t){
+  const r1=parseInt(c1.slice(1,3),16), g1=parseInt(c1.slice(3,5),16), b1=parseInt(c1.slice(5,7),16);
+  const r2=parseInt(c2.slice(1,3),16), g2=parseInt(c2.slice(3,5),16), b2=parseInt(c2.slice(5,7),16);
+  const r=Math.round(lerp(r1,r2,t)), g=Math.round(lerp(g1,g2,t)), b=Math.round(lerp(b1,b2,t));
+  return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+
+// === 树 SVG 生成（支持浮点 level 平滑过渡）===
+function treeSVG(level, size, skyData){
+  const w = size || 400, h = size || 400;
+  const cx = w / 2;
+  const groundY = h - 45;
+  const sc = skyData;
+  const isNight = sc.isNight;
+
+  let svg = `<svg class="tree-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+
+  svg += `<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${sc.sky[0]}"/>
+      <stop offset="50%" stop-color="${sc.sky[1]}"/>
+      <stop offset="100%" stop-color="${sc.sky[2]}"/>
+    </linearGradient>
+    <linearGradient id="ground-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${sc.ground[0]}"/>
+      <stop offset="100%" stop-color="${sc.ground[1]}"/>
+    </linearGradient>
+    <linearGradient id="trunk-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3D2B1F"/>
+      <stop offset="30%" stop-color="#6B4F35"/>
+      <stop offset="55%" stop-color="#8B6F47"/>
+      <stop offset="75%" stop-color="#6B4F35"/>
+      <stop offset="100%" stop-color="#3D2B1F"/>
+    </linearGradient>
+    <radialGradient id="leaf-light" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#D4F0B8"/>
+      <stop offset="30%" stop-color="#A8D88A"/>
+      <stop offset="65%" stop-color="#7FB069"/>
+      <stop offset="100%" stop-color="#4A7A3A"/>
+    </radialGradient>
+    <radialGradient id="leaf-dark" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#B8D89C"/>
+      <stop offset="35%" stop-color="#8EC06A"/>
+      <stop offset="70%" stop-color="#5E9A48"/>
+      <stop offset="100%" stop-color="#3A6A2C"/>
+    </radialGradient>
+    <radialGradient id="leaf-highlight" cx="0.3" cy="0.2" r="0.6">
+      <stop offset="0%" stop-color="rgba(255,255,200,0.4)"/>
+      <stop offset="100%" stop-color="rgba(255,255,200,0)"/>
+    </radialGradient>
+    <radialGradient id="fruit-grad" cx="0.35" cy="0.25" r="0.8">
+      <stop offset="0%" stop-color="#FFE0A0"/>
+      <stop offset="35%" stop-color="#F5B05A"/>
+      <stop offset="70%" stop-color="#D87838"/>
+      <stop offset="100%" stop-color="#A05020"/>
+    </radialGradient>
+    <radialGradient id="fruit-shine" cx="0.3" cy="0.2" r="0.3">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <radialGradient id="flower-grad" cx="0.4" cy="0.3" r="0.7">
+      <stop offset="0%" stop-color="#FFF0F5"/>
+      <stop offset="40%" stop-color="#FFB0CC"/>
+      <stop offset="80%" stop-color="#E0789C"/>
+      <stop offset="100%" stop-color="#C04878"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft-shadow"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.15"/></filter>
+  </defs>`;
+
+  // 天空
+  svg += `<rect width="${w}" height="${h}" fill="url(#sky)"/>`;
+
+  // 星星（夜晚）— 根据夜晚程度淡入
+  const nightOpacity = isNight ? 1 : 0;
+  if(isNight){
+    const stars=[[40,30,1],[80,50,1.5],[120,25,1],[200,40,1.2],[280,20,1],[320,55,1.5],[360,35,1],[60,70,0.8],[180,60,1],[260,65,0.8],[340,70,1.2]];
+    stars.forEach((s,i)=>{
+      svg += `<circle class="star-twinkle" cx="${s[0]}" cy="${s[1]}" r="${s[2]}" fill="#FFF" opacity="${0.4+0.4*((i%3)/3)}" style="animation-delay:${i*0.3}s"/>`;
+    });
+  }
+
+  // 太阳/月亮
+  const sunX = w - 65, sunY = 55;
+  if(isNight){
+    svg += `<circle cx="${sunX}" cy="${sunY}" r="16" fill="${sc.sun}" opacity="0.9" filter="url(#glow)"/>`;
+    svg += `<circle cx="${sunX-5}" cy="${sunY-3}" r="13" fill="${sc.sky[0]}" opacity="0.95"/>`;
+    svg += `<circle cx="${sunX-4}" cy="${sunY-2}" r="12" fill="${sc.sun}" opacity="0.8"/>`;
+  } else {
+    svg += `<circle cx="${sunX}" cy="${sunY}" r="28" fill="${sc.sun}" opacity="0.2"/>`;
+    svg += `<circle cx="${sunX}" cy="${sunY}" r="20" fill="${sc.sun}" opacity="0.4" filter="url(#glow)"/>`;
+    svg += `<circle cx="${sunX}" cy="${sunY}" r="14" fill="${sc.sun}" opacity="0.9"/>`;
+  }
+
+  // 远山
+  svg += `<path d="M0,${groundY-10} Q${w*0.15},${groundY-45} ${w*0.3},${groundY-15} Q${w*0.45},${groundY-35} ${w*0.6},${groundY-10} Q${w*0.75},${groundY-30} ${w},${groundY-12} L${w},${groundY} L0,${groundY} Z" fill="${sc.ground[1]}" opacity="0.4"/>`;
+  svg += `<path d="M0,${groundY-5} Q${w*0.2},${groundY-25} ${w*0.4},${groundY-8} Q${w*0.6},${groundY-20} ${w*0.8},${groundY-5} Q${w*0.9},${groundY-15} ${w},${groundY-3} L${w},${groundY} L0,${groundY} Z" fill="${sc.ground[1]}" opacity="0.6"/>`;
+
+  // 云朵（白天，level>=2）
+  if(!isNight && level >= 2){
+    const clouds = [[60,40,1],[250,30,0.8],[330,55,0.6]];
+    clouds.forEach(c=>{
+      svg += `<g opacity="${c[2]*0.6}">`;
+      svg += `<ellipse cx="${c[0]}" cy="${c[1]}" rx="20" ry="8" fill="#FFF"/>`;
+      svg += `<ellipse cx="${c[0]+12}" cy="${c[1]+2}" rx="15" ry="7" fill="#FFF"/>`;
+      svg += `<ellipse cx="${c[0]-10}" cy="${c[1]+3}" rx="12" ry="5" fill="#FFF"/>`;
+      svg += `</g>`;
+    });
+  }
+
+  // 草地
+  svg += `<ellipse cx="${cx}" cy="${groundY+5}" rx="${w*0.48}" ry="30" fill="url(#ground-grad)"/>`;
+  if(level >= 2){
+    const grass = [[-80,3],[-50,-2],[-30,4],[30,-3],[50,2],[80,-2],[100,3],[-100,-1]];
+    grass.forEach(g=>{
+      const gx = cx+g[0], gy = groundY+g[1];
+      svg += `<path d="M${gx},${gy} Q${gx+2},${gy-8} ${gx+1},${gy-12} M${gx+3},${gy} Q${gx+4},${gy-6} ${gx+5},${gy-10}" stroke="${sc.ground[0]}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>`;
+    });
+  }
+
+  // === 树的主体（支持浮点 level 平滑过渡）===
+  // 使用 scale 驱动树的大小，level 的整数部分决定结构，小数部分决定过渡
+  const levelInt = Math.floor(level);
+  const levelFrac = level - levelInt;
+  const growT = levelFrac; // 0→1 在当前等级内的成长进度
+
+  if(levelInt === 1){
+    // 种子 → 嫩芽过渡
+    const sproutH = lerp(0, 40, growT);
+    svg += `<g class="trunk" filter="url(#soft-shadow)">`;
+    // 种子
+    svg += `<ellipse cx="${cx}" cy="${groundY-3}" rx="${lerp(16,10,growT)}" ry="${lerp(11,7,growT)}" fill="url(#trunk-grad)" opacity="${1-growT*0.3}"/>`;
+    svg += `<ellipse cx="${cx-3}" cy="${groundY-6}" rx="${lerp(10,6,growT)}" ry="${lerp(6,4,growT)}" fill="rgba(255,255,255,0.1)"/>`;
+    // 嫩芽逐渐长出
+    if(growT > 0.2){
+      const t2 = (growT - 0.2) / 0.8;
+      svg += `<path d="M${cx},${groundY-2} Q${cx-1},${groundY-sproutH*0.6} ${cx},${groundY-sproutH}" stroke="url(#trunk-grad)" stroke-width="${lerp(2,4,t2)}" fill="none" stroke-linecap="round" opacity="${t2}"/>`;
+      if(growT > 0.5){
+        const t3 = (growT - 0.5) / 0.5;
+        svg += `<ellipse cx="${cx-11*t3}" cy="${groundY-35*t3}" rx="${13*t3}" ry="${8*t3}" fill="url(#leaf-light)" transform="rotate(-35 ${cx-11*t3} ${groundY-35*t3})" opacity="${t3}"/>`;
+        svg += `<ellipse cx="${cx+11*t3}" cy="${groundY-35*t3}" rx="${13*t3}" ry="${8*t3}" fill="url(#leaf-light)" transform="rotate(35 ${cx+11*t3} ${groundY-35*t3})" opacity="${t3}"/>`;
+      }
+    }
+    svg += `</g>`;
+  } else if(levelInt === 2 || (levelInt === 1 && growT > 0.8)){
+    // 嫩芽阶段
+    const t = levelInt === 1 ? (growT - 0.8) / 0.2 : (levelInt === 2 ? 1 : 0);
+    svg += `<g class="trunk" filter="url(#soft-shadow)">`;
+    svg += `<path d="M${cx},${groundY} Q${cx-1},${groundY-25} ${cx},${groundY-40}" stroke="url(#trunk-grad)" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    svg += `<ellipse cx="${cx-11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(-35 ${cx-11} ${groundY-35})"/>`;
+    svg += `<ellipse cx="${cx+11}" cy="${groundY-35}" rx="13" ry="8" fill="url(#leaf-light)" transform="rotate(35 ${cx+11} ${groundY-35})"/>`;
+    svg += `<ellipse cx="${cx-11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(-35 ${cx-11} ${groundY-36})"/>`;
+    svg += `<ellipse cx="${cx+11}" cy="${groundY-36}" rx="10" ry="5" fill="url(#leaf-highlight)" transform="rotate(35 ${cx+11} ${groundY-36})"/>`;
+    svg += `<circle cx="${cx}" cy="${groundY-42}" r="3" fill="#A8D88A"/>`;
+    svg += `</g>`;
+  }
+
+  if(levelInt >= 2){
+    // 树干 + 树冠（level 2+），用 scale 参数平滑过渡
+    const scale = 0.3 + (level - 1) * 0.13; // level=2:0.43, level=7:1.08
+    const trunkH = 140 * scale;
+    const trunkBaseW = 14 * scale;
+    const trunkTopW = 7 * scale;
+    const crownY = groundY - trunkH;
+    const crownR = 55 * scale;
+
+    svg += `<g class="trunk">`;
+    // 树干
+    svg += `<path d="M${cx-trunkBaseW},${groundY}
+      Q${cx-trunkBaseW*0.8},${groundY-trunkH*0.4} ${cx-trunkTopW},${crownY+trunkH*0.1}
+      L${cx+trunkTopW},${crownY+trunkH*0.1}
+      Q${cx+trunkBaseW*0.8},${groundY-trunkH*0.4} ${cx+trunkBaseW},${groundY}
+      Z" fill="url(#trunk-grad)" filter="url(#soft-shadow)"/>`;
+    // 树皮纹理
+    svg += `<path d="M${cx-trunkBaseW*0.5},${groundY-5} Q${cx-trunkBaseW*0.3},${groundY-trunkH*0.3} ${cx-trunkTopW*0.5},${crownY+trunkH*0.15}" stroke="rgba(0,0,0,0.12)" stroke-width="1" fill="none"/>`;
+    svg += `<path d="M${cx+trunkBaseW*0.3},${groundY-8} Q${cx+trunkBaseW*0.2},${groundY-trunkH*0.35} ${cx+trunkTopW*0.3},${crownY+trunkH*0.12}" stroke="rgba(0,0,0,0.08)" stroke-width="0.8" fill="none"/>`;
+    svg += `<path d="M${cx},${groundY-10} L${cx},${crownY+trunkH*0.1}" stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="none"/>`;
+
+    // 主分枝
+    const branchW = 4 * scale;
+    svg += `<path d="M${cx},${crownY+trunkH*0.15} Q${cx-25*scale},${crownY} ${cx-45*scale},${crownY-8*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW}" fill="none" stroke-linecap="round"/>`;
+    svg += `<path d="M${cx},${crownY+trunkH*0.15} Q${cx+25*scale},${crownY} ${cx+45*scale},${crownY-8*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW}" fill="none" stroke-linecap="round"/>`;
+    svg += `<path d="M${cx},${crownY+trunkH*0.1} Q${cx-10*scale},${crownY-15*scale} ${cx-15*scale},${crownY-30*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.8}" fill="none" stroke-linecap="round"/>`;
+    svg += `<path d="M${cx},${crownY+trunkH*0.1} Q${cx+10*scale},${crownY-15*scale} ${cx+15*scale},${crownY-30*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.8}" fill="none" stroke-linecap="round"/>`;
+    if(level >= 5){
+      svg += `<path d="M${cx-40*scale},${crownY-5*scale} Q${cx-55*scale},${crownY-15*scale} ${cx-60*scale},${crownY-25*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.7}" fill="none" stroke-linecap="round"/>`;
+      svg += `<path d="M${cx+40*scale},${crownY-5*scale} Q${cx+55*scale},${crownY-15*scale} ${cx+60*scale},${crownY-25*scale}" stroke="url(#trunk-grad)" stroke-width="${branchW*0.7}" fill="none" stroke-linecap="round"/>`;
+    }
+    svg += `</g>`;
+
+    // 树冠叶簇
+    svg += `<g class="leaf-cluster">`;
+    let clusters = [
+      {x:cx,y:crownY,r:crownR,grad:"leaf-light"},
+      {x:cx-crownR*0.65,y:crownY+crownR*0.25,r:crownR*0.72,grad:"leaf-dark"},
+      {x:cx+crownR*0.65,y:crownY+crownR*0.25,r:crownR*0.72,grad:"leaf-light"},
+      {x:cx-crownR*0.35,y:crownY-crownR*0.45,r:crownR*0.62,grad:"leaf-dark"},
+      {x:cx+crownR*0.35,y:crownY-crownR*0.45,r:crownR*0.62,grad:"leaf-light"},
+      {x:cx,y:crownY-crownR*0.65,r:crownR*0.58,grad:"leaf-dark"},
+    ];
+    if(level >= 5){
+      clusters.push({x:cx-crownR*1.05,y:crownY+crownR*0.05,r:crownR*0.52,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*1.05,y:crownY+crownR*0.05,r:crownR*0.52,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*0.7,y:crownY-crownR*0.55,r:crownR*0.45,grad:"leaf-light"});
+      clusters.push({x:cx+crownR*0.7,y:crownY-crownR*0.55,r:crownR*0.45,grad:"leaf-dark"});
+    }
+    if(level >= 6){
+      clusters.push({x:cx,y:crownY-crownR*0.9,r:crownR*0.42,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*1.2,y:crownY-crownR*0.2,r:crownR*0.38,grad:"leaf-light"});
+      clusters.push({x:cx+crownR*1.2,y:crownY-crownR*0.2,r:crownR*0.38,grad:"leaf-dark"});
+    }
+    if(level >= 7){
+      clusters.push({x:cx-crownR*0.5,y:crownY+crownR*0.6,r:crownR*0.35,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*0.5,y:crownY+crownR*0.6,r:crownR*0.35,grad:"leaf-light"});
+      clusters.push({x:cx-crownR*1.3,y:crownY+crownR*0.3,r:crownR*0.3,grad:"leaf-dark"});
+      clusters.push({x:cx+crownR*1.3,y:crownY+crownR*0.3,r:crownR*0.3,grad:"leaf-light"});
+    }
+    clusters.forEach((c,i)=>{
+      const bumps = 6;
+      let path = `M${c.x+c.r},${c.y}`;
+      for(let b=0;b<bumps;b++){
+        const ang = (b/bumps)*Math.PI*2;
+        const ang2 = ((b+0.5)/bumps)*Math.PI*2;
+        const r1 = c.r*(0.88+0.12*((b+i)%3===0?1:0));
+        const r2 = c.r*(0.82+0.08*((b+i)%2));
+        const x2 = c.x+Math.cos(ang2)*r2;
+        const y2 = c.y+Math.sin(ang2)*r2;
+        path += ` Q${(c.x+Math.cos(ang)*r1*1.1).toFixed(1)},${(c.y+Math.sin(ang)*r1*1.1).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+      }
+      path += ` Z`;
+      svg += `<path class="leaf" d="${path}" fill="url(#${c.grad})" opacity="${0.88+0.12*(i%2)}"/>`;
+      svg += `<ellipse cx="${c.x-c.r*0.2}" cy="${c.y-c.r*0.25}" rx="${c.r*0.5}" ry="${c.r*0.35}" fill="url(#leaf-highlight)" opacity="${0.5+0.3*(i%2)}"/>`;
+    });
+
+    // 果实
+    if(level >= 4){
+      let fruits = [
+        {x:cx-crownR*0.4,y:crownY+crownR*0.3,r:7*scale},
+        {x:cx+crownR*0.5,y:crownY+crownR*0.1,r:6*scale},
+        {x:cx-crownR*0.1,y:crownY+crownR*0.55,r:7*scale},
+        {x:cx+crownR*0.2,y:crownY-crownR*0.2,r:6*scale},
+      ];
+      if(level >= 5){fruits.push({x:cx-crownR*0.6,y:crownY-crownR*0.1,r:6*scale});fruits.push({x:cx+crownR*0.6,y:crownY+crownR*0.4,r:7*scale});}
+      if(level >= 6){fruits.push({x:cx-crownR*0.3,y:crownY-crownR*0.5,r:5*scale});fruits.push({x:cx+crownR*0.3,y:crownY-crownR*0.6,r:5*scale});}
+      if(level >= 7){fruits.push({x:cx,y:crownY-crownR*0.8,r:5*scale});}
+      fruits.forEach(f=>{
+        svg += `<circle class="fruit" cx="${f.x}" cy="${f.y}" r="${f.r}" fill="url(#fruit-grad)"/>`;
+        svg += `<circle cx="${f.x-f.r*0.3}" cy="${f.y-f.r*0.3}" r="${f.r*0.35}" fill="url(#fruit-shine)"/>`;
+      });
+    }
+
+    // 花朵
+    if(level >= 6){
+      let flowers = [
+        {x:cx+crownR*0.7,y:crownY-crownR*0.3},
+        {x:cx-crownR*0.8,y:crownY+crownR*0.15},
+        {x:cx+crownR*0.1,y:crownY-crownR*0.7},
+        {x:cx-crownR*0.5,y:crownY-crownR*0.3},
+        {x:cx+crownR*0.4,y:crownY+crownR*0.5},
+      ];
+      if(level >= 7){flowers.push({x:cx,y:crownY-crownR*0.95});flowers.push({x:cx-crownR*0.9,y:crownY-crownR*0.1});flowers.push({x:cx+crownR*0.9,y:crownY-crownR*0.1});}
+      flowers.forEach(f=>{
+        for(let p=0;p<5;p++){
+          const ang = p*72*Math.PI/180 - Math.PI/2;
+          const px = f.x+Math.cos(ang)*6*scale;
+          const py = f.y+Math.sin(ang)*6*scale;
+          svg += `<circle class="flower" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${4.5*scale}" fill="url(#flower-grad)" opacity="0.92"/>`;
+        }
+        svg += `<circle cx="${f.x}" cy="${f.y}" r="${3*scale}" fill="#FFE060"/>`;
+      });
+    }
+
+    // Lv.7 星光
+    if(level >= 7){
+      svg += `<g filter="url(#glow)">`;
+      svg += `<circle cx="${cx}" cy="${crownY-crownR*1.05}" r="4" fill="#FFE060" opacity="0.9"/>`;
+      svg += `<circle cx="${cx-crownR*1.1}" cy="${crownY-crownR*0.3}" r="3" fill="#FFE060" opacity="0.8"/>`;
+      svg += `<circle cx="${cx+crownR*1.1}" cy="${crownY-crownR*0.3}" r="3" fill="#FFE060" opacity="0.8"/>`;
+      svg += `<circle cx="${cx-crownR*0.4}" cy="${crownY+crownR*0.8}" r="2.5" fill="#FFE060" opacity="0.7"/>`;
+      svg += `</g>`;
+    }
+    svg += `</g>`;
+  }
+
+  // 根系
+  if(level >= 2){
+    svg += `<g class="root" opacity="0.35">`;
+    const rootSpread = level >= 4 ? 40 : 25;
+    svg += `<path d="M${cx-8},${groundY} Q${cx-15},${groundY+8} ${cx-rootSpread},${groundY+18}" stroke="#4A3A24" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg += `<path d="M${cx+8},${groundY} Q${cx+15},${groundY+8} ${cx+rootSpread},${groundY+18}" stroke="#4A3A24" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    svg += `<path d="M${cx},${groundY} L${cx},${groundY+22}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    if(level >= 4){
+      svg += `<path d="M${cx-18},${groundY+3} Q${cx-28},${groundY+12} ${cx-42},${groundY+15}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+      svg += `<path d="M${cx+18},${groundY+3} Q${cx+28},${groundY+12} ${cx+42},${groundY+15}" stroke="#4A3A24" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    }
+    svg += `</g>`;
+  }
+
+  // 飘浮粒子
+  if(level >= 3){
+    const particleCount = isNight ? 8 : 5;
+    const particleColor = isNight ? "#FFE060" : "#FFE5A0";
+    for(let i=0;i<particleCount;i++){
+      const px = cx + ((i*37+13)%200-100);
+      const py = groundY - 80 - ((i*53+17)%120);
+      svg += `<circle class="particle" cx="${px}" cy="${py}" r="${isNight?2.5:2}" fill="${particleColor}" opacity="0" style="animation-delay:${i*0.5}s"/>`;
+    }
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// === 动画时间线 ===
+// 总时长 20 秒，240 帧（12fps → 实际 30fps 录制更顺滑）
+// 阶段:
+// 0-2s: Lv.1 种子（夜晚）种子微动
+// 2-4s: Lv.1→Lv.2 成长，天亮
+// 4-6s: Lv.2→Lv.3 嫩芽到小苗
+// 6-8s: Lv.3→Lv.4 小苗到小树
+// 8-10s: Lv.4→Lv.5 小树到茂盛
+// 10-12s: Lv.5→Lv.6 茂盛到开花（黄昏）
+// 12-14s: Lv.6→Lv.7 开花到古树
+// 14-20s: Lv.7 满级展示（夜晚，星光，萤火）
+
+const TOTAL_FRAMES = 600; // 30fps * 20s
+const FPS = 30;
+
+function getFrameState(frame){
+  const t = frame / FPS; // 秒
+  const state = {level: 1, phase: 0, water: 0, sunlight: 0, fertilizer: 0};
+
+  if(t < 2){
+    // Lv.1 种子
+    state.level = 1;
+    state.phase = 0; // 深夜
+  } else if(t < 4){
+    // Lv.1→Lv.2
+    const p = (t-2)/2;
+    state.level = 1 + easeInOut(p);
+    state.phase = p * 0.25; // 深夜→黎明
+  } else if(t < 6){
+    // Lv.2→Lv.3
+    const p = (t-4)/2;
+    state.level = 2 + easeInOut(p);
+    state.phase = 0.25 + p * 0.25; // 黎明→正午
+  } else if(t < 8){
+    // Lv.3→Lv.4
+    const p = (t-6)/2;
+    state.level = 3 + easeInOut(p);
+    state.phase = 0.5; // 正午
+  } else if(t < 10){
+    // Lv.4→Lv.5
+    const p = (t-8)/2;
+    state.level = 4 + easeInOut(p);
+    state.phase = 0.5;
+  } else if(t < 12){
+    // Lv.5→Lv.6
+    const p = (t-10)/2;
+    state.level = 5 + easeInOut(p);
+    state.phase = 0.5 + p * 0.25; // 正午→黄昏
+  } else if(t < 14){
+    // Lv.6→Lv.7
+    const p = (t-12)/2;
+    state.level = 6 + easeInOut(p);
+    state.phase = 0.75 + p * 0.25; // 黄昏→夜晚
+  } else {
+    // Lv.7 满级展示
+    state.level = 7;
+    const p = (t-14)/6;
+    state.phase = (p * 2) % 1; // 两个日夜循环
+    if(state.phase > 0.5) state.phase = 1 - state.phase; // 来回
+  }
+
+  // 养分数字（随等级增长）
+  state.water = Math.round(state.level * 800);
+  state.sunlight = Math.round(state.level * 600);
+  state.fertilizer = Math.round(state.level * 500);
+
+  return state;
+}
+
+function render(frame){
+  const st = getFrameState(frame);
+  const skyData = getSkyColors(st.phase);
+  const svg = treeSVG(st.level, 400, skyData);
+  document.getElementById("tree-svg").innerHTML = svg;
+
+  // 更新标题
+  const lvIdx = Math.min(6, Math.floor(st.level) - 1);
+  const lvInfo = TREE_LEVELS[lvIdx];
+  const nextLv = TREE_LEVELS[lvIdx + 1];
+  document.getElementById("level-name").textContent = lvInfo.name;
+  document.getElementById("level-sub").textContent = "Lv." + (lvIdx+1) + " · " + lvInfo.sub;
+
+  // 进度条
+  let progress = 100;
+  if(nextLv){
+    progress = Math.round((st.level - 1 - lvIdx) * 100);
+  }
+  document.getElementById("progress-fill").style.width = Math.min(100, progress) + "%";
+
+  // 养分
+  document.getElementById("nut-water").textContent = st.water;
+  document.getElementById("nut-sun").textContent = st.sunlight;
+  document.getElementById("nut-fert").textContent = st.fertilizer;
+}
+
+// 暴露给 Playwright
+window.__renderFrame = render;
+window.__totalFrames = TOTAL_FRAMES;
+</script>
+</body>
+</html>
