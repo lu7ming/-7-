@@ -601,6 +601,20 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .pomo-status{font-size:12px;color:var(--muted);}
 .pomo-count{font-size:12px;color:var(--good);margin-top:6px;font-weight:600;}
 
+/* ---- 冥想/呼吸计时器 ---- */
+.meditate-box{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:14px;box-shadow:var(--glass-inset);}
+.breath-circle{width:140px;height:140px;border-radius:50%;margin:16px auto;background:radial-gradient(circle,rgba(232,184,99,0.3),rgba(127,176,105,0.15));border:2px solid rgba(232,184,99,0.4);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out,background 4s ease-in-out,border-color 4s ease-in-out;position:relative;}
+.breath-circle.inhale{transform:scale(1.35);background:radial-gradient(circle,rgba(127,176,105,0.4),rgba(232,184,99,0.2));border-color:rgba(127,176,105,0.6);}
+.breath-circle.hold{transform:scale(1.35);background:radial-gradient(circle,rgba(232,184,99,0.35),rgba(200,167,128,0.15));border-color:rgba(232,184,99,0.6);}
+.breath-circle.exhale{transform:scale(0.85);background:radial-gradient(circle,rgba(212,106,106,0.25),rgba(127,176,105,0.1));border-color:rgba(212,106,106,0.4);}
+.breath-text{font-size:14px;font-weight:600;color:var(--ink-2);}
+.breath-count{font-size:36px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.meditate-presets{display:flex;gap:6px;justify-content:center;margin-bottom:8px;}
+.meditate-preset{background:var(--glass-bg-soft);border:1px solid var(--glass-border);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-2);cursor:pointer;}
+.meditate-preset.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.meditate-status{font-size:12px;color:var(--muted);margin-top:4px;}
+.meditate-count{font-size:12px;color:var(--good);margin-top:6px;font-weight:600;}
+
 /* ---- Habit week card (首页) ---- */
 .habit-week-card{padding:16px 18px;}
 .hw-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -1119,6 +1133,7 @@ function migrate(){
     if(e&&e.context==null)e.context="";
     if(e&&e.pomodoros==null)e.pomodoros=0;
     if(e&&e.focusSessions==null)e.focusSessions=[];
+    if(e&&e.health&&e.health.meditation==null)e.health.meditation=[];
   });
 }
 
@@ -2135,6 +2150,33 @@ function viewHealthModule(){
          <input class="tl-input" type="number" step="0.1" data-metric="weight" value="${(state.metrics[currentDate]&&state.metrics[currentDate].weight)||""}" placeholder="体重 (kg)"/>
          <input class="tl-input" type="number" step="0.1" data-metric="bodyFat" value="${(state.metrics[currentDate]&&state.metrics[currentDate].bodyFat)||""}" placeholder="体脂率 (%)"/>
        </div></div>
+     </div>
+   </div>
+
+   <div class="card">
+     <div class="section-eyebrow">MINDFULNESS</div>
+     <div class="section-title">🧘 冥想 · 呼吸引导</div>
+     <p class="section-desc">4-7-8 呼吸法：吸气 4 秒 → 憋气 7 秒 → 呼气 8 秒，缓解焦虑、助眠</p>
+     <div class="meditate-box">
+       <div class="breath-circle" id="breathCircle">
+         <div style="text-align:center">
+           <div class="breath-text">准备</div>
+           <div class="breath-count">${medRunning?breathPhaseLabel(medBreathPhase):"▶"}</div>
+         </div>
+       </div>
+       <div class="pomo-display" id="medDisplay" style="font-size:36px">${fmtMedTime(medRemain)}</div>
+       <div class="meditate-presets">
+         <button class="meditate-preset ${medDuration===180?'active':''}" data-med-set="180">3 分</button>
+         <button class="meditate-preset ${medDuration===300?'active':''}" data-med-set="300">5 分</button>
+         <button class="meditate-preset ${medDuration===600?'active':''}" data-med-set="600">10 分</button>
+         <button class="meditate-preset ${medDuration===900?'active':''}" data-med-set="900">15 分</button>
+       </div>
+       <div class="pomo-controls">
+         <button class="btn" id="medStart" data-med-action="start" style="${medRunning?'display:none':''}">▶ 开始</button>
+         <button class="btn-ghost" id="medStop" data-med-action="stop" style="${medRunning?'':'display:none'}">⏹ 结束</button>
+       </div>
+       <div class="meditate-status" id="medStatus">${medRunning?'跟随节奏呼吸…':'选一个时长，开始放松'}</div>
+       <div class="meditate-count">今日冥想：${((getDay(currentDate).health.meditation||[]).reduce((s,m)=>s+(m.duration||0),0))/60|0} 分钟</div>
      </div>
    </div>
   `;
@@ -3610,6 +3652,13 @@ function onClick(e){
     return;
   }
   if(t.dataset.pomoSet!=null){setPomoDuration(+t.dataset.pomoSet);return;}
+  // 冥想/呼吸计时器
+  if(t.dataset.medAction){
+    if(t.dataset.medAction==="start")startMeditate();
+    else if(t.dataset.medAction==="stop")stopMeditate(false);
+    return;
+  }
+  if(t.dataset.medSet!=null){setMedDuration(+t.dataset.medSet);return;}
   // 顶栏
   if(t.dataset.top){
     const a=t.dataset.top;
@@ -4283,6 +4332,96 @@ function resetPomo(){
 function setPomoDuration(sec){
   pomoDuration=sec;
   if(!pomoRunning){pomoRemain=sec;updatePomoDisplay();}
+  render();
+}
+
+/* ============== 冥想/呼吸计时器 ============== */
+let medDuration=300;      // 总时长秒数，默认5分钟
+let medRemain=300;        // 剩余秒数
+let medRunning=false;     // 是否运行
+let medTimer=null;        // setInterval ID
+let medBreathPhase=0;     // 0=吸气4s 1=憋气7s 2=呼气8s
+let medBreathTimer=null;  // 呼吸阶段计时器
+let medStartTime=null;     // 开始时间
+function fmtMedTime(s){const m=Math.floor(s/60),sec=s%60;return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;}
+function breathPhaseLabel(p){return ["吸气","憋气","呼气"][p]||"";}
+function breathPhaseDuration(p){return [4,7,8][p]||4;}
+function updateMeditateDisplay(){
+  const el=document.getElementById("medDisplay");
+  if(el)el.textContent=fmtMedTime(medRemain);
+  const status=document.getElementById("medStatus");
+  if(status)status.textContent=medRunning?"跟随节奏呼吸…":"选一个时长，开始放松";
+  const startBtn=document.getElementById("medStart");
+  const stopBtn=document.getElementById("medStop");
+  if(startBtn&&stopBtn){
+    startBtn.style.display=medRunning?"none":"inline-block";
+    stopBtn.style.display=medRunning?"inline-block":"none";
+  }
+}
+function updateBreathPhase(){
+  const circle=document.getElementById("breathCircle");
+  if(!circle)return;
+  const phase=medBreathPhase;
+  circle.className="breath-circle "+["inhale","hold","exhale"][phase];
+  const text=circle.querySelector(".breath-text");
+  const count=circle.querySelector(".breath-count");
+  if(text)text.textContent=breathPhaseLabel(phase);
+  let remain=breathPhaseDuration(phase);
+  if(count)count.textContent=remain;
+  // 倒数
+  if(medBreathTimer)clearInterval(medBreathTimer);
+  medBreathTimer=setInterval(()=>{
+    remain--;
+    if(remain<=0){
+      medBreathPhase=(medBreathPhase+1)%3;
+      updateBreathPhase();
+    }else{
+      if(count)count.textContent=remain;
+    }
+  },1000);
+}
+function startMeditate(){
+  if(medRunning)return;
+  if(medRemain<=0)medRemain=medDuration;
+  medStartTime=new Date().toISOString();
+  medRunning=true;
+  medBreathPhase=0;
+  updateMeditateDisplay();
+  updateBreathPhase();
+  medTimer=setInterval(()=>{
+    medRemain--;
+    if(medRemain<=0){
+      stopMeditate(true);
+    }else{
+      updateMeditateDisplay();
+    }
+  },1000);
+}
+function stopMeditate(completed){
+  medRunning=false;
+  clearInterval(medTimer);medTimer=null;
+  clearInterval(medBreathTimer);medBreathTimer=null;
+  // 记录到健康数据
+  if(completed&&medStartTime){
+    const h=getDay(currentDate).health;
+    h.meditation=h.meditation||[];
+    h.meditation.push({id:uid(),startTime:medStartTime,duration:medDuration,completed:true});
+    // 也勾选健康-运动签到
+    const r=getDay(currentDate);
+    r.checks["健康-运动"]=true;
+    save();
+    toast("🧘 冥想完成 "+Math.round(medDuration/60)+" 分钟，身心放松");
+  }
+  medRemain=medDuration;
+  medBreathPhase=0;
+  const circle=document.getElementById("breathCircle");
+  if(circle){circle.className="breath-circle";}
+  updateMeditateDisplay();
+  if(completed)render();
+}
+function setMedDuration(sec){
+  medDuration=sec;
+  if(!medRunning){medRemain=sec;updateMeditateDisplay();}
   render();
 }
 
