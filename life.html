@@ -307,6 +307,19 @@ body::after{
 .scroll::-webkit-scrollbar{width:6px;}
 .scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
 
+/* ---- 视觉质感增强（C级氛围 · 不动格局）---- */
+#scroll{animation:pageIn .42s cubic-bezier(.22,.61,.36,1);}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px) scale(.995)}to{opacity:1;transform:none}}
+.card{transition:box-shadow .25s ease,transform .25s ease;}
+.card:hover{box-shadow:0 14px 44px rgba(60,45,30,.16),var(--glass-inset);}
+.section-title{letter-spacing:-.6px;}
+.section-eyebrow{letter-spacing:1.8px;}
+.btn,.btn-ghost{transition:transform .15s ease,box-shadow .2s ease,background .2s ease;}
+.btn:active,.btn-ghost:active{transform:scale(.97);}
+.kpi-value{letter-spacing:-.5px;}
+/* 关联区块的统一"次级卡"语感 */
+.card[style*="card-soft"]{border:1px dashed var(--line);}
+
 /* ---- Common card ---- */
 .card{
   background:var(--glass-bg);border:1px solid var(--glass-border);
@@ -2917,6 +2930,29 @@ function viewLearn(){
              </div>
            </div>`).join("")}
          `:'<div class="empty">今天还没有专注会话，开始一个番茄吧</div>'}
+       </div>`;
+     })()}
+
+     ${(()=>{ /* 同系列整合：番茄花园内嵌于番茄钟页 */
+       state.tomGarden=state.tomGarden||{manual:0};
+       const real=tgRealPomodoros();
+       const manual=state.tomGarden.manual||0;
+       const plants=real+manual;
+       const mins=plants*25;
+       return `<div class="card" style="margin-top:14px">
+         <div class="section-eyebrow">TOMATO GARDEN · 专注的回报</div>
+         <div class="section-title" style="font-size:18px">🌱 番茄花园</div>
+         <p class="section-desc">每完成一个番茄，这片花园就多一株。专注的复利，看得见。</p>
+         <div class="tg-stats">
+           <div class="tg-stat"><div class="v">${mins}</div><div class="l">累计专注分钟</div></div>
+           <div class="tg-stat"><div class="v">${plants}</div><div class="l">番茄总数</div></div>
+           <div class="tg-stat"><div class="v">${plants}</div><div class="l">植物数</div></div>
+         </div>
+         <div class="tg-garden">${tgGardenSvg(plants)}</div>
+         <div class="input-row" style="margin-top:14px">
+           <button class="btn" data-mod-action="tg-plant">🌱 手动种一株</button>
+           ${manual?`<span class="tg-note">含 ${manual} 株手动补录</span>`:""}
+         </div>
        </div>`;
      })()}
 
@@ -7469,6 +7505,34 @@ function viewTree(){
       💧 打卡/喝水 → 水分 · ☀️ 运动/睡眠 → 阳光 · 🌿 学习/思考 → 养分<br/>
       今日已获：${todayN.total} 能量（水${todayN.water}+光${todayN.sunlight}+肥${todayN.fertilizer}）
     </div>
+
+    ${(()=>{ /* 同系列整合：今日打卡速览（成长可见系列） */
+      const r=getDay(currentDate);
+      const done=[];
+      const pend=[];
+      CHECK_TPL.forEach(c=>{
+        c.items.forEach(it=>{
+          const k=c.cat+"-"+it;
+          if(r.checks[k]) done.push(c.icon+" "+it);
+          else pend.push(c.icon+" "+it);
+        });
+      });
+      const todayPomo=r.pomodoros||0;
+      return `<div class="card" style="margin-top:14px;background:var(--card-soft);box-shadow:none">
+        <div class="section-eyebrow">HABITS · 今日打卡（滋养生命树）</div>
+        ${done.length?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+          ${done.map(d=>`<span style="font-size:12px;background:var(--good);color:#fff;padding:3px 10px;border-radius:999px">✓ ${esc(d)}</span>`).join("")}
+        </div>`:'<div class="section-desc" style="margin:8px 0 0">今天还没有打卡，完成一项就能给树添能量。</div>'}
+        ${pend.length?`<details style="margin-top:8px"><summary style="font-size:12px;color:var(--muted);cursor:pointer">未完成 ${pend.length} 项</summary>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+            ${pend.map(d=>`<span style="font-size:12px;color:var(--muted);padding:3px 10px;border-radius:999px;border:1px solid var(--line)">${esc(d)}</span>`).join("")}
+          </div></details>`:''}
+        <div class="data-row" style="margin-top:10px">
+          <button class="btn-ghost" data-nav="home">去打卡 →</button>
+          <span style="font-size:12px;color:var(--muted);align-self:center">今日番茄 ${todayPomo} 个</span>
+        </div>
+      </div>`;
+    })()}
   </div>`;
 }
 
@@ -8482,6 +8546,21 @@ function viewSpaced(){
         <div class="dash-stat s-master"><div class="ds-num">${mastered}</div><div class="ds-label">已掌握</div></div>
         <div class="dash-stat"><div class="ds-num">${total}</div><div class="ds-label">总卡数</div></div>
       </div>
+
+      ${(()=>{ /* 同系列整合：摘抄/备忘/笔记来源速览 */
+        const qN=(state.quotes||[]).length;
+        const mN=(state.memos||[]).length;
+        const nN=(state.notes||[]).length;
+        return `<div class="card" style="margin:14px 0;background:var(--card-soft);box-shadow:none">
+          <div class="section-eyebrow">SOURCES · 复习的原料</div>
+          <div class="data-row" style="margin-top:6px">
+            <button class="btn-ghost" data-nav="quote">✒️ 摘抄 ${qN}</button>
+            <button class="btn-ghost" data-nav="memo">📌 备忘 ${mN}</button>
+            <button class="btn-ghost" data-nav="note">📝 笔记 ${nN}</button>
+          </div>
+          <div class="section-desc" style="margin-top:8px;margin-bottom:0">新增的摘抄/备忘/笔记会自动进入复习队列。</div>
+        </div>`;
+      })()}
 
       <div class="sr-topbar">
         <button class="btn-ghost" data-mod-action="sr-sync">↻ 全部重新同步</button>
