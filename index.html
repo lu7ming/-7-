@@ -1482,6 +1482,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
       <div style="display:flex;gap:8px">
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
+        <button class="top-icon" data-nav="sound" title="声音 · 白噪音/闹钟">🎵</button>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
@@ -2497,27 +2498,32 @@ const NAV_ITEMS=[
  {id:"book",l:"书架",ico:"📚"},
  {id:"course",l:"课程",ico:"🗓"},
  {id:"project",l:"项目",ico:"🎯"},
- {id:"goals",l:"目标",ico:"🏹"},
- {id:"reflect",l:"思考",ico:"💭"},
- {id:"quote",l:"摘抄",ico:"✒️"},
- {id:"note",l:"笔记",ico:"📝"},
  {id:"memo",l:"备忘录",ico:"📌"},
  {id:"tree",l:"生命树",ico:"🌳"},
- {id:"sound",l:"声音",ico:"🎵"},
- {id:"shopping",l:"购物",ico:"🛒"},
- {id:"body",l:"身体",ico:"⚖️"},
  {id:"data",l:"数据",ico:"📊"}
 ];
-// "数据"是新增的统一入口，承载多个子视图（看板/趋势/复盘/周计划/年回顾/热力图/图谱/番茄花园/休息）
+// 子模块并入母模块：
+//   身体 → 健康（健康页底部嵌入）
+//   购物 → 备忘录（备忘录页底部嵌入）
+//   摘抄/笔记 → 书架（书架页内 Tab 切换）
+//   目标/思考 → 数据（数据中心顶部嵌入）
+//   声音 → 顶栏右上角图标（从侧栏移除）
+// "数据"承载多个子视图（看板/趋势/复盘/周计划/年回顾/热力图/图谱/番茄花园/休息/目标/思考）
 function renderData(){
   // 内部用一个二级卡片分组承载
   return `
    <div class="card">
      <div class="section-eyebrow">DATA HUB</div>
      <div class="section-title">📊 数据中心</div>
-     <p class="section-desc">把分散的数据视图收拢到一起：热力图、年回顾、复盘、图谱、休息，一页掌握。</p>
+     <p class="section-desc">把分散的数据视图收拢到一起：目标、思考、热力图、年回顾、复盘、图谱、休息，一页掌握。</p>
 
-     <div class="section-eyebrow" style="margin-top:8px">📈 看板 · 趋势</div>
+     <div class="section-eyebrow" style="margin-top:8px">🏹 目标 · 💭 思考</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="goals">🏹 目标 OKR</button>
+       <button class="btn-ghost" data-nav="reflect">💭 思考流</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">📈 看板 · 趋势</div>
      <div class="data-row">
        <button class="btn-ghost" data-nav="board">📊 看板</button>
        <button class="btn-ghost" data-nav="trends">📈 趋势</button>
@@ -3174,6 +3180,10 @@ function viewHealthModule(){
          </div>
        </div>`;
      })()}
+
+     ${(()=>{ /* 身体数据嵌入健康页 */
+       try{return viewBody();}catch(e){return"";}
+     })()}
    </div>
   `;
 }
@@ -3515,6 +3525,14 @@ function viewBooks(){
       <button class="btn" data-action="add-book">添加</button>
     </div>
     ${sec}
+
+    ${(()=>{ /* 摘抄嵌入书架页 */
+      try{return viewQuotes();}catch(e){return"";}
+    })()}
+
+    ${(()=>{ /* 笔记嵌入书架页 */
+      try{return viewNotes();}catch(e){return"";}
+    })()}
   </div>`;
 }
 
@@ -4150,6 +4168,10 @@ function viewMemo(){
     ${quickAdd}
     ${filterTabs}
     <div style="margin-top:12px" id="memoList">${listHtml}</div>
+
+    ${(()=>{ /* 购物清单嵌入备忘录页 */
+      try{return viewShopping();}catch(e){return"";}
+    })()}
   </div>`;
 }
 function renderMemoCard(m){
