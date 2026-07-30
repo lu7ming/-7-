@@ -701,6 +701,24 @@ body[data-theme="dark"] .data-row input[type=month]{color-scheme:dark;}
   z-index:120;font-size:14px;}
 .hidden{display:none!important;}
 
+/* ===== 应用内弹窗（iPad 主屏安全，替代原生 confirm/prompt） ===== */
+#appModalRoot{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+#appModalRoot.am-show{display:flex;}
+.am-backdrop{position:absolute;inset:0;background:rgba(40,30,20,.5);backdrop-filter:blur(2px);}
+body[data-theme="dark"] .am-backdrop{background:rgba(0,0,0,.66);}
+.am-card{position:relative;margin:auto;width:100%;max-width:430px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:22px;animation:amPop .18s ease;}
+@keyframes amPop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.am-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.am-msg{font-size:14px;line-height:1.7;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;}
+.am-input{width:100%;margin-top:12px;background:var(--card-soft);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;}
+.am-input:focus{border-color:var(--warm);}
+.am-btns{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+.am-btns .btn,.am-btns .btn-ghost{flex:1;min-width:96px;text-align:center;padding:11px 14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--line);box-sizing:border-box;}
+.am-btns .btn-ghost{background:var(--card-soft);color:var(--ink-2);}
+.am-btns .btn{background:var(--ink);color:var(--accent-ink);border-color:var(--ink);}
+.am-danger .am-msg{color:var(--warn);}
+.am-danger-btn{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important;}
+
 /* Date nav */
 .date-nav{display:flex;gap:6px;align-items:center;margin-bottom:12px;background:var(--card-soft);border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px}
 .date-nav .dn-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--line);
@@ -978,6 +996,29 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .alarm-repeat{font-size:11px;color:var(--muted);}
 .alarm-toggle{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--card-soft);color:var(--muted);}
 .alarm-toggle.on{background:var(--good);color:#fff;}
+.al-edit{padding:4px 10px;border-radius:8px;font-size:13px;cursor:pointer;background:var(--card-soft);color:var(--ink-2);border:1px solid var(--line);}
+.alarm-hint{margin-top:10px;font-size:12px;line-height:1.7;color:var(--warn);background:var(--warm-soft);border:1px solid var(--warm);border-radius:10px;padding:8px 10px;}
+.alarm-log{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+.alarm-log-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--card-soft);border-radius:8px;padding:6px 10px;}
+.alarm-log-item.missed{color:var(--warn);}
+.alarm-log-item b{color:var(--ink-2);}
+.alarm-log-item .al-time{font-weight:700;color:var(--ink);}
+.alarm-log-item .al-when{margin-left:auto;font-size:11px;}
+/* 应用内响铃页 */
+.alarm-ring{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;}
+.alarm-ring.show{display:flex;}
+.alarm-ring .ar-flash{position:absolute;inset:0;background:var(--warn);opacity:0;animation:arFlash 1.2s ease-in-out infinite;}
+@keyframes arFlash{0%,100%{opacity:0}50%{opacity:.18}}
+.alarm-ring .ar-inner{position:relative;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-md);padding:34px 30px;text-align:center;max-width:340px;width:86%;animation:amPop .25s ease;}
+.ar-bell{font-size:64px;animation:arRing 1s ease-in-out infinite;transform-origin:top center;}
+@keyframes arRing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.ar-title{font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;}
+.ar-time{font-size:40px;font-weight:800;color:var(--warm);margin-top:4px;font-variant-numeric:tabular-nums;}
+.ar-tip{font-size:13px;color:var(--muted);margin-top:6px;}
+.ar-btns{display:flex;gap:10px;margin-top:22px;}
+.ar-btns button{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;}
+.ar-snooze{background:var(--card-soft);color:var(--ink-2);border:1px solid var(--line)!important;}
+.ar-stop{background:var(--good);color:#fff;}
 .word-item{display:flex;align-items:center;gap:8px;padding:8px 10px;}
 .word-main{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
 .word-text{font-size:15px;}
@@ -1920,81 +1961,98 @@ function _doSave(){
   }
   bumpDataVersion();
 }
+function stateDefaults(){
+  return {
+    entries:{},contacts:[],books:[],
+    countdowns:[
+      {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
+      {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
+    ],
+    customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[],moods:{},inbox:[],shopping:{lists:{default:[]},active:"default"},bodyData:{},reminders:[],alarmLog:[]
+  };
+}
+function settingsDefaults(){
+  return {theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[],soundPersist:null};
+}
 function load(){
-  try{
-    const r=localStorage.getItem(STORE_KEY);
-    if(r){
-      const p=JSON.parse(r);
-      state=Object.assign({
-        entries:{},contacts:[],books:[],
-        countdowns:[
-          {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
-          {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
-        ],
-        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[],moods:{},inbox:[]
-      },p);
-      // 类型安全修正：防止 localStorage 被外部篡改成错误类型
-      const         obj=()=>({}),arr=()=>[];
-      state.entries=(state.entries&&typeof state.entries==="object"&&!Array.isArray(state.entries))?state.entries:{};
-      state.goals=Array.isArray(state.goals)?state.goals:[];
-      state.moods=(state.moods&&typeof state.moods==="object"&&!Array.isArray(state.moods))?state.moods:{};
-      state.inbox=Array.isArray(state.inbox)?state.inbox:[];
-      state.contacts=Array.isArray(state.contacts)?state.contacts:[];
-      state.books=Array.isArray(state.books)?state.books:[];
-      state.countdowns=Array.isArray(state.countdowns)?state.countdowns:[];
-      state.customTags=Array.isArray(state.customTags)?state.customTags:[];
-      state.customQuestions=Array.isArray(state.customQuestions)?state.customQuestions:[];
-      state.goals=Array.isArray(state.goals)?state.goals:[];
-      state.projects=Array.isArray(state.projects)?state.projects:[];
-      state.quotes=Array.isArray(state.quotes)?state.quotes:[];
-      state.weeklyPlans=Array.isArray(state.weeklyPlans)?state.weeklyPlans:[];
-      state.notes=Array.isArray(state.notes)?state.notes:[];
-      state.capsules=Array.isArray(state.capsules)?state.capsules:[];
-      state.memos=Array.isArray(state.memos)?state.memos:[];
-      state.alarms=Array.isArray(state.alarms)?state.alarms:[];
-      state.soundPresets=Array.isArray(state.soundPresets)?state.soundPresets:[];
-      state.unlockedAch=Array.isArray(state.unlockedAch)?state.unlockedAch:[];
-      state.metrics=(state.metrics&&typeof state.metrics==="object")?state.metrics:{};
-      state.reviews=(state.reviews&&typeof state.reviews==="object")?state.reviews:{};
-      state.reflections=(state.reflections&&typeof state.reflections==="object")?state.reflections:{};
-      state.courses=(state.courses&&typeof state.courses==="object")?state.courses:{};
-      state.courseOverrides=(state.courseOverrides&&typeof state.courseOverrides==="object")?state.courseOverrides:{};
-      state.financeBudget=(state.financeBudget&&typeof state.financeBudget==="object")?state.financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200};
-      state.soundSettings=(state.soundSettings&&typeof state.soundSettings==="object")?state.soundSettings:{volume:0.5,autoPomo:"",autoMed:""};
-      state.shopping=(state.shopping&&typeof state.shopping==="object")?state.shopping:{lists:{default:[]},active:"default"};
-      if(!state.shopping.lists)state.shopping.lists={default:[]};
-      if(!state.shopping.active)state.shopping.active="default";
-      state.bodyData=(state.bodyData&&typeof state.bodyData==="object"&&!Array.isArray(state.bodyData))?state.bodyData:{};
-      state.reminders=Array.isArray(state.reminders)?state.reminders:[];
-      // treeData 类型安全
-      if(!state.treeData||typeof state.treeData!=="object"||Array.isArray(state.treeData)){
-        state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
-      }
-      if(!state.treeData.history||typeof state.treeData.history!=="object")state.treeData.history={};
-      if(!state.treeData.lastCalcDate)state.treeData.lastCalcDate="";
-      state.onboarded=!!state.onboarded;
-      migrate();
-    }
-  }catch(e){}
+  let p=null;
+  try{const r=localStorage.getItem(STORE_KEY);if(r)p=JSON.parse(r);}catch(e){}
+  // 始终基于默认值初始化，避免空 localStorage / 数据损坏导致 state 字段缺失而崩溃
+  state=Object.assign(stateDefaults(),p||{});
+  // 类型安全修正：防止 localStorage 被外部篡改成错误类型
+  state.entries=(state.entries&&typeof state.entries==="object"&&!Array.isArray(state.entries))?state.entries:{};
+  state.goals=Array.isArray(state.goals)?state.goals:[];
+  state.moods=(state.moods&&typeof state.moods==="object"&&!Array.isArray(state.moods))?state.moods:{};
+  state.inbox=Array.isArray(state.inbox)?state.inbox:[];
+  state.contacts=Array.isArray(state.contacts)?state.contacts:[];
+  state.books=Array.isArray(state.books)?state.books:[];
+  state.countdowns=Array.isArray(state.countdowns)?state.countdowns:[];
+  state.customTags=Array.isArray(state.customTags)?state.customTags:[];
+  state.customQuestions=Array.isArray(state.customQuestions)?state.customQuestions:[];
+  state.projects=Array.isArray(state.projects)?state.projects:[];
+  state.quotes=Array.isArray(state.quotes)?state.quotes:[];
+  state.weeklyPlans=Array.isArray(state.weeklyPlans)?state.weeklyPlans:[];
+  state.notes=Array.isArray(state.notes)?state.notes:[];
+  state.capsules=Array.isArray(state.capsules)?state.capsules:[];
+  state.memos=Array.isArray(state.memos)?state.memos:[];
+  state.alarms=Array.isArray(state.alarms)?state.alarms:[];
+  state.soundPresets=Array.isArray(state.soundPresets)?state.soundPresets:[];
+  state.unlockedAch=Array.isArray(state.unlockedAch)?state.unlockedAch:[];
+  state.metrics=(state.metrics&&typeof state.metrics==="object")?state.metrics:{};
+  state.reviews=(state.reviews&&typeof state.reviews==="object")?state.reviews:{};
+  state.reflections=(state.reflections&&typeof state.reflections==="object")?state.reflections:{};
+  state.courses=(state.courses&&typeof state.courses==="object")?state.courses:{};
+  state.courseOverrides=(state.courseOverrides&&typeof state.courseOverrides==="object")?state.courseOverrides:{};
+  state.financeBudget=(state.financeBudget&&typeof state.financeBudget==="object")?state.financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200};
+  state.soundSettings=(state.soundSettings&&typeof state.soundSettings==="object")?state.soundSettings:{volume:0.5,autoPomo:"",autoMed:""};
+  state.shopping=(state.shopping&&typeof state.shopping==="object")?state.shopping:{lists:{default:[]},active:"default"};
+  if(!state.shopping.lists)state.shopping.lists={default:[]};
+  if(!state.shopping.active)state.shopping.active="default";
+  state.bodyData=(state.bodyData&&typeof state.bodyData==="object"&&!Array.isArray(state.bodyData))?state.bodyData:{};
+  state.reminders=Array.isArray(state.reminders)?state.reminders:[];
+  state.alarmLog=Array.isArray(state.alarmLog)?state.alarmLog:[];
+  // treeData 类型安全
+  if(!state.treeData||typeof state.treeData!=="object"||Array.isArray(state.treeData)){
+    state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+  }
+  if(!state.treeData.history||typeof state.treeData.history!=="object")state.treeData.history={};
+  if(!state.treeData.lastCalcDate)state.treeData.lastCalcDate="";
+  state.onboarded=!!state.onboarded;
+  migrate();
   try{
     const s=localStorage.getItem(SET_KEY);
-    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[]},JSON.parse(s));
+    if(s)settings=Object.assign(settingsDefaults(),JSON.parse(s));
   }catch(e){}
 }
 function saveSettings(){
-  try{localStorage.setItem(SET_KEY,JSON.stringify(settings));return;}
+  // 容量优化：背景图 base64 移出 localStorage、存入 IndexedDB，避免 5MB 配额被图片占满
+  const gallery=settings.bgGallery||[];
+  const shadow=gallery.map(g=>g.data||null);
+  const prev=settings.bgGallery;
+  settings.bgGallery=gallery.map(g=>({name:g.name})); // 仅留名字，data 进 IDB
+  try{localStorage.setItem(SET_KEY,JSON.stringify(settings));}
   catch(e){
-    /* 配额超限：丢弃最旧背景图后重试 */
     try{
-      while(settings.bgGallery&&settings.bgGallery.length){
+      while(settings.bgGallery.length){
         settings.bgGallery.shift();
         if(settings.bg.mode==="photo"&&settings.bg.sel>=settings.bgGallery.length)settings.bg.sel=settings.bgGallery.length-1;
         if(settings.bg.sel<0){settings.bg.mode="gradient";settings.bg.sel=-1;}
-        try{localStorage.setItem(SET_KEY,JSON.stringify(settings));return;}catch(e2){}
+        try{localStorage.setItem(SET_KEY,JSON.stringify(settings));break;}catch(e2){}
       }
     }catch(e3){}
     try{localStorage.setItem(SET_KEY,JSON.stringify({theme:settings.theme,palette:settings.palette}));}catch(e4){}
   }
+  settings.bgGallery=prev; // 还原内存中的完整数据（含 data），供渲染缩略图/应用背景
+  if(idbDB){try{idbSet("bgImgs",shadow);}catch(e){}}
+}
+async function restoreBgImages(){
+  try{
+    if(!idbDB)return;
+    const shadow=await idbGet("bgImgs");
+    if(Array.isArray(shadow)&&settings.bgGallery){
+      settings.bgGallery.forEach((g,i)=>{if(shadow[i]!=null)g.data=shadow[i];});
+    }
+  }catch(e){}
 }
 /* 如果 localStorage 丢失但 IndexedDB 有备份，尝试恢复 */
 async function tryRestoreFromIDB(){
@@ -4771,7 +4829,7 @@ function achievementsHtml(){
 }
 
 /* ============== 白噪音 + 闹钟 ============== */
-let audioCtx=null,masterGain=null,activeNodes=[],currentSound=null,soundTimer=null,soundRemain=0,soundTimerInt=null;
+let audioCtx=null,masterGain=null,activeNodes=[],currentSound=null,soundTimer=null,soundRemain=0,soundTimerInt=null,currentGain=null,soundStopAt=0;
 
 function initAudio(){
   if(audioCtx)return;
@@ -4806,7 +4864,8 @@ function makeNoiseBuffer(type){
 
 function startSound(type){
   initAudio();
-  if(audioCtx.state==="suspended")audioCtx.resume();
+  if(!audioCtx||!masterGain){toast("当前设备暂不支持音频播放");return;}
+  if(audioCtx.state==="suspended"){audioCtx.resume().catch(()=>{});}
   stopSound(true);
   currentSound=type;
   activeNodes=[];
@@ -4815,6 +4874,7 @@ function startSound(type){
   g.gain.linearRampToValueAtTime(1,audioCtx.currentTime+0.5);
   g.connect(masterGain);
   activeNodes.push(g);
+  currentGain=g;
 
   if(type==="white"||type==="pink"||type==="brown"){
     const src=audioCtx.createBufferSource();
@@ -4895,10 +4955,21 @@ function startSound(type){
 
 function stopSound(instant){
   if(!audioCtx)return;
-  activeNodes.forEach(n=>{try{if(n.stop){if(!instant)n.gain&&n.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.3);n.stop(instant?0:0.3);}n.disconnect&&n.disconnect();}catch(e){}});
-  activeNodes=[];
+  const nodes=activeNodes;activeNodes=[];
+  const g=currentGain;currentGain=null;
+  if(instant){
+    nodes.forEach(n=>{try{if(n.stop){try{n.stop(0);}catch(e){}}n.disconnect&&n.disconnect();}catch(e){}});
+  }else{
+    // 先把主增益淡出，避免切歌/停止时的咔哒声，再停源节点
+    try{
+      if(g&&g.gain){g.gain.cancelScheduledValues(audioCtx.currentTime);g.gain.setValueAtTime(g.gain.value,audioCtx.currentTime);g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.35);}
+    }catch(e){}
+    setTimeout(()=>{nodes.forEach(n=>{try{if(n.stop){try{n.stop(0);}catch(e){}}n.disconnect&&n.disconnect();}catch(e){}});},380);
+  }
   currentSound=null;
   if(soundTimerInt){clearInterval(soundTimerInt);soundTimerInt=null;}
+  soundStopAt=0;
+  if(settings.soundPersist){settings.soundPersist=null;try{saveSettings();}catch(e){}}
   soundRemain=0;
   updateSoundIndicator();
 }
@@ -4910,13 +4981,35 @@ function setVolume(v){
 }
 
 function startSoundTimer(minutes){
+  if(!currentSound){toast("请先播放一个音效");return;}
   if(soundTimerInt)clearInterval(soundTimerInt);
   soundRemain=minutes*60;
+  soundStopAt=minutes>0?Date.now()+minutes*60*1000:0;
+  if(minutes>0){try{settings.soundPersist={type:currentSound,stopAt:soundStopAt};saveSettings();}catch(e){}}
   soundTimerInt=setInterval(()=>{
     soundRemain--;
     if(soundRemain<=0){stopSound();toast("⏰ 白噪音定时结束");if(soundTimerInt){clearInterval(soundTimerInt);soundTimerInt=null;}}
     updateSoundIndicator();
   },1000);
+}
+
+/* 刷新后恢复白噪音定时（实际播放仍需点击音效卡恢复，这里恢复倒计时与指示） */
+function restoreSoundTimer(){
+  try{
+    const p=settings.soundPersist;
+    if(p&&p.stopAt&&p.stopAt>Date.now()){
+      soundRemain=Math.round((p.stopAt-Date.now())/1000);
+      currentSound=p.type;
+      updateSoundIndicator();
+      toast("⏱ 白噪音定时已恢复（点音效卡可重新播放）");
+      if(soundTimerInt)clearInterval(soundTimerInt);
+      soundTimerInt=setInterval(()=>{
+        soundRemain--;
+        if(soundRemain<=0){stopSound();toast("⏰ 白噪音定时结束");if(soundTimerInt){clearInterval(soundTimerInt);soundTimerInt=null;}}
+        updateSoundIndicator();
+      },1000);
+    }else if(p){settings.soundPersist=null;try{saveSettings();}catch(e){}}
+  }catch(e){}
 }
 
 function updateSoundIndicator(){
@@ -4953,7 +5046,36 @@ function initAlarms(){
   alarmCheckInt=setInterval(checkAlarms,30000);
   checkAlarms();
 }
+function detectMissedAlarms(){
+  try{
+    state.alarmLog=state.alarmLog||[];
+    const lc=state.lastClosed;
+    if(!lc)return;
+    const now=Date.now();
+    if(now-lc<60000)return; // 离开不足 1 分钟不计入
+    const start=Math.max(lc,now-24*3600*1000); // 最多回看 24h
+    (state.alarms||[]).forEach(a=>{
+      if(!a.enabled)return;
+      const [hh,mm]=a.time.split(":").map(Number);
+      for(let t=start;t<=now;t+=60000){
+        const d=new Date(t);
+        if(d.getHours()!==hh||d.getMinutes()!==mm)continue;
+        const ds=fmtDate(d),td=d.getDay(),isWorkday=td>=1&&td<=5;
+        if(a.repeat==="workdays"&&!isWorkday)continue;
+        if(a.repeat==="once"&&a.triggeredOnce)continue;
+        if(a.lastTriggered===ds)continue;
+        state.alarmLog.unshift({id:a.id,label:a.label,time:a.time,at:t,missed:true});
+        a.lastTriggered=ds;
+        if(a.repeat==="once")a.triggeredOnce=true;
+        break;
+      }
+    });
+    if(state.alarmLog.length>50)state.alarmLog=state.alarmLog.slice(0,50);
+    save();
+  }catch(e){}
+}
 function checkAlarms(){
+  state.alarmLog=state.alarmLog||[];
   const now=new Date();
   const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   const today=now.getDay(); // 0=日
@@ -4974,21 +5096,76 @@ function checkAlarms(){
 function triggerAlarm(a){
   haptic([200,100,200,100,200]);
   if("Notification" in window&&Notification.permission==="granted"){
-    new Notification("⏰ 闹钟："+a.label,{body:"时间到了！点击查看",tag:"alarm-"+a.id});
+    try{new Notification("⏰ 闹钟："+a.label,{body:"时间到了！点击查看",tag:"alarm-"+a.id});}catch(e){}
   }
+  try{
+    state.alarmLog=state.alarmLog||[];
+    state.alarmLog.unshift({id:a.id,label:a.label,time:a.time,at:Date.now(),missed:false});
+    if(state.alarmLog.length>50)state.alarmLog=state.alarmLog.slice(0,50);
+  }catch(e){}
+  showAlarmRing(a);
   toast("⏰ 闹钟："+a.label);
-  // 铃声
-  initAudio();
-  if(audioCtx){
-    const playBell=()=>{
-      const o=audioCtx.createOscillator();const g=audioCtx.createGain();
-      o.type="sine";o.frequency.value=880;
-      g.gain.value=0;g.gain.linearRampToValueAtTime(0.3,audioCtx.currentTime+0.01);
-      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+1.5);
-      o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+1.5);
-    };
-    playBell();setTimeout(playBell,800);setTimeout(playBell,1600);
-  }
+}
+/* 应用内响铃页：保证前台必定可见，支持贪睡/停止，并尝试发声 */
+let _ringInt=null,_ringBellInt=null;
+function showAlarmRing(a){
+  try{
+    if(!audioCtx)initAudio();
+    if(audioCtx&&audioCtx.state==="suspended"){audioCtx.resume().catch(()=>{});}
+  }catch(e){}
+  let root=document.getElementById("alarmRing");
+  if(!root){root=document.createElement("div");root.id="alarmRing";root.className="alarm-ring";document.body.appendChild(root);}
+  const now=new Date();
+  const tstr=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  root.innerHTML=`<div class="ar-flash"></div><div class="ar-inner">
+    <div class="ar-bell">🔔</div>
+    <div class="ar-title">${esc(a.label||"闹钟")}</div>
+    <div class="ar-time">${tstr}</div>
+    <div class="ar-tip">应用已打开，闹钟准时响起</div>
+    <div class="ar-btns">
+      <button class="ar-snooze">😴 贪睡 5 分钟</button>
+      <button class="ar-stop">✅ 停止</button>
+    </div></div>`;
+  root.classList.add("show");
+  const playBell=()=>{try{if(!audioCtx)return;const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type="sine";o.frequency.value=880;g.gain.value=0;g.gain.linearRampToValueAtTime(0.3,audioCtx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+1.2);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+1.3);}catch(e){}};
+  playBell();_ringBellInt=setInterval(playBell,1500);
+  _ringInt=setInterval(()=>{haptic([300,100,300]);},2000);
+  haptic([300,100,300]);
+  const stop=()=>{
+    root.classList.remove("show");
+    if(_ringInt){clearInterval(_ringInt);_ringInt=null;}
+    if(_ringBellInt){clearInterval(_ringBellInt);_ringBellInt=null;}
+  };
+  root.querySelector(".ar-stop").onclick=stop;
+  root.querySelector(".ar-snooze").onclick=()=>{
+    stop();
+    toast("😴 5 分钟后再次提醒");
+    setTimeout(()=>{const cur=(state.alarms||[]).find(x=>x.id===a.id);if(cur&&cur.enabled)triggerAlarm(cur);},5*60000);
+  };
+}
+/* 编辑已有闹钟 */
+function showAlarmEditor(a){
+  let root=document.getElementById("alarmEditorRoot");
+  if(!root){root=document.createElement("div");root.className="overlay";root.id="alarmEditorRoot";root.style.zIndex="320";document.body.appendChild(root);}
+  root.innerHTML=`<div class="panel" style="max-width:360px">
+    <div class="panel-head"><h3>编辑闹钟</h3><button class="btn" data-x>取消</button></div>
+    <div class="panel-body">
+      <div class="li-row" style="margin-bottom:12px"><span style="width:48px;color:var(--muted)">时间</span><input id="aeTime" type="time" class="tl-input" value="${esc(a.time||"07:00")}" style="flex:1"/></div>
+      <div class="li-row" style="margin-bottom:12px"><span style="width:48px;color:var(--muted)">标签</span><input id="aeLabel" class="tl-input" value="${esc(a.label||"闹钟")}" style="flex:1"/></div>
+      <div class="li-row" style="margin-bottom:14px"><span style="width:48px;color:var(--muted)">重复</span><select id="aeRepeat" class="tl-input" style="flex:1"><option value="daily" ${a.repeat==="daily"?"selected":""}>每天</option><option value="workdays" ${a.repeat==="workdays"?"selected":""}>工作日</option><option value="once" ${a.repeat==="once"?"selected":""}>一次</option></select></div>
+      <button class="btn" id="aeSave" style="width:100%">保存</button>
+    </div></div>`;
+  root.classList.remove("hidden");
+  const close=()=>{root.classList.add("hidden");root.innerHTML="";document.removeEventListener("keydown",onKey,true);};
+  function onKey(e){if(e.key==="Escape"){e.preventDefault();close();}}
+  document.addEventListener("keydown",onKey,true);
+  root.querySelector("[data-x]").onclick=close;
+  root.querySelector("#aeSave").onclick=()=>{
+    a.time=root.querySelector("#aeTime").value||a.time;
+    a.label=(root.querySelector("#aeLabel").value||"").trim()||"闹钟";
+    a.repeat=root.querySelector("#aeRepeat").value;
+    save();render();close();toast("已更新闹钟");
+  };
 }
 
 function viewSound(){
@@ -5012,8 +5189,18 @@ function viewSound(){
       <div class="alarm-time">${a.time}</div>
       <div class="alarm-info"><b>${esc(a.label)}</b><span class="alarm-repeat">${{daily:"每天",workdays:"工作日",once:"一次"}[a.repeat]||"每天"}</span></div>
       <div class="alarm-toggle ${a.enabled?"on":""}" data-alarm-toggle="${a.id}">${a.enabled?"开":"关"}</div>
+      <button class="btn-ghost al-edit" data-alarm-edit="${a.id}" title="编辑">✎</button>
       <button class="check-del" data-alarm-del="${a.id}">✕</button>
     </div>`).join(""):`<div class="empty">还没有闹钟</div>`;
+
+  const alarmLog=(state.alarmLog||[]).slice(0,8).map(l=>`
+    <div class="alarm-log-item ${l.missed?"missed":""}">
+      <span>${l.missed?"⚠️ 错过":"🔔 响过"}</span>
+      <b>${esc(l.label||"闹钟")}</b>
+      <span class="al-time">${l.time}</span>
+      <span class="al-when">${l.at?new Date(l.at).toLocaleString("zh-CN",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):""}</span>
+    </div>`).join("");
+  const logHtml=alarmLog?`<div class="section-eyebrow" style="margin-top:14px">📜 响铃记录</div><div class="alarm-log">${alarmLog}</div>`:"";
 
   const presetList=presets.length?presets.map(p=>{
     const s=SOUND_TYPES.find(x=>x.k===p.type);
@@ -5088,7 +5275,8 @@ function viewSound(){
         <button class="btn" data-action="add-alarm">添加</button>
       </div>
       <div class="list" style="margin-top:10px">${alarmList}</div>
-      <p class="section-desc" style="margin-top:8px">闹钟在应用打开时每 30 秒检查一次，到点会推送通知 + 响铃 + 振动。请允许通知权限。</p>
+      ${logHtml}
+      <div class="alarm-hint">⚠️ <b>仅前台生效</b>：iOS 主屏 PWA 切到后台或锁屏后，系统会挂起定时器，闹钟可能不响。请保持应用在前台，或配合系统闹钟使用。点到时会弹出全屏响铃页 + 振动 + 响铃。</div>
     `:""}
   </div>`;
 }
@@ -6269,6 +6457,7 @@ function render(){
   html+=viewTools();
   sc.innerHTML=html;
   bindDateNav();
+  updateSoundIndicator();
 }
 
 /* ============== 交互 ============== */
@@ -6682,6 +6871,11 @@ function onClick(e){
   if(t.dataset.alarmDel!=null){
     state.alarms=state.alarms.filter(x=>x.id!==t.dataset.alarmDel);save();render();return;
   }
+  if(t.dataset.alarmEdit!=null){
+    const a=state.alarms.find(x=>x.id===t.dataset.alarmEdit);
+    if(a)showAlarmEditor(a);
+    return;
+  }
   if(t.dataset.action==="add-alarm"){
     const tm=document.getElementById("alarmTime"),lb=document.getElementById("alarmLabel"),rp=document.getElementById("alarmRepeat");
     if(!tm.value){toast("请选择时间");return;}
@@ -6818,20 +7012,20 @@ function onClick(e){
   }
   /* ---- 课程表 ---- */
   if(t.dataset.action==="add-course" || t.dataset.addCourseSlot!=null){
-    let day,startHint="";
-    if(t.dataset.addCourseSlot){
-      const [d,time]=t.dataset.addCourseSlot.split("|");
-      day=d;startHint=time;
-    }else{
-      day=t.dataset.day;
-    }
-    const name=window.prompt("课程名称：");if(!name)return;
-    const start=window.prompt("开始时间"+(startHint?"（已预填 "+startHint+"）":"")+"：",startHint)||"";if(!start)return;
-    const end=window.prompt("结束时间（如 09:40）：");if(!end)return;
-    const loc=window.prompt("地点（可留空）：")||"";
-    if(!state.courses[day])state.courses[day]=[];
-    state.courses[day].push({id:uid(),name:name.trim(),start:start.trim(),end:end.trim(),loc:loc.trim()});
-    save();render();return;
+    (async()=>{
+      const t0=t;
+      let day,startHint="";
+      if(t0.dataset.addCourseSlot){const [d,time]=t0.dataset.addCourseSlot.split("|");day=d;startHint=time;}
+      else day=t0.dataset.day;
+      const name=await appPrompt("课程名称：");if(!name)return;
+      const start=await appPrompt("开始时间"+(startHint?"（已预填 "+startHint+"）":"")+"：",startHint);if(!start)return;
+      const end=await appPrompt("结束时间（如 09:40）：");if(!end)return;
+      const loc=await appPrompt("地点（可留空）：");
+      if(!state.courses[day])state.courses[day]=[];
+      state.courses[day].push({id:uid(),name:name.trim(),start:start.trim(),end:end.trim(),loc:(loc||"").trim()});
+      save();render();toast("已添加课程");
+    })();
+    return;
   }
   if(t.dataset.courseDel!=null){
     // 二次确认：首次点击提示，3秒内再点才删除
@@ -7309,7 +7503,7 @@ function bindBgControls(){
       if(!files.length)return;
       for(const f of files){
         try{
-          const data=await compressImage(f,1600,0.82);
+          const data=await compressImage(f,1280,0.75);
           settings.bgGallery.push({name:f.name?f.name.replace(/\.[^.]+$/,""):("图"+(settings.bgGallery.length+1)),data:data});
         }catch(e){toast("这张图片读取失败，换一张试试");}
       }
@@ -8392,7 +8586,11 @@ function openData(){
   <p class="data-note" style="margin-top:14px">⚠️ 选择性删除：</p>
   <div class="data-row"><button class="btn-ghost" id="delDay">删除单日</button><input type="date" id="delDayD" value="${currentDate}"/></div>
   <div class="data-row"><button class="btn-ghost" id="delAll" style="color:var(--warn)">清空全部数据</button></div>
-  <p class="warn-text">删除与清空不可恢复，请先导出备份。</p>`;
+  <p class="warn-text">删除与清空不可恢复，请先导出备份。</p>
+  <p class="data-note" style="margin-top:14px">🤖 AI 智能报告（需先在 AI 助手配置 DeepSeek key）：</p>
+  <div class="data-row"><button class="btn" id="aiWeek">📅 周报</button><button class="btn" id="aiMonth">📆 月报</button><button class="btn" id="aiReview">🪞 复盘</button><button class="btn" id="aiInsight">💡 跨模块洞察</button></div>
+  <p class="data-note" style="margin-top:14px">☁️ 云端同步（GitHub 私有仓库，需 token，仅本地保存）：</p>
+  <div class="data-row"><button class="btn" id="ghPush">⬆️ 上传备份</button><button class="btn-ghost" id="ghPull">⬇️ 下载恢复</button></div>`;
  document.getElementById("expDay").onclick=()=>{const d=document.getElementById("expDayD").value;if(!state.entries[d]){toast("该日无数据");return;}download(`life_${d}.json`,JSON.stringify({date:d,entry:state.entries[d]},null,2));};
  document.getElementById("expAll").onclick=()=>download(`life_backup_${fmtDate(new Date())}.json`,JSON.stringify(state,null,2));
  document.getElementById("impBtn").onclick=()=>document.getElementById("impFile").click();
@@ -8402,8 +8600,14 @@ function openData(){
    if(ok){save();render();toast("已从 IndexedDB 恢复");document.getElementById("dataOverlay").classList.add("hidden");}
    else toast("IndexedDB 无备份可用");
  };
- document.getElementById("delDay").onclick=()=>{const d=document.getElementById("delDayD").value;if(!state.entries[d]){toast("该日无数据");return;}if(!confirm("删除 "+d+" 的全部数据？"))return;delete state.entries[d];save();render();toast("已删除");};
- document.getElementById("delAll").onclick=()=>{if(!confirm("清空全部数据？"))return;localStorage.removeItem(STORE_KEY);state={entries:{},contacts:[],books:[],countdowns:[{id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now()},{id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now()}],customTags:[]};save();render();toast("已清空");};
+ document.getElementById("delDay").onclick=async()=>{const d=document.getElementById("delDayD").value;if(!state.entries[d]){toast("该日无数据");return;}if(!(await appConfirm("删除 "+d+" 的全部数据？",{danger:true,okText:"删除"})))return;delete state.entries[d];save();render();toast("已删除");};
+ document.getElementById("delAll").onclick=async()=>{if(!(await appConfirm("清空全部数据？此操作不可恢复！",{danger:true,okText:"清空"})))return;localStorage.removeItem(STORE_KEY);try{idbSet("state",null);}catch(e){}load();render();toast("已清空");};
+ document.getElementById("aiWeek").onclick=()=>aiReport("week");
+ document.getElementById("aiMonth").onclick=()=>aiReport("month");
+ document.getElementById("aiReview").onclick=()=>aiReport("review");
+ document.getElementById("aiInsight").onclick=()=>aiReport("insight");
+ document.getElementById("ghPush").onclick=()=>githubSyncPush();
+ document.getElementById("ghPull").onclick=()=>githubSyncPull();
  document.getElementById("notifToggle").onclick=()=>{
    if(settings.notifEnabled){
      settings.notifEnabled=false;saveSettings();
@@ -8417,8 +8621,36 @@ function openData(){
  };
  document.getElementById("dataOverlay").classList.remove("hidden");
 }
+function githubSyncPush(){
+  (async()=>{
+    let token=settings.githubToken||"";
+    if(!token){token=await appPrompt("粘贴你的 GitHub Token（需 repo 权限；仅存本地，用于私有云同步）");if(!token)return;settings.githubToken=token;saveSettings();}
+    try{
+      const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
+      const content=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      let sha=null;
+      try{const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});if(r.ok){const j=await r.json();sha=j.sha;}}catch(e){}
+      const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify({message:"life-workbench auto backup "+new Date().toISOString(),content:content,sha:sha||undefined})});
+      if(r.ok)toast("☁️ 已同步到 GitHub 私有仓库");else toast("同步失败："+r.status);
+    }catch(e){toast("同步失败："+(e&&e.message||e));}
+  })();
+}
+function githubSyncPull(){
+  (async()=>{
+    let token=settings.githubToken||"";
+    if(!token){token=await appPrompt("粘贴你的 GitHub Token");if(!token)return;settings.githubToken=token;saveSettings();}
+    try{
+      const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
+      const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});
+      if(!r.ok){toast("云端没有备份");return;}
+      const j=await r.json();const txt=decodeURIComponent(escape(atob(j.content)));const d=JSON.parse(txt);
+      if(!(await appConfirm("用云端备份覆盖当前数据？",{danger:true,okText:"覆盖"})))return;
+      state=Object.assign(stateDefaults(),d);save();render();toast("已从云端恢复");
+    }catch(e){toast("恢复失败："+(e&&e.message||e));}
+  })();
+}
 function download(name,content){const b=new Blob([content],{type:"application/json;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
-function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!confirm("导入将覆盖当前全部数据，确定？"))return;state=Object.assign({entries:{},contacts:[],books:[],countdowns:[],customTags:[]},d);state.entries=state.entries||{};state.contacts=state.contacts||[];state.books=state.books||[];state.countdowns=state.countdowns||[];state.customTags=state.customTags||[];save();render();toast("导入成功");}catch(err){toast("导入失败：格式不正确");}};rd.readAsText(f);}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const d=JSON.parse(rd.result);if(!(await appConfirm("导入将覆盖当前全部数据，确定？",{danger:true,okText:"导入覆盖"})))return;state=Object.assign(stateDefaults(),d);state.entries=state.entries||{};state.contacts=state.contacts||[];state.books=state.books||[];state.countdowns=state.countdowns||[];state.customTags=state.customTags||[];save();render();toast("导入成功");}catch(err){toast("导入失败：格式不正确");}};rd.readAsText(f);}
 
 /* ============== 番茄钟 ============== */
 function fmtPomoTime(sec){
@@ -8622,8 +8854,50 @@ function setMedDuration(sec){
 /* ============== Toast ============== */
 let toastT;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.remove("hidden");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add("hidden"),2200);}
 
+/* ===== 应用内弹窗：替代被 iOS 主屏吞掉的原生 confirm/prompt ===== */
+function showAppModal(o){
+  return new Promise((resolve)=>{
+    o=o||{};
+    let root=document.getElementById("appModalRoot");
+    if(!root){root=document.createElement("div");root.id="appModalRoot";document.body.appendChild(root);}
+    const isPrompt=o.type==="prompt";
+    const okText=o.okText||"确定", cancelText=o.cancelText||"取消";
+    root.innerHTML=`<div class="am-backdrop"></div><div class="am-card${o.danger?" am-danger":""}" role="dialog" aria-modal="true">
+      ${o.title?`<div class="am-title">${esc(o.title)}</div>`:""}
+      <div class="am-msg">${esc(o.message||"").replace(/\n/g,"<br>")}</div>
+      ${isPrompt?`<input class="am-input" type="text" value="${esc(o.defaultValue||"")}" placeholder="${esc(o.placeholder||"")}"/>`:""}
+      <div class="am-btns">
+        ${o.hideCancel?"":`<button class="am-cancel btn-ghost">${esc(cancelText)}</button>`}
+        <button class="am-ok btn${o.danger?" am-danger-btn":""}">${esc(okText)}</button>
+      </div></div>`;
+    root.classList.add("am-show");
+    const input=root.querySelector(".am-input");
+    const okBtn=root.querySelector(".am-ok");
+    const cancelBtn=root.querySelector(".am-cancel");
+    const backdrop=root.querySelector(".am-backdrop");
+    function close(val){root.classList.remove("am-show");root.innerHTML="";document.removeEventListener("keydown",onKey,true);resolve(val);}
+    function onKey(e){
+      if(e.key==="Escape"){e.preventDefault();close(isPrompt?null:false);}
+      else if(e.key==="Enter"){e.preventDefault();close(isPrompt?(input?input.value.trim():""):true);}
+    }
+    document.addEventListener("keydown",onKey,true);
+    if(isPrompt&&input){input.focus();input.select();}
+    else okBtn.focus();
+    okBtn.onclick=()=>close(isPrompt?(input?input.value.trim():""):true);
+    if(cancelBtn)cancelBtn.onclick=()=>close(isPrompt?null:false);
+    backdrop.onclick=()=>{if(!o.noBackdropClose)close(isPrompt?null:false);};
+  });
+}
+function appConfirm(message,opts){opts=opts||{};return showAppModal(Object.assign({type:"confirm",message:message},opts));}
+function appPrompt(message,def,opts){opts=opts||{};return showAppModal(Object.assign({type:"prompt",message:message,defaultValue:def||""},opts));}
+
 /* ============== 全局 ============== */
 function bind(){
+ // 命令面板：⌘K / Ctrl+K 或 "/" 唤起全局搜索（跨模块）
+ document.addEventListener("keydown",e=>{
+   if((e.key==="k"||e.key==="K")&&(e.metaKey||e.ctrlKey)){e.preventDefault();const so=document.getElementById("searchOverlay");if(so&&!so.classList.contains("hidden"))closeSearch();else openSearch("");return;}
+   if(e.key==="/"&&!/(input|textarea|select)/i.test((e.target.tagName||""))&&document.activeElement===document.body){e.preventDefault();openSearch("");}
+ });
  document.getElementById("scroll").addEventListener("click",onClick);
  document.getElementById("scroll").addEventListener("input",onInput);
  document.getElementById("scroll").addEventListener("change",onChange);
@@ -8640,6 +8914,16 @@ function bind(){
   document.getElementById("sbOverlay").classList.remove("show");
  });
  bindQuickCapture();
+ // 首次手势解锁音频（绕过 iOS 自动播放限制，确保闹钟/白噪音能响）
+ function unlockAudio(){try{if(!audioCtx)initAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();}catch(e){}}
+ document.addEventListener("pointerdown",unlockAudio,{once:true});
+ document.addEventListener("keydown",unlockAudio,{once:true});
+ // 记录离开时间，用于"错过闹钟"检测
+ function markClosed(){try{state.lastClosed=Date.now();_doSave();}catch(e){}}
+ window.addEventListener("pagehide",markClosed);
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")markClosed();});
+ // 启动时检测关闭期间错过的闹钟
+ detectMissedAlarms();
  document.querySelectorAll("[data-top]").forEach(el=>el.addEventListener("click",()=>{
   const a=el.dataset.top;
   if(a==="search")openSearch("");
@@ -9590,9 +9874,9 @@ MODULE_ACTIONS["rm-toggle"] = function(t){
   toast(r.enabled ? "✅ 已启用提醒" : "⏸ 已停用提醒");
 };
 
-MODULE_ACTIONS["rm-del"] = function(t){
+MODULE_ACTIONS["rm-del"] = async function(t){
   const id = t.dataset.id;
-  if (!confirm("确定删除这个提醒？")) return;
+  if (!(await appConfirm("确定删除这个提醒？",{danger:true,okText:"删除"}))) return;
   state.reminders = (state.reminders || []).filter(x => x.id !== id);
   save();
   render();
@@ -9914,8 +10198,8 @@ MODULE_ACTIONS["sp-del"]=function(t){
 MODULE_ACTIONS["sp-tab"]=function(t){
   state.shopping.active=t.dataset.list;save();render();
 };
-MODULE_ACTIONS["sp-new"]=function(){
-  const name=prompt("新清单名称（如：超市/文具/数码）");
+MODULE_ACTIONS["sp-new"]=async function(){
+  const name=await appPrompt("新清单名称（如：超市/文具/数码）");
   if(!name||!name.trim())return;
   const k=name.trim();
   if(!state.shopping.lists[k])state.shopping.lists[k]=[];
@@ -10022,6 +10306,8 @@ async function init(){
     const restored=await tryRestoreFromIDB();
     if(restored)toast("已从 IndexedDB 恢复数据");
   }
+  // 从 IndexedDB 恢复背景图 base64（已移出 localStorage 以扩容）
+  await restoreBgImages();
   // 修补可能缺失的倒计时默认
   if(!state.countdowns||state.countdowns.length===0){
    state.countdowns=[
@@ -10037,6 +10323,7 @@ async function init(){
   updateTreeData();
   // 初始化闹钟检查
   initAlarms();
+  restoreSoundTimer();
   // 异步加载单词本
   loadWords();
   // 初始化推送提醒
@@ -10217,7 +10504,7 @@ async function aiSend(text){
   // 拦截：用户要求配置 key
   if(text.includes("配置")&&text.includes("key")){
     aiAddMsg("user",text);
-    const newKey=prompt("请粘贴你的 DeepSeek API key（get → https://platform.deepseek.com/）\n\n说明：key 只存本地 localStorage，刷新不丢失，绝不上传。\n\n如需清除：在控制台运行 localStorage.removeItem('ai_deepseek_key')");
+    const newKey=await appPrompt("请粘贴你的 DeepSeek API key（get → https://platform.deepseek.com/）\n\n说明：key 只存本地 localStorage，刷新不丢失，绝不上传。\n\n如需清除：在控制台运行 localStorage.removeItem('ai_deepseek_key')");
     if(newKey&&newKey.trim()){
       DEEPSEEK_KEY=newKey.trim();
       localStorage.setItem("ai_deepseek_key",DEEPSEEK_KEY);
@@ -10323,6 +10610,38 @@ window.__aiSend=function(){
 };
 
 // 打开 AI 面板（顶栏按钮 + 侧栏入口共用）
+function aiBuildStats(){
+  try{
+    const days=Object.keys(state.entries).sort();
+    const recent=days.slice(-7);
+    let tasks=0,done=0,checks=0,onchecks=0,pomos=0,moods=[],spent=0;
+    recent.forEach(d=>{const e=state.entries[d];if(!e)return;
+      const ts=e.tasks||[];tasks+=ts.length;done+=ts.filter(t=>t&&t.done).length;
+      const cs=e.checks||{};Object.keys(cs).forEach(k=>{checks++;if(cs[k])onchecks++;});
+      if(e.pomos)pomos+=e.pomos;
+      if(e.mood!=null)moods.push(e.mood);
+      if(typeof e.finance==="number")spent+=e.finance;
+    });
+    const avgMood=moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length*10)/10:"—";
+    return `记录天数:${days.length} | 近7天:${recent.length}\n任务总数:${tasks} 已完成:${done}\n打卡项:${checks} 已完成:${onchecks}\n番茄数:${pomos}\n平均心情(1-5):${avgMood}\n近7天账目支出:${spent}`;
+  }catch(e){return "（数据统计失败）";}
+}
+function aiReport(type){
+  try{
+    const promptMap={
+      week:"请根据我本周（最近7天）的记录生成一份周报，包含：完成的事、坚持的习惯、情绪波动、番茄专注时长、账目概况，并给出下周的小建议。",
+      month:"请根据我本月的记录生成月度复盘，包含趋势、亮点、不足与下月改进方向。",
+      review:"请基于我的全部记录做一次深度复盘：我在哪些事上最投入？哪些目标在推进？情绪与专注的关系如何？给出真诚的观察。",
+      insight:"请跨模块分析我的数据：运动/练声日 vs 其他日的心情与专注差异、超预算信号、睡眠与效率关联，给出 3 条可执行洞察。"
+    };
+    const prompt=(promptMap[type]||promptMap.week)+"\n\n【我的数据摘要】\n"+aiBuildStats();
+    openAIPanel();
+    const inp=document.getElementById("aiInput");
+    if(inp)inp.value=prompt;
+    if(window.__aiSend)window.__aiSend();else aiSend(prompt);
+    toast("正在生成 AI 报告…");
+  }catch(e){toast("生成报告失败");}
+}
 function openAIPanel(){
   const panel=document.getElementById("aiPanel");
   if(!panel)return;
