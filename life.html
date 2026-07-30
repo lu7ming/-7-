@@ -1952,6 +1952,7 @@ function save(immediate){
 }
 function _doSave(){
   try{
+    state._savedAt=Date.now(); // 记录本地最后保存时间，供云同步冲突检测
     const json=JSON.stringify(state);
     localStorage.setItem(STORE_KEY,json);
     idbSet("state",json); // 异步备份到 IndexedDB
@@ -1960,6 +1961,10 @@ function _doSave(){
     try{idbSet("state",JSON.stringify(state));toast("存储空间告急，已备份到 IndexedDB");}catch(e2){toast("保存失败：空间已满");}
   }
   bumpDataVersion();
+  // 自动云同步：保存后 30 秒防抖推送（iOS 后台会挂起定时器，pagehide 时兜底补全）
+  if(settings.cloud&&settings.cloud.autoSync&&settings.githubToken){
+    scheduleCloudPush();
+  }
 }
 function stateDefaults(){
   return {
@@ -1972,7 +1977,7 @@ function stateDefaults(){
   };
 }
 function settingsDefaults(){
-  return {theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[],soundPersist:null};
+  return {theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[],soundPersist:null,cloud:{autoSync:false,lastPush:0,lastPull:0}};
 }
 function load(){
   let p=null;
@@ -8590,6 +8595,8 @@ function openData(){
   <p class="data-note" style="margin-top:14px">🤖 AI 智能报告（需先在 AI 助手配置 DeepSeek key）：</p>
   <div class="data-row"><button class="btn" id="aiWeek">📅 周报</button><button class="btn" id="aiMonth">📆 月报</button><button class="btn" id="aiReview">🪞 复盘</button><button class="btn" id="aiInsight">💡 跨模块洞察</button></div>
   <p class="data-note" style="margin-top:14px">☁️ 云端同步（GitHub 私有仓库，需 token，仅本地保存）：</p>
+  <div class="data-row"><span style="font-size:13px;font-weight:600;color:var(--ink)">自动后台同步</span><button class="${(settings.cloud&&settings.cloud.autoSync)?"btn":"btn-ghost"}" id="ghAuto" style="margin-left:auto">${(settings.cloud&&settings.cloud.autoSync)?"已开启 ✅":"开启自动"}</button></div>
+  <p class="data-note" id="ghStatus" style="margin-top:4px">${cloudStatusText()}</p>
   <div class="data-row"><button class="btn" id="ghPush">⬆️ 上传备份</button><button class="btn-ghost" id="ghPull">⬇️ 下载恢复</button></div>`;
  document.getElementById("expDay").onclick=()=>{const d=document.getElementById("expDayD").value;if(!state.entries[d]){toast("该日无数据");return;}download(`life_${d}.json`,JSON.stringify({date:d,entry:state.entries[d]},null,2));};
  document.getElementById("expAll").onclick=()=>download(`life_backup_${fmtDate(new Date())}.json`,JSON.stringify(state,null,2));
@@ -8608,6 +8615,16 @@ function openData(){
  document.getElementById("aiInsight").onclick=()=>aiReport("insight");
  document.getElementById("ghPush").onclick=()=>githubSyncPush();
  document.getElementById("ghPull").onclick=()=>githubSyncPull();
+ document.getElementById("ghAuto").onclick=async()=>{
+   if(settings.cloud&&settings.cloud.autoSync){
+     settings.cloud.autoSync=false;saveSettings();openData();toast("已关闭自动同步");
+   }else{
+     let token=settings.githubToken||"";
+     if(!token){token=await appPrompt("粘贴你的 GitHub Token（需 repo 权限；仅存本地，用于私有云同步）");if(!token){openData();return;}settings.githubToken=token;saveSettings();}
+     settings.cloud.autoSync=true;saveSettings();openData();toast("已开启自动同步，保存后将自动上传");
+     cloudAutoPull(); // 开启后立即拉取一次，建立同步基线
+   }
+ };
  document.getElementById("notifToggle").onclick=()=>{
    if(settings.notifEnabled){
      settings.notifEnabled=false;saveSettings();
@@ -8625,14 +8642,7 @@ function githubSyncPush(){
   (async()=>{
     let token=settings.githubToken||"";
     if(!token){token=await appPrompt("粘贴你的 GitHub Token（需 repo 权限；仅存本地，用于私有云同步）");if(!token)return;settings.githubToken=token;saveSettings();}
-    try{
-      const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
-      const content=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-      let sha=null;
-      try{const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});if(r.ok){const j=await r.json();sha=j.sha;}}catch(e){}
-      const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify({message:"life-workbench auto backup "+new Date().toISOString(),content:content,sha:sha||undefined})});
-      if(r.ok)toast("☁️ 已同步到 GitHub 私有仓库");else toast("同步失败："+r.status);
-    }catch(e){toast("同步失败："+(e&&e.message||e));}
+    await doCloudPush({});
   })();
 }
 function githubSyncPull(){
@@ -8640,15 +8650,89 @@ function githubSyncPull(){
     let token=settings.githubToken||"";
     if(!token){token=await appPrompt("粘贴你的 GitHub Token");if(!token)return;settings.githubToken=token;saveSettings();}
     try{
-      const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
-      const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});
-      if(!r.ok){toast("云端没有备份");return;}
-      const j=await r.json();const txt=decodeURIComponent(escape(atob(j.content)));const d=JSON.parse(txt);
+      const remote=await fetchCloudRemote();
+      if(!remote){toast("云端没有备份");return;}
       if(!(await appConfirm("用云端备份覆盖当前数据？",{danger:true,okText:"覆盖"})))return;
-      state=Object.assign(stateDefaults(),d);save();render();toast("已从云端恢复");
+      applyRemote(remote.data,remote._savedAt);toast("已从云端恢复");
     }catch(e){toast("恢复失败："+(e&&e.message||e));}
   })();
 }
+/* 自动云同步：保存后 30 秒防抖推送（iOS 后台会挂起定时器，pagehide 时兜底补全） */
+let _cloudPushTimer=null;
+function scheduleCloudPush(){
+  clearTimeout(_cloudPushTimer);
+  _cloudPushTimer=setTimeout(()=>{_cloudPushTimer=null;doCloudPush({silent:true});},30000);
+}
+async function doCloudPush(opts){
+  opts=opts||{};
+  try{
+    const token=settings.githubToken||"";
+    if(!token)return;
+    const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
+    state._savedAt=state._savedAt||Date.now();
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    let sha=opts.sha||null;
+    if(!sha){try{const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});if(r.ok){const j=await r.json();sha=j.sha;}}catch(e){}}
+    const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{method:"PUT",headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:JSON.stringify({message:"life-workbench auto backup "+new Date().toISOString(),content:content,sha:sha||undefined})});
+    if(r.ok){settings.cloud.lastPush=state._savedAt;saveSettings();if(!opts.silent)toast("☁️ 已同步到 GitHub 私有仓库");}
+    else if(!opts.silent)toast("同步失败："+r.status);
+  }catch(e){if(!opts.silent)toast("同步失败："+(e&&e.message||e));}
+}
+async function fetchCloudRemote(){
+  const owner="lu7ming",repo="-7-",path="life_backup/life_data_v1.json";
+  const token=settings.githubToken||"";
+  if(!token)return null;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"}});
+    if(!r.ok)return null;
+    const j=await r.json();
+    const data=JSON.parse(decodeURIComponent(escape(atob(j.content))));
+    return {data:data,sha:j.sha,_savedAt:data._savedAt||0};
+  }catch(e){return null;}
+}
+function applyRemote(data,remoteSavedAt){
+  state=Object.assign(stateDefaults(),data);
+  state._savedAt=remoteSavedAt||data._savedAt||Date.now();
+  settings.cloud.lastPull=Date.now();
+  settings.cloud.lastPush=state._savedAt; // 拉取后与云端一致，更新同步基准
+  saveSettings();
+  // 直接落盘，避免 save() 重写 _savedAt 破坏同步时间戳
+  const json=JSON.stringify(state);
+  try{localStorage.setItem(STORE_KEY,json);}catch(e){}
+  try{idbSet("state",json);}catch(e){}
+  bumpDataVersion();
+  render();
+}
+async function cloudAutoPull(){
+  try{
+    if(!(settings.cloud&&settings.cloud.autoSync))return;
+    const remote=await fetchCloudRemote();
+    if(!remote){await doCloudPush({silent:true});return;} // 云端暂无备份 → 推本地建立基线
+    if(remote._savedAt<=settings.cloud.lastPush){settings.cloud.lastPull=Date.now();saveSettings();return;} // 云端无更新
+    const localUnsynced=(state._savedAt||0)>settings.cloud.lastPush; // 本机自上次同步后改过
+    if(localUnsynced){
+      const choice=await showAppModal({
+        title:"☁️ 云端同步冲突",
+        message:"云端有更新的备份，且与本机未同步的修改冲突。用哪个版本？\n• 用云端备份：以 GitHub 备份为准（覆盖本机）\n• 保留本地：把本机修改推上去覆盖云端",
+        buttons:[
+          {text:"用云端备份",value:"cloud"},
+          {text:"保留本地",value:"local",danger:true},
+          {text:"暂不处理",value:"cancel",ghost:true}
+        ]
+      });
+      if(choice==="cloud"){applyRemote(remote.data,remote._savedAt);toast("已用云端备份覆盖本机");}
+      else if(choice==="local"){await doCloudPush({silent:true,sha:remote.sha});toast("已用本机覆盖云端");}
+    }else{
+      applyRemote(remote.data,remote._savedAt);toast("已从云端同步最新备份");
+    }
+  }catch(e){console.error("[cloudAutoPull]",e);}
+}
+function cloudStatusText(){
+  const c=settings.cloud||{autoSync:false,lastPush:0,lastPull:0};
+  if(!c.autoSync)return "自动同步关闭：仅可手动 ⬆️/⬇️。";
+  return "自动同步已开启"+(c.lastPush?(" · 上次上传 "+fmtAgo(c.lastPush)):" · 尚未上传")+(c.lastPull?(" · 上次拉取 "+fmtAgo(c.lastPull)):"");
+}
+function fmtAgo(ts){if(!ts)return"";const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+"秒前";if(s<3600)return Math.floor(s/60)+"分钟前";if(s<86400)return Math.floor(s/3600)+"小时前";return Math.floor(s/86400)+"天前";}
 function download(name,content){const b=new Blob([content],{type:"application/json;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const d=JSON.parse(rd.result);if(!(await appConfirm("导入将覆盖当前全部数据，确定？",{danger:true,okText:"导入覆盖"})))return;state=Object.assign(stateDefaults(),d);state.entries=state.entries||{};state.contacts=state.contacts||[];state.books=state.books||[];state.countdowns=state.countdowns||[];state.customTags=state.customTags||[];save();render();toast("导入成功");}catch(err){toast("导入失败：格式不正确");}};rd.readAsText(f);}
 
@@ -8862,13 +8946,15 @@ function showAppModal(o){
     if(!root){root=document.createElement("div");root.id="appModalRoot";document.body.appendChild(root);}
     const isPrompt=o.type==="prompt";
     const okText=o.okText||"确定", cancelText=o.cancelText||"取消";
+    // 多选按钮模式（如云端同步冲突：用云端 / 保留本地 / 暂不处理）
+    const choiceBtns=Array.isArray(o.buttons)?o.buttons.map((b,i)=>({text:String(b.text),value:(b.value===undefined?i:b.value),danger:!!b.danger,ghost:!!b.ghost})):null;
     root.innerHTML=`<div class="am-backdrop"></div><div class="am-card${o.danger?" am-danger":""}" role="dialog" aria-modal="true">
       ${o.title?`<div class="am-title">${esc(o.title)}</div>`:""}
       <div class="am-msg">${esc(o.message||"").replace(/\n/g,"<br>")}</div>
       ${isPrompt?`<input class="am-input" type="text" value="${esc(o.defaultValue||"")}" placeholder="${esc(o.placeholder||"")}"/>`:""}
       <div class="am-btns">
-        ${o.hideCancel?"":`<button class="am-cancel btn-ghost">${esc(cancelText)}</button>`}
-        <button class="am-ok btn${o.danger?" am-danger-btn":""}">${esc(okText)}</button>
+        ${choiceBtns?choiceBtns.map((b,i)=>`<button class="am-choice btn${b.danger?" am-danger-btn":""}${b.ghost?" btn-ghost":""}" data-i="${i}">${esc(b.text)}</button>`).join("")
+          :(o.hideCancel?"":`<button class="am-cancel btn-ghost">${esc(cancelText)}</button>`)+`<button class="am-ok btn${o.danger?" am-danger-btn":""}">${esc(okText)}</button>`}
       </div></div>`;
     root.classList.add("am-show");
     const input=root.querySelector(".am-input");
@@ -8878,14 +8964,18 @@ function showAppModal(o){
     function close(val){root.classList.remove("am-show");root.innerHTML="";document.removeEventListener("keydown",onKey,true);resolve(val);}
     function onKey(e){
       if(e.key==="Escape"){e.preventDefault();close(isPrompt?null:false);}
-      else if(e.key==="Enter"){e.preventDefault();close(isPrompt?(input?input.value.trim():""):true);}
+      else if(e.key==="Enter"&&!choiceBtns){e.preventDefault();close(isPrompt?(input?input.value.trim():""):true);}
     }
     document.addEventListener("keydown",onKey,true);
     if(isPrompt&&input){input.focus();input.select();}
-    else okBtn.focus();
-    okBtn.onclick=()=>close(isPrompt?(input?input.value.trim():""):true);
-    if(cancelBtn)cancelBtn.onclick=()=>close(isPrompt?null:false);
-    backdrop.onclick=()=>{if(!o.noBackdropClose)close(isPrompt?null:false);};
+    else if(!choiceBtns&&okBtn) okBtn.focus();
+    if(choiceBtns){
+      root.querySelectorAll(".am-choice").forEach(btn=>{btn.onclick=()=>close(choiceBtns[+btn.dataset.i].value);});
+    }else{
+      okBtn.onclick=()=>close(isPrompt?(input?input.value.trim():""):true);
+      if(cancelBtn)cancelBtn.onclick=()=>close(isPrompt?null:false);
+      backdrop.onclick=()=>{if(!o.noBackdropClose)close(isPrompt?null:false);};
+    }
   });
 }
 function appConfirm(message,opts){opts=opts||{};return showAppModal(Object.assign({type:"confirm",message:message},opts));}
@@ -8919,7 +9009,7 @@ function bind(){
  document.addEventListener("pointerdown",unlockAudio,{once:true});
  document.addEventListener("keydown",unlockAudio,{once:true});
  // 记录离开时间，用于"错过闹钟"检测
- function markClosed(){try{state.lastClosed=Date.now();_doSave();}catch(e){}}
+ function markClosed(){try{state.lastClosed=Date.now();_doSave();}catch(e){}try{if(_cloudPushTimer){clearTimeout(_cloudPushTimer);_cloudPushTimer=null;doCloudPush({silent:true});}}catch(e){}}
  window.addEventListener("pagehide",markClosed);
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")markClosed();});
  // 启动时检测关闭期间错过的闹钟
@@ -10336,6 +10426,8 @@ async function init(){
   setInterval(()=>{renderTop();},60000);
   // 启动时检查是否需要自动备份
   setTimeout(()=>{try{autoBackupCheck();}catch(e){}},3000);
+  // 自动云同步：启动后拉取云端（若已开启自动同步）
+  setTimeout(()=>{try{cloudAutoPull();}catch(e){}},4000);
  // 注册 Service Worker（file:// 协议下不会注册，安全失败）
  if("serviceWorker" in navigator){
    try{
