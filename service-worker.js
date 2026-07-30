@@ -1,7 +1,7 @@
 /* 鹿7铭 · 人生工作台 Service Worker
  * 策略：HTML 文档 network-first（保证更新生效），静态资源 cache-first（离线可用）
  */
-const CACHE = "life-workbench-v3"; // v3: 更换图标（萨摩耶）
+const CACHE = "life-workbench-v4"; // v4: 导航请求绕过缓存，支持应用内"立即更新"
 const SHELL = "./life.html";
 const ASSETS = [
   "./manifest.json",
@@ -56,7 +56,7 @@ self.addEventListener("fetch", (e) => {
   // HTML 文档：network-first → 保证用户始终拿到最新版本
   if (isNavigate) {
     e.respondWith(
-      fetch(req).then((res) => {
+      fetch(req, { cache: "reload" }).then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(target, copy)).catch(() => {});
@@ -84,3 +84,8 @@ self.addEventListener("fetch", (e) => {
 
 self.addEventListener("error", (e) => { console.error("[SW] error", e); });
 self.addEventListener("unhandledrejection", (e) => { console.error("[SW] unhandledrejection", e.reason); });
+
+// 收到页面"立即更新"指令后，跳过等待、立即激活新版本
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+});
