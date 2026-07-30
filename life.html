@@ -9501,7 +9501,13 @@ ${JSON.stringify(ctx,null,2)}
 2. 基于真实数据分析，不要编造数据里没有的东西
 3. 给建议要具体可执行，不要空话
 4. 如果用户要求"记一笔/加提醒/加目标/加购物"等录入操作，只回复纯 JSON（不要 markdown 代码块、不要多余文字）：{"action":"record","type":"finance|reminder|goal|shopping|body","data":{...}}
-   - finance: data={cat:"餐饮|学习|娱乐|交通|其他",amount:数字,note:"说明"}（cat 必须是这5个之一，根据用户描述判断：吃饭/咖啡/外卖→餐饮，书/课→学习，玩乐→娱乐，出行→交通，其他→其他）
+   - finance: data={cat:"餐饮|学习|娱乐|交通|其他",amount:数字,note:"物品或场景"}（强制规则：cat 必须是这5个之一）
+     * 餐饮：明确提到食物/饮料/餐/饭/菜/水果/咖啡/奶茶/外卖/早餐/午餐/晚餐/夜宵/零食
+     * 学习：明确提到书/课/培训/学费/文具/订阅/课程/讲座/考试/资料
+     * 娱乐：明确提到电影/游戏/演出/旅游/景点/ktv/酒吧/聚会/玩具/手办/会员
+     * 交通：明确提到打车/地铁/公交/加油/停车/高铁/机票/油费/过路费/骑车/共享单车
+     * 其他：购物/购买/买/杂项/水电/房租/医疗/日用品/无明确类别的
+     * 重要：如果描述含糊（比如只说"花了30元"），优先归"其他"，note 里写明用途；不要强行猜
    - shopping: data={name:"物品名",qty:"数量或单位"}
    - reminder: data={title:"标题",date:"YYYY-MM-DD(可选)",time:"HH:MM(可选)",type:"once|daily|weekly",intervalMin:分钟数(仅type非once时)}
    - goal: data={title:"目标",level:"annual|quarter|month"}
