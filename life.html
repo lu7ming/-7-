@@ -1780,25 +1780,43 @@ function load(){
         ],
         customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[]
       },p);
-      state.entries=state.entries||{};
-      state.contacts=state.contacts||[];
-      state.books=state.books||[];
-      state.countdowns=state.countdowns||[];
-      state.customTags=state.customTags||[];
-      state.customQuestions=state.customQuestions||[];
-      state.metrics=state.metrics||{};
-      state.reviews=state.reviews||{};
-      state.reflections=state.reflections||{};
-      state.capsules=state.capsules||[];
-      state.courses=state.courses||{};
-      state.courseOverrides=state.courseOverrides||{};
-      state.projects=state.projects||[];
+      // 类型安全修正：防止 localStorage 被外部篡改成错误类型
+      const obj=()=>({}),arr=()=>[];
+      state.entries=(state.entries&&typeof state.entries==="object"&&!Array.isArray(state.entries))?state.entries:{};
+      state.contacts=Array.isArray(state.contacts)?state.contacts:[];
+      state.books=Array.isArray(state.books)?state.books:[];
+      state.countdowns=Array.isArray(state.countdowns)?state.countdowns:[];
+      state.customTags=Array.isArray(state.customTags)?state.customTags:[];
+      state.customQuestions=Array.isArray(state.customQuestions)?state.customQuestions:[];
+      state.goals=Array.isArray(state.goals)?state.goals:[];
+      state.projects=Array.isArray(state.projects)?state.projects:[];
+      state.quotes=Array.isArray(state.quotes)?state.quotes:[];
+      state.weeklyPlans=Array.isArray(state.weeklyPlans)?state.weeklyPlans:[];
+      state.notes=Array.isArray(state.notes)?state.notes:[];
+      state.capsules=Array.isArray(state.capsules)?state.capsules:[];
+      state.memos=Array.isArray(state.memos)?state.memos:[];
+      state.alarms=Array.isArray(state.alarms)?state.alarms:[];
+      state.soundPresets=Array.isArray(state.soundPresets)?state.soundPresets:[];
+      state.unlockedAch=Array.isArray(state.unlockedAch)?state.unlockedAch:[];
+      state.metrics=(state.metrics&&typeof state.metrics==="object")?state.metrics:{};
+      state.reviews=(state.reviews&&typeof state.reviews==="object")?state.reviews:{};
+      state.reflections=(state.reflections&&typeof state.reflections==="object")?state.reflections:{};
+      state.courses=(state.courses&&typeof state.courses==="object")?state.courses:{};
+      state.courseOverrides=(state.courseOverrides&&typeof state.courseOverrides==="object")?state.courseOverrides:{};
+      state.financeBudget=(state.financeBudget&&typeof state.financeBudget==="object")?state.financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200};
+      state.soundSettings=(state.soundSettings&&typeof state.soundSettings==="object")?state.soundSettings:{volume:0.5,autoPomo:"",autoMed:""};
+      state.shopping=(state.shopping&&typeof state.shopping==="object")?state.shopping:{lists:{default:[]},active:"default"};
+      if(!state.shopping.lists)state.shopping.lists={default:[]};
+      if(!state.shopping.active)state.shopping.active="default";
+      state.bodyData=(state.bodyData&&typeof state.bodyData==="object"&&!Array.isArray(state.bodyData))?state.bodyData:{};
+      state.reminders=Array.isArray(state.reminders)?state.reminders:[];
+      // treeData 类型安全
+      if(!state.treeData||typeof state.treeData!=="object"||Array.isArray(state.treeData)){
+        state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+      }
+      if(!state.treeData.history||typeof state.treeData.history!=="object")state.treeData.history={};
+      if(!state.treeData.lastCalcDate)state.treeData.lastCalcDate="";
       state.onboarded=!!state.onboarded;
-      state.alarms=state.alarms||[];
-      state.soundPresets=state.soundPresets||[];
-      state.soundSettings=state.soundSettings||{volume:0.5,autoPomo:"",autoMed:""};
-      state.unlockedAch=state.unlockedAch||[];
-      state.memos=state.memos||[];
       migrate();
     }
   }catch(e){}
