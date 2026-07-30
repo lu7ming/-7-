@@ -1402,6 +1402,36 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .graph-svg-wrap{width:100%;overflow:hidden;}
 .graph-svg{display:block;width:100%;height:auto;max-height:78vh;touch-action:manipulation;}
 .graph-node{cursor:default;}
+
+/* === MODULE CSS: shopping === */
+/* === MODULE CSS: shopping === */
+.shop-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.shop-tab{padding:6px 14px;border-radius:999px;font-size:13px;background:var(--card-soft);color:var(--ink-2);cursor:pointer;border:1px solid var(--line);}
+.shop-tab.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.shop-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line-2);}
+.shop-item:last-child{border-bottom:none;}
+.shop-cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;color:transparent;}
+.shop-cb.on{background:var(--good);border-color:var(--good);color:#fff;}
+.shop-name{flex:1;font-size:14px;}
+.shop-item.done .shop-name{text-decoration:line-through;color:var(--muted);}
+.shop-qty{font-size:12px;color:var(--muted);background:var(--card-soft);padding:2px 8px;border-radius:999px;}
+.shop-del{font-size:16px;color:var(--muted);cursor:pointer;width:24px;text-align:center;}
+.shop-del:active{color:var(--warn);}
+.shop-add{display:flex;gap:8px;margin-bottom:14px;}
+.shop-add input{flex:1;}
+.shop-empty{text-align:center;color:var(--muted);padding:30px 0;font-size:13px;}
+
+/* === MODULE CSS: body === */
+/* === MODULE CSS: body === */
+.body-metric-input{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.body-chart-box{background:var(--card-soft);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+.body-latest{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:14px;}
+.body-latest-item{background:var(--card-soft);border-radius:var(--radius);padding:12px;text-align:center;}
+.body-latest-item .v{font-size:20px;font-weight:700;color:var(--ink);}
+.body-latest-item .l{font-size:11px;color:var(--muted);margin-top:2px;}
+.body-latest-item .d{font-size:10px;color:var(--faint);margin-top:2px;}
+.body-history-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13px;}
+.body-history-row:last-child{border-bottom:none;}
 .graph-node circle{transition:r .18s ease, stroke-width .18s ease, opacity .18s ease; transform-box:fill-box; transform-origin:center;}
 .graph-node:hover circle{stroke-width:3.5; opacity:1;}
 .graph-label{font-size:13px;font-weight:600;fill:var(--ink);pointer-events:none;user-select:none;}
@@ -2485,7 +2515,9 @@ const NAV_ITEMS=[
  {id:"tomgarden",l:"番茄花园",ico:"🌱"},
  {id:"spaced",l:"复习",ico:"🔁"},
  {id:"remind",l:"提醒",ico:"🔔"},
- {id:"graph",l:"图谱",ico:"🕸"}
+ {id:"graph",l:"图谱",ico:"🕸"},
+ {id:"shopping",l:"购物",ico:"🛒"},
+ {id:"body",l:"身体",ico:"⚖️"}
 ];
 function renderTop(){
   const d=parseDate(currentDate);
@@ -5656,6 +5688,8 @@ function render(){
    case"spaced":html=viewSpaced();break;
    case"remind":html=viewRemind();break;
    case"graph":html=viewGraph();break;
+   case"shopping":html=viewShopping();break;
+   case"body":html=viewBody();break;
    default:html=viewHome();
   }
   // 工具区始终追加在最后
@@ -6401,6 +6435,14 @@ function onInput(e){
   if(t.dataset.metric!=null){
     if(!state.metrics[currentDate])state.metrics[currentDate]={};
     state.metrics[currentDate][t.dataset.metric]=t.value?+t.value:"";
+    markSaved();return;
+  }
+  if(t.dataset.body!=null){
+    if(!state.bodyData)state.bodyData={};
+    if(!state.bodyData[currentDate])state.bodyData[currentDate]={};
+    const f=t.dataset.body;
+    if(f==="note"){state.bodyData[currentDate].note=t.value;}
+    else{state.bodyData[currentDate][f]=t.value?(+t.value):"";}
     markSaved();return;
   }
   if(t.dataset.reviewPeriod!=null){
@@ -9008,6 +9050,168 @@ MODULE_ACTIONS["gp-dyn"]=function(){
   save();render();
 };
 
+/* === MODULE JS: shopping === */
+/* === MODULE JS: shopping === */
+/* 购物清单 —— 多清单管理 + 勾选 + 数量 */
+function viewShopping(){
+  state.shopping=state.shopping||{lists:{default:[]},active:"default"};
+  const lists=state.shopping.lists;
+  const active=state.shopping.active||"default";
+  if(!lists[active])lists[active]=[];
+  const items=lists[active];
+  const done=items.filter(i=>i.done).length;
+  const total=items.length;
+
+  const tabHtml=Object.keys(lists).map(k=>
+    `<div class="shop-tab ${k===active?'active':''}" data-mod-action="sp-tab" data-list="${esc(k)}">${esc(k)} (${lists[k].filter(i=>!i.done).length})</div>`
+  ).join("")+`<div class="shop-tab" data-mod-action="sp-new">＋ 新建</div>`;
+
+  const itemHtml=items.length?items.map((it,i)=>
+    `<div class="shop-item ${it.done?'done':''}">
+      <div class="shop-cb ${it.done?'on':''}" data-mod-action="sp-toggle" data-idx="${i}">✓</div>
+      <span class="shop-name">${esc(it.name)}</span>
+      ${it.qty?`<span class="shop-qty">×${esc(it.qty)}</span>`:""}
+      <span class="shop-del" data-mod-action="sp-del" data-idx="${i}">×</span>
+    </div>`
+  ).join(""):`<div class="shop-empty">清单空空如也，加几样要买的东西吧 🛒</div>`;
+
+  return `<div class="card">
+    <div class="section-eyebrow">SHOPPING</div>
+    <div class="section-title">🛒 购物清单</div>
+    <p class="section-desc">日常采购、想买的东西分清单管理。勾选即已购，不打扰、不丢失。</p>
+
+    <div class="shop-tabs">${tabHtml}</div>
+
+    <div class="shop-add">
+      <input class="tl-input" id="spName" placeholder="要买什么…" onkeydown="if(event.key==='Enter')document.querySelector('[data-mod-action=sp-add]').click()"/>
+      <input class="tl-input" id="spQty" placeholder="数量" style="flex:0 0 80px"/>
+      <button class="btn" data-mod-action="sp-add">添加</button>
+    </div>
+
+    ${total?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${done}/${total} 已购 · 剩 ${total-done} 项</div>`:""}
+
+    <div class="list">${itemHtml}</div>
+
+    ${total&&done?`<div style="margin-top:10px"><button class="btn-ghost" data-mod-action="sp-clear">清除已购</button></div>`:""}
+  </div>`;
+}
+MODULE_ACTIONS["sp-add"]=function(){
+  const n=document.getElementById("spName");const q=document.getElementById("spQty");
+  if(!n||!n.value.trim())return;
+  const active=state.shopping.active||"default";
+  state.shopping.lists[active].push({name:n.value.trim(),qty:(q&&q.value.trim())||"",done:false});
+  n.value="";if(q)q.value="";save();render();
+};
+MODULE_ACTIONS["sp-toggle"]=function(t){
+  const i=+t.dataset.idx;const active=state.shopping.active||"default";
+  state.shopping.lists[active][i].done=!state.shopping.lists[active][i].done;
+  save();render();
+};
+MODULE_ACTIONS["sp-del"]=function(t){
+  const i=+t.dataset.idx;const active=state.shopping.active||"default";
+  state.shopping.lists[active].splice(i,1);save();render();
+};
+MODULE_ACTIONS["sp-tab"]=function(t){
+  state.shopping.active=t.dataset.list;save();render();
+};
+MODULE_ACTIONS["sp-new"]=function(){
+  const name=prompt("新清单名称（如：超市/文具/数码）");
+  if(!name||!name.trim())return;
+  const k=name.trim();
+  if(!state.shopping.lists[k])state.shopping.lists[k]=[];
+  state.shopping.active=k;save();render();
+};
+MODULE_ACTIONS["sp-clear"]=function(){
+  const active=state.shopping.active||"default";
+  state.shopping.lists[active]=state.shopping.lists[active].filter(i=>!i.done);
+  save();render();
+};
+
+/* === MODULE JS: body === */
+/* === MODULE JS: body === */
+/* 身体数据追踪 —— 体重/体脂/心率/步数 记录 + 趋势图 */
+function viewBody(){
+  state.bodyData=state.bodyData||{}; // {date:{weight,bodyFat,hr,steps,note}}
+  const today=currentDate;
+  const todayData=state.bodyData[today]||{};
+
+  // 取最近 N 条历史
+  const dates=Object.keys(state.bodyData).sort().reverse();
+  const recent=dates.slice(0,30).reverse();
+
+  // 各指标最新值
+  const latest={};
+  ["weight","bodyFat","hr","steps"].forEach(k=>{
+    for(const d of dates){
+      if(state.bodyData[d]&&state.bodyData[d][k]!=null&&state.bodyData[d][k]!==""){
+        latest[k]={v:state.bodyData[d][k],d:d};break;
+      }
+    }
+  });
+
+  const latestHtml=["weight","bodyFat","hr","steps"].map(k=>{
+    const META={weight:["⚖️ 体重","kg"],bodyFat:["🔥 体脂","%"],hr:["❤️ 心率","bpm"],steps:["👟 步数","步"]};
+    const m=META[k];const l=latest[k];
+    return `<div class="body-latest-item">
+      <div class="v">${l?l.v:"—"}</div>
+      <div class="l">${m[0]} ${l?'<span style="font-size:10px;color:var(--muted)">'+m[1]+'</span>':''}</div>
+      <div class="d">${l?l.d.slice(5):"暂无"}</div>
+    </div>`;
+  }).join("");
+
+  // 体重趋势图（最近 14 天有点子的）
+  const wPts=recent.filter(d=>state.bodyData[d]&&state.bodyData[d].weight).map(d=>({label:d.slice(5),value:+state.bodyData[d].weight}));
+  let wChart="";
+  if(wPts.length>=2){
+    const vals=wPts.map(p=>p.value);const minV=Math.min(...vals)-1,maxV=Math.max(...vals)+1;
+    const W=300,H=120,pad=24,bw=W/Math.max(wPts.length,1);
+    const x=i=>pad+i*bw;
+    const y=v=>H-10-(v-minV)/(maxV-minV||1)*(H-30);
+    const path=wPts.map((p,i)=>(i?"L":"M")+x(i)+","+y(p.value)).join("");
+    const dots=wPts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.value)}" r="3" fill="var(--warm)"/>`).join("");
+    wChart=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:320px;display:block;margin:0 auto">
+      <line x1="${pad}" y1="${H-10}" x2="${W}" y2="${H-10}" stroke="var(--line)"/>
+      <path d="${path}" fill="none" stroke="var(--warm)" stroke-width="2"/>
+      ${dots}
+      ${wPts.map((p,i)=>`<text x="${x(i)}" y="${H-2}" text-anchor="middle" font-size="8" fill="var(--muted)">${p.label}</text>`).join("")}
+    </svg>`;
+  }
+
+  // 历史 5 条
+  const histHtml=dates.slice(0,5).map(d=>{
+    const e=state.bodyData[d];if(!e)return"";
+    const parts=[];
+    if(e.weight)parts.push("⚖️ "+e.weight+"kg");
+    if(e.bodyFat)parts.push("🔥 "+e.bodyFat+"%");
+    if(e.hr)parts.push("❤️ "+e.hr);
+    if(e.steps)parts.push("👟 "+e.steps);
+    if(!parts.length)return"";
+    return `<div class="body-history-row"><span style="color:var(--muted)">${d}</span><span>${parts.join(" · ")}</span></div>`;
+  }).filter(Boolean).join("");
+
+  return `<div class="card">
+    <div class="section-eyebrow">BODY TRACKER</div>
+    <div class="section-title">⚖️ 身体数据</div>
+    <p class="section-desc">记录体重、体脂、心率、步数。看得见的趋势，是坚持的理由。</p>
+
+    <div class="body-latest">${latestHtml}</div>
+
+    <div class="section-eyebrow" style="margin-top:8px">📝 今日记录（${today}）</div>
+    <div class="body-metric-input">
+      <input class="tl-input" type="number" step="0.1" data-body="weight" value="${todayData.weight||""}" placeholder="体重 (kg)"/>
+      <input class="tl-input" type="number" step="0.1" data-body="bodyFat" value="${todayData.bodyFat||""}" placeholder="体脂率 (%)"/>
+      <input class="tl-input" type="number" data-body="hr" value="${todayData.hr||""}" placeholder="静息心率 (bpm)"/>
+      <input class="tl-input" type="number" data-body="steps" value="${todayData.steps||""}" placeholder="步数"/>
+    </div>
+    <textarea class="big-text" rows="2" data-body="note" placeholder="今日身体感受…">${esc(todayData.note||"")}</textarea>
+
+    ${wChart?`<div class="section-eyebrow" style="margin-top:14px">📈 体重趋势（近 ${wPts.length} 次记录）</div>
+    <div class="body-chart-box">${wChart}</div>`:""}
+
+    ${histHtml?`<div class="section-eyebrow" style="margin-top:8px">📋 最近记录</div>
+    <div class="list">${histHtml}</div>`:""}
+  </div>`;
+}
 /* ============== 启动 ============== */
 async function init(){
  try{
