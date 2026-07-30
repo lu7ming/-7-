@@ -350,16 +350,21 @@ body::after{
 .ai-panel .ai-quick button{font-size:12px;padding:5px 12px;border-radius:999px;background:var(--card-soft);
   border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;}
 .ai-panel .ai-quick button:active{transform:scale(.96);}
-.ai-panel .ai-input{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-shrink:0;
+.ai-panel .ai-input{display:flex;gap:8px;align-items:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-shrink:0;
   padding-bottom:max(12px,env(safe-area-inset-bottom));}
 .ai-panel .ai-input textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;
   padding:10px 12px;font-size:14px;background:var(--card);color:var(--ink);outline:none;
   font-family:inherit;line-height:1.5;max-height:100px;}
 .ai-panel .ai-input textarea:focus{border-color:var(--warm);}
-.ai-panel .ai-input button{width:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);
-  font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ai-panel .ai-input button{width:40px;height:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);
+  font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;}
 .ai-panel .ai-input button:active{transform:scale(.95);}
 .ai-panel .ai-input button:disabled{opacity:.5;}
+.ai-panel .ai-input button#aiMicBtn{background:var(--card-soft);color:var(--ink);}
+.ai-panel .ai-input button#aiMicBtn.listening{background:#FF6B6B;color:#fff;animation:pulseMic 1.2s infinite;}
+@keyframes pulseMic{0%{box-shadow:0 0 0 0 rgba(255,107,107,.4);}70%{box-shadow:0 0 0 10px rgba(255,107,107,0);}100%{box-shadow:0 0 0 0 rgba(255,107,107,0);}}
+/* AI 面板打开时隐藏右下角灵感 FAB,避免与发送按钮重叠 */
+.ai-panel.open ~ .qc-fab{display:none;}
 @media(max-width:540px){.ai-panel{width:100vw;}}
 
 /* ---- Common card ---- */
@@ -7384,6 +7389,34 @@ function toggleVoice(){
   try{voiceRec.start();}catch(e){toast("无法启动语音识别");}
 }
 
+/* AI 输入框语音录入 */
+let aiVoiceRec=null,aiVoiceActive=false;
+function toggleAISpeech(){
+  const btn=document.getElementById("aiMicBtn");
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast("当前浏览器不支持语音识别");return;}
+  if(aiVoiceActive){
+    try{aiVoiceRec&&aiVoiceRec.stop();}catch(e){}
+    aiVoiceActive=false;
+    if(btn){btn.classList.remove("listening");btn.textContent="🎤";}
+    return;
+  }
+  aiVoiceRec=new SR();
+  aiVoiceRec.lang="zh-CN";
+  aiVoiceRec.continuous=false;
+  aiVoiceRec.interimResults=false;
+  aiVoiceRec.onstart=()=>{aiVoiceActive=true;if(btn){btn.classList.add("listening");btn.textContent="⏹";}toast("🎤 正在听… 说完自动填入输入框");};
+  aiVoiceRec.onend=()=>{aiVoiceActive=false;if(btn){btn.classList.remove("listening");btn.textContent="🎤";}};
+  aiVoiceRec.onerror=(e)=>{aiVoiceActive=false;if(btn){btn.classList.remove("listening");btn.textContent="🎤";}if(e.error!=="aborted")toast("语音识别失败："+(e.error||"未知错误"));};
+  aiVoiceRec.onresult=(e)=>{
+    const txt=e.results[0][0].transcript;
+    const input=document.getElementById("aiInput");
+    if(input){input.value=(input.value?input.value+" ":"")+txt;input.focus();if(input.oninput)input.oninput();}
+    toast("识别完成："+txt.slice(0,20)+(txt.length>20?"…":""));
+  };
+  try{aiVoiceRec.start();}catch(e){toast("无法启动语音识别");}
+}
+
 /* ============== 本地推送提醒 ============== */
 function initNotifications(){
   if(!("Notification" in window))return;
@@ -10293,6 +10326,8 @@ function openAIPanel(){
   const panel=document.getElementById("aiPanel");
   if(!panel)return;
   panel.classList.add("open");
+  const fab=document.getElementById("quickCaptureBtn");
+  if(fab)fab.style.display="none";
   if(aiMsgs.length===0){
     if(!DEEPSEEK_KEY){
       aiAddMsg("bot","👋 首次使用，需要先配置你的 DeepSeek API key（在设置里填，存本地不外传）");
@@ -10312,10 +10347,16 @@ function openAIPanel(){
     const btn=document.getElementById("aiBtn");
     const close=document.getElementById("aiClose");
     const sendBtn=document.getElementById("aiSendBtn");
+    const micBtn=document.getElementById("aiMicBtn");
     const input=document.getElementById("aiInput");
     if(btn)btn.onclick=openAIPanel;
-    if(close)close.onclick=()=>{if(panel)panel.classList.remove("open");};
+    if(close)close.onclick=()=>{
+      if(panel)panel.classList.remove("open");
+      const fab=document.getElementById("quickCaptureBtn");
+      if(fab)fab.style.display="";
+    };
     if(sendBtn)sendBtn.onclick=window.__aiSend;
+    if(micBtn)micBtn.onclick=toggleAISpeech;
     // 自动高度
     if(input)input.oninput=function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,100)+"px";};
     // 快捷问题
@@ -10347,6 +10388,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   </div>
   <div class="ai-input">
     <textarea id="aiInput" rows="1" placeholder="问我任何事，或让我帮你记录…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.__aiSend&&window.__aiSend();}"></textarea>
+    <button id="aiMicBtn" title="语音输入">🎤</button>
     <button id="aiSendBtn" title="发送">↑</button>
   </div>
 </div>
