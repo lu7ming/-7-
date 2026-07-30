@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>人生工作台 · 方案与进度总览（发扣子用）</title>
+<style>
+  :root{--bg:#0c0f14;--card:rgba(255,255,255,.05);--brd:rgba(255,255,255,.12);--ink:#f3f1ea;--dim:rgba(243,241,234,.6);--acc:#7fd1a3;--warn:#ffcf7a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:linear-gradient(180deg,#0c0f14,#10141c);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.7;padding:22px 16px 80px}
+  .wrap{max-width:820px;margin:0 auto}
+  h1{font-size:26px;font-weight:800;margin-bottom:4px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--brd);border-radius:18px;padding:18px 20px;margin:14px 0;backdrop-filter:blur(8px)}
+  h2{font-size:18px;margin-bottom:10px;color:var(--acc);display:flex;align-items:center;gap:8px}
+  h2 .n{background:var(--acc);color:#08110c;border-radius:8px;font-size:13px;padding:1px 8px;font-weight:800}
+  p,li{font-size:14.5px;color:#e8e6df}
+  ul{margin:6px 0 6px 18px} li{margin:4px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--brd);vertical-align:top}
+  th{color:var(--dim);font-weight:600}
+  .ok{color:var(--acc);font-weight:700} .wait{color:var(--warn);font-weight:700} .no{color:#ff9a9a;font-weight:700}
+  a{color:#8fd0ff;text-decoration:none} a:hover{text-decoration:underline}
+  .imgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .imgs figure{margin:0} .imgs img{width:100%;border-radius:12px;border:1px solid var(--brd)}
+  .imgs figcaption{font-size:11px;color:var(--dim);text-align:center;margin-top:4px}
+  code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;font-size:12.5px}
+  .pill{display:inline-block;background:rgba(127,209,163,.15);border:1px solid rgba(127,209,163,.4);color:var(--acc);border-radius:999px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0}
+  .big{font-size:16px;font-weight:700;color:#fff;background:rgba(127,209,163,.12);border-left:3px solid var(--acc);padding:12px 14px;border-radius:10px;margin:10px 0}
+  .foot{color:var(--dim);font-size:12px;margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>人生工作台 · 方案与进度总览</h1>
+  <div class="sub">整理给扣子（Coze）的上下文 · 含产品愿景 / 已拍板方案 / 已上线成果 / 当前卡点 / 下一步</div>
+
+  <div class="big">一句话定位：<b>人生工作台 = 用户（鹿7铭）iPad 开机即进的「人生 OS」</b>——用真实可感的世界，把效率、自律、休息焊进每一天。</div>
+
+  <div class="card">
+    <h2><span class="n">壹</span>产品愿景（用户原话提炼）</h2>
+    <ul>
+      <li>每天打开 iPad = 打开这个工作台，学习 / 休息 / 摘抄 / 日常（非上课、无线下任务时）全部在这里进行。</li>
+      <li>要<b>覆盖日常大部分软件</b>（排除：游戏、上网浏览、点外卖）。</li>
+      <li>画面要<b>更写实</b>（生命树、番茄花园、休息模式目前偏动画/卡通感，想偏写实）。</li>
+      <li>核心价值：<b>高效生产力 App</b> + 便捷服务 + 提高自制力 + <b>最重要是提效</b>。</li>
+      <li>隐性刚需：<b>粘性 / 浓厚兴趣</b>——让用户想每天回来。写实化本质是为粘性服务。</li>
+    </ul>
+    <p style="margin-top:8px;color:var(--dim)">三个英雄场景 = 每日回归引擎：🌳生命树(自律) / 🍅番茄花园(效率) / 🏔休息模式(休息恢复)。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">贰</span>已拍板的方案（关键决策）</h2>
+    <table>
+      <tr><th>决策点</th><th>决定</th><th>理由</th></tr>
+      <tr><td>视觉路线</td><td><b>玻璃浮层 + 写实背景</b>（路线A）</td><td>不做3D；visionOS同款语言，统一且稳</td></tr>
+      <tr><td>文件策略</td><td><b>单 HTML + Service Worker 缓存图片</b></td><td>已有SW，图片缓存离线，HTML不膨胀</td></tr>
+      <tr><td>主调场景</td><td><b>休息模式·雪夜木屋先做到位</b></td><td>三张里最像样、最戳"回归感"、单照即写实、风险最低</td></tr>
+      <tr><td>写实素材</td><td>CSS实景先当v1，背景层预留换真照片接口</td><td>沙箱调不通AI图，但不阻塞</td></tr>
+      <tr><td>落地顺序</td><td>iPad试→反馈最戳→接主站→补另两→全站玻璃化→补缺口模块</td><td>先验证方向再投入</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">叁</span>已做完并上线 ✅</h2>
+    <p><b>本轮新增 6 大模块</b>（2026-07-30 提交 <code>209b744</code>，已推 GitHub Pages）：</p>
+    <ul>
+      <li>📅 年回顾（yearreview）— 10张统计卡+年份切换+历史上今天+JSON导出</li>
+      <li>🔥 习惯热力图（heatmap）— 53×7格、5级权重着色、年导航</li>
+      <li>🌱 番茄花园（tomgarden）— SVG花园、自动统计真实番茄数、手动种植</li>
+      <li>🔁 间隔复习（spaced）— 自动抓备忘/摘抄/笔记成卡、Leitner 5箱</li>
+      <li>🔔 提醒中心+健康提醒（remind）— 一次/每日/周期提醒、水/站立/护眼、接入通知引擎</li>
+      <li>🕸 模块联动图谱（graph）— 27节点环形、11条静态联动、动态按数据量高亮</li>
+    </ul>
+    <p style="margin-top:8px">数据导入/恢复经核查本就存在，已用真实文件导入验证 3/3 通过。</p>
+    <p style="margin-top:8px">📎 主站：<a href="https://lu7ming.github.io/-7-/life.html">https://lu7ming.github.io/-7-/life.html</a></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">肆</span>写实概念验证（已部署，可 iPad 切换试用）</h2>
+    <p>因沙箱调不通 AI 图像 API（Google 返回 <code>API_KEY_INVALID</code>），先用纯 CSS/SVG 把"写实感"推到代码极限，做出三场景可切换概念原型，用于判断方向。</p>
+    <div class="imgs">
+      <figure><img src="concept_tree.png" alt="生命树"><figcaption>🌳 生命树</figcaption></figure>
+      <figure><img src="concept_garden.png" alt="番茄花园"><figcaption>🍅 番茄花园</figcaption></figure>
+      <figure><img src="concept_rest.png" alt="休息模式"><figcaption>🏔 休息模式</figcaption></figure>
+    </div>
+    <p style="margin-top:10px">📎 概念原型：<a href="https://lu7ming.github.io/-7-/concept_realistic.html">https://lu7ming.github.io/-7-/concept_realistic.html</a>（点顶部胶囊切换三场景）</p>
+    <p style="margin-top:6px;color:var(--dim)">诚实评估：纯 CSS 写实天花板明显（休息模式⭐⭐⭐⭐、花园⭐⭐⭐、树⭐⭐⭐），要到照片级必须换 AI 真照片。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">伍</span>当前卡点 ⏳</h2>
+    <ul>
+      <li><span class="wait">卡点1</span> <b>AI 写实图像生成</b>：沙箱无有效 OpenAI/Gemini key，无法出真照片背景。需要用户提供一份 API key（设成环境变量）即可解锁。</li>
+      <li><span class="wait">卡点2</span> <b>导航交互</b>：用户反馈"不想折叠侧栏、要常驻直切"。已讨论改底部 Tab 栏/侧栏常驻/顶部滑动条，待用户确认布局后改。</li>
+      <li><span class="wait">卡点3</span> <b>概念转正</b>：等用户 iPad 试用反馈（哪个场景最戳 + 玻璃+写实路子对不对），再把选定场景接进主站。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">陆</span>下一步流程</h2>
+    <ol>
+      <li>用户在 iPad 试概念原型 1–2 天 → 反馈①哪个场景最戳 ②玻璃+写实路子对不对</li>
+      <li>若给 API key → 换 AI 真照片背景；否则按 CSS v1 继续</li>
+      <li>把选定英雄场景 + 玻璃 UI 接进 <code>life.html</code> 主站</li>
+      <li>补齐另两个英雄场景</li>
+      <li>全站 UI 玻璃化统一语言</li>
+      <li>补缺口模块（按优先级：①密码/账号保险库 ②购物&收纳清单 ③本地音乐播放器 ④身体数据追踪）</li>
+      <li>导航改常驻（Tab/侧栏/滑动条，待定）</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">柒</span>给扣子的背景（决策上下文）</h2>
+    <p>这是一个运行在 <b>GitHub Pages 的单文件 HTML PWA</b>（<code>life.html</code>，约 9000 行，无框架，IIFE 封装，localStorage + IndexedDB 持久化，Service Worker 离线）。当前 28+ 模块已覆盖任务/笔记/课程/项目/记账/打卡/番茄钟/书摘/健康提醒/联系人/目标OKR/思考流/胶囊/周计划/复盘/闹钟/白噪音/冥想/生命树/番茄花园/年回顾/热力图/间隔复习/图谱/天气/日历/搜索等。</p>
+    <p style="margin-top:6px">待扣子/用户拍板的开放问题：①写实背景用 AI 真照片还是继续 CSS；②导航布局选哪种；③缺口模块优先级。我（WorkBuddy）已就前两点给出明确推荐（真照片+底部Tab栏），最终以用户在扣子的讨论结论为准。</p>
+    <p style="margin-top:6px"><span class="pill">单文件PWA</span><span class="pill">iPad优先</span><span class="pill">写实化=粘性</span><span class="pill">效率+自律+休息</span></p>
+  </div>
+
+  <div class="foot">生成于 2026-07-30 · 人生工作台项目上下文快照 · 供扣子（Coze）协作使用</div>
+</div>
+</body>
+</html>
