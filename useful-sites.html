@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>实用网站导航 · 鹿7铭</title>
+<style>
+  :root{
+    --bg1:#F0E0D0;--bg2:#E8C8A8;--bg3:#D8B89A;--card:#FFFFFF;--card2:#F7F3EC;
+    --ink:#1F1B17;--muted:#8A7E70;--warm:#C8965A;--warm-soft:#F3E4D2;--line:#EADFD2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%,var(--bg3));color:var(--ink);min-height:100vh;padding:18px 14px 60px;}
+  .head{text-align:center;margin:10px 0 18px;}
+  .head h1{font-size:22px;margin:0 0 4px;}
+  .head p{font-size:13px;color:var(--muted);margin:0;}
+  .search{position:sticky;top:8px;z-index:10;max-width:680px;margin:0 auto 18px;}
+  .search input{width:100%;padding:13px 18px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(255,255,255,.85);backdrop-filter:blur(6px);font-size:15px;color:var(--ink);outline:none;
+    box-shadow:0 4px 18px rgba(150,110,70,.12);}
+  .search input:focus{border-color:var(--warm);box-shadow:0 0 0 3px var(--warm-soft);}
+  .wrap{max-width:680px;margin:0 auto;}
+  .cat{margin:22px 0 8px;display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;}
+  .cat .ico{font-size:20px;}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr);}}
+  a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;
+    text-decoration:none;color:var(--ink);transition:.15s;box-shadow:0 2px 10px rgba(150,110,70,.08);}
+  a.card:hover{transform:translateY(-2px);border-color:var(--warm);box-shadow:0 6px 18px rgba(150,110,70,.18);}
+  a.card .n{font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+  a.card .u{font-size:11px;color:var(--muted);margin-top:3px;word-break:break-all;}
+  a.card .d{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45;}
+  .empty{text-align:center;color:var(--muted);padding:30px;font-size:14px;}
+  .foot{text-align:center;color:var(--muted);font-size:11px;margin-top:30px;line-height:1.7;}
+  .tag{font-size:10px;background:var(--warm-soft);color:var(--warm);border-radius:6px;padding:1px 6px;font-weight:600;}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>🌟 实用网站导航</h1>
+    <p>按人生工作台的模块整理 · 点开即用 · 共 <span id="cnt">0</span> 个</p>
+  </div>
+  <div class="search"><input id="q" placeholder="搜索网站名 / 用途，如：AI、理财、PDF…" autocomplete="off"></div>
+  <div class="wrap" id="app"></div>
+  <div class="foot">为鹿7铭整理 · 工作台同源出品<br>链接均在新标签打开，建议「添加到主屏幕」当起始页</div>
+
+<script>
+const SITES=[
+ {c:"🤖 AI 助手",ico:"🤖",items:[
+   {n:"DeepSeek",u:"https://chat.deepseek.com/",d:"你工作台接入的同款，推理强、免费、可联网",t:"在用"},
+   {n:"豆包",u:"https://www.doubao.com/chat/",d:"字节出品，多模态、语音通话、画图写作一体"},
+   {n:"Kimi",u:"https://kimi.moonshot.ai/",d:"长文本解析，读论文/报告/合同利器"},
+   {n:"通义千问",u:"https://tongyi.aliyun.com/",d:"阿里多模态，读文档、做PPT"},
+   {n:"ChatGPT",u:"https://chatgpt.com/",d:"综合能力最均衡（需海外网络）"},
+   {n:"秘塔 AI 搜索",u:"https://metaso.cn/",d:"无广告中文 AI 搜索，带溯源"},
+   {n:"智谱清言",u:"https://chatglm.cn/",d:"清华团队，编程/解题/学术"},
+   {n:"讯飞星火",u:"https://xinghuo.xfyun.cn/",d:"科大讯飞，中文创作+语音"}
+ ]},
+ {c:"📚 学习 / 知识",ico:"📚",items:[
+   {n:"哔哩哔哩",u:"https://www.bilibili.com/",d:"学习区极强，教程/公开课/科普",t:"常用"},
+   {n:"中国大学 MOOC",u:"https://www.icourse163.org/",d:"国内高校正规课程"},
+   {n:"可汗学院",u:"https://www.khanacademy.org/",d:"系统化基础学科，免费"},
+   {n:"Coursera",u:"https://www.coursera.org/",d:"全球名校课程，可拿证书"},
+   {n:"网易公开课",u:"https://open.163.com/",d:"TED/名校公开课汇总"},
+   {n:"维基百科",u:"https://zh.wikipedia.org/",d:"查概念首选"},
+   {n:"知乎",u:"https://www.zhihu.com/",d:"深度问答与专业讨论"},
+   {n:"得到",u:"https://www.dedao.cn/",d:"通识/商业/听书"}
+ ]},
+ {c:"📖 阅读 / 书本",ico:"📖",items:[
+   {n:"微信读书",u:"https://weread.qq.com/",d:"资源全、笔记同步（你工作台在用书）",t:"在用"},
+   {n:"豆瓣读书",u:"https://book.douban.com/",d:"评分/书评/书单参考"},
+   {n:"鸠摩搜书",u:"https://www.jiumo.com/",d:"电子书聚合搜索"},
+   {n:"Project Gutenberg",u:"https://www.gutenberg.org/",d:"公版英文电子书免费库"},
+   {n:"中国国家图书馆",u:"https://www.nlc.cn/",d:"权威数字资源"}
+ ]},
+ {c:"💰 资产 / 理财",ico:"💰",items:[
+   {n:"且慢",u:"https://www.qieman.com/",d:"基金投顾，适合普通人的懒人理财"},
+   {n:"雪球",u:"https://xueqiu.com/",d:"投资社区与组合跟踪"},
+   {n:"东方财富",u:"https://www.eastmoney.com/",d:"行情/资讯/开户一体"},
+   {n:"天天基金",u:"https://fund.eastmoney.com/",d:"基金数据最全"},
+   {n:"理杏仁",u:"https://www.lixinger.com/",d:"财务与估值数据分析"}
+ ]},
+ {c:"💪 健康 / 运动",ico:"💪",items:[
+   {n:"Keep",u:"https://www.keep.com/",d:"居家训练计划与跟练"},
+   {n:"薄荷健康",u:"https://www.boohee.com/",d:"热量/体重/饮食记录"},
+   {n:"丁香医生",u:"https://dxy.com/",d:"靠谱医学科普与问诊"},
+   {n:"华为运动健康",u:"https://www.huaweicloud.com/",d:"步数/睡眠/心率汇总"}
+ ]},
+ {c:"🛠 效率 / 工具",ico:"🛠",items:[
+   {n:"Notion",u:"https://www.notion.so/",d:"笔记+数据库+项目管理全能",t:"常用"},
+   {n:"语雀",u:"https://www.yuque.com/",d:"阿里出品，结构化知识库"},
+   {n:"飞书",u:"https://www.feishu.cn/",d:"文档/表格/协作一体"},
+   {n:"滴答清单",u:"https://www.dida365.com/",d:"GTD 任务管理"},
+   {n:"幕布",u:"https://mubu.com/",d:"大纲笔记一键变思维导图"},
+   {n:"腾讯文档",u:"https://docs.qq.com/",d:"轻量多人协作"},
+   {n:"iLovePDF",u:"https://www.ilovepdf.com/",d:"PDF 合并/压缩/转换"}
+ ]},
+ {c:"🎨 设计 / 创作",ico:"🎨",items:[
+   {n:"Canva",u:"https://www.canva.cn/",d:"海报/封面/简历模板（小白友好）"},
+   {n:"稿定设计",u:"https://www.gaoding.com/",d:"电商/社交配图快速出图"},
+   {n:"即梦 AI",u:"https://jimeng.jianying.com/",d:"字节 AI 绘画与视频"},
+   {n:"剪映",u:"https://www.capcut.cn/",d:"智能剪辑与字幕"},
+   {n:"Figma",u:"https://www.figma.com/",d:"专业界面/原型设计"}
+ ]},
+ {c:"💻 开发者 / 技术",ico:"💻",items:[
+   {n:"GitHub",u:"https://github.com/",d:"代码托管（你工作台就部署在这）",t:"在用"},
+   {n:"MDN",u:"https://developer.mozilla.org/zh-CN/",d:"Web 技术权威文档"},
+   {n:"Stack Overflow",u:"https://stackoverflow.com/",d:"编程问答"},
+   {n:"阮一峰的网络日志",u:"https://www.ruanyifeng.com/blog/",d:"高质量中文技术科普"}
+ ]},
+ {c:"📰 优质信息源",ico:"📰",items:[
+   {n:"少数派",u:"https://sspai.com/",d:"效率/数字生活深度好文"},
+   {n:"36氪",u:"https://36kr.com/",d:"创投与商业前沿"},
+   {n:"虎嗅",u:"https://www.huxiu.com/",d:"商业洞察"},
+   {n:"果壳",u:"https://www.guokr.com/",d:"靠谱科技科普"}
+ ]}
+];
+
+const app=document.getElementById("app");
+const q=document.getElementById("q");
+const cnt=document.getElementById("cnt");
+function render(filter){
+  filter=(filter||"").trim().toLowerCase();
+  let html="",total=0;
+  SITES.forEach(seg=>{
+    const items=seg.items.filter(it=>{
+      if(!filter)return true;
+      return (it.n+it.d+seg.c).toLowerCase().includes(filter);
+    });
+    if(!items.length)return;
+    total+=items.length;
+    html+=`<div class="cat"><span class="ico">${seg.ico}</span>${seg.c}</div><div class="grid">`+
+      items.map(it=>`<a class="card" href="${it.u}" target="_blank" rel="noopener">
+        <div class="n">${it.n}${it.t?`<span class="tag">${it.t}</span>`:""}</div>
+        <div class="u">${it.u.replace(/^https?:\/\//,"")}</div>
+        <div class="d">${it.d}</div></a>`).join("")+`</div>`;
+  });
+  app.innerHTML=html||`<div class="empty">没有匹配的网站，换个关键词试试～</div>`;
+  cnt.textContent=total;
+}
+render("");
+q.addEventListener("input",()=>render(q.value));
+</script>
+</body>
+</html>
