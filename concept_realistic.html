@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>人生工作台 · 写实概念原型</title>
+<style>
+  :root{
+    --glass:rgba(255,255,255,.08);
+    --glass-brd:rgba(255,255,255,.16);
+    --ink:#f3f1ea;
+    --ink-dim:rgba(243,241,234,.62);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#05070a;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+  /* ===== 顶部分类切换 ===== */
+  .switcher{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+    z-index:50;display:flex;gap:6px;padding:6px;border-radius:999px;
+    background:rgba(10,12,16,.45);backdrop-filter:blur(20px) saturate(140%);
+    -webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .switcher button{appearance:none;border:0;background:transparent;color:var(--ink-dim);
+    font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;cursor:pointer;transition:.25s;white-space:nowrap}
+  .switcher button.on{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+  /* ===== 场景 ===== */
+  .scene{position:fixed;inset:0;opacity:0;visibility:hidden;transition:opacity .8s ease;overflow:hidden}
+  .scene.on{opacity:1;visibility:visible}
+  canvas.fx{position:absolute;inset:0;pointer-events:none}
+  /* 胶片颗粒 + 暗角，统一写实基调 */
+  .grain{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.10;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .vignette{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 38%,transparent 52%,rgba(0,0,0,.55) 100%)}
+  /* 毛玻璃信息浮层 */
+  .panel{position:absolute;left:18px;right:18px;bottom:max(22px,env(safe-area-inset-bottom));
+    padding:20px 22px;border-radius:22px;background:var(--glass);
+    backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);
+    border:1px solid var(--glass-brd);box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18)}
+  .panel .k{font-size:12px;letter-spacing:.18em;color:var(--ink-dim);text-transform:uppercase}
+  .panel .t{font-size:26px;font-weight:750;margin:6px 0 14px}
+  .panel .row{display:flex;gap:18px;flex-wrap:wrap}
+  .panel .stat{flex:1;min-width:84px}
+  .panel .stat b{display:block;font-size:22px;font-weight:750}
+  .panel .stat span{font-size:12px;color:var(--ink-dim)}
+
+  /* ========== 1. 生命树 ========== */
+  #s-tree{background:
+    radial-gradient(80% 60% at 50% 8%,rgba(120,200,170,.18),transparent 60%),
+    linear-gradient(180deg,#0c1a17 0%,#10241d 38%,#163024 70%,#0c1a14 100%)}
+  #s-tree .fog{position:absolute;left:-10%;width:120%;height:160px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(180,220,205,.16),transparent);filter:blur(18px)}
+  #s-tree .shaft{position:absolute;top:-10%;width:40%;height:120%;
+    background:linear-gradient(180deg,rgba(190,240,210,.20),transparent);
+    filter:blur(22px);transform:rotate(12deg);transform-origin:top}
+  #s-tree svg{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);height:62%;width:auto}
+  #s-tree .ground{position:absolute;left:0;right:0;bottom:0;height:26%;
+    background:linear-gradient(180deg,rgba(20,40,30,.0),rgba(6,14,10,.95))}
+
+  /* ========== 2. 番茄花园 ========== */
+  #s-garden{background:
+    radial-gradient(60% 50% at 82% 14%,rgba(255,224,150,.9),rgba(255,180,90,.25) 30%,transparent 60%),
+    linear-gradient(180deg,#f6c98a 0%,#eaa972 26%,#c98a5e 52%,#7c5a44 78%,#3c2c22 100%)}
+  #s-garden .flare{position:absolute;top:6%;right:10%;width:230px;height:230px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,240,.95),rgba(255,230,170,.3) 40%,transparent 70%);
+    filter:blur(6px);mix-blend-mode:screen}
+  #s-garden svg{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:108%;height:74%}
+  #s-garden .soil{position:absolute;left:0;right:0;bottom:0;height:34%;
+    background:linear-gradient(180deg,rgba(120,80,50,.0),rgba(60,38,24,.95))}
+
+  /* ========== 3. 休息模式 ========== */
+  #s-rest{background:
+    radial-gradient(70% 50% at 50% 12%,rgba(60,90,140,.35),transparent 60%),
+    linear-gradient(180deg,#070d1c 0%,#0b1428 36%,#0e1a30 64%,#0a1320 100%)}
+  #s-rest .stars{position:absolute;inset:0;
+    background-image:
+      radial-gradient(1.4px 1.4px at 20% 18%,#fff,transparent),
+      radial-gradient(1.2px 1.2px at 70% 12%,#cfe,transparent),
+      radial-gradient(1.6px 1.6px at 44% 24%,#fff,transparent),
+      radial-gradient(1.1px 1.1px at 85% 30%,#fff,transparent),
+      radial-gradient(1.3px 1.3px at 12% 40%,#def,transparent),
+      radial-gradient(1.2px 1.2px at 60% 8%,#fff,transparent)}
+  #s-rest .aurora{position:absolute;top:6%;left:-10%;width:120%;height:34%;
+    background:linear-gradient(90deg,transparent,rgba(90,200,170,.16),rgba(120,160,230,.14),transparent);
+    filter:blur(30px);transform:rotate(-4deg)}
+  #s-rest svg{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);height:56%;width:auto}
+  #s-rest .snowg{position:absolute;left:0;right:0;bottom:0;height:30%;
+    background:linear-gradient(180deg,rgba(180,200,220,.0),rgba(200,215,230,.9))}
+  .hint{position:fixed;top:max(64px,calc(env(safe-area-inset-top) + 52px));left:50%;transform:translateX(-50%);
+    z-index:40;font-size:12.5px;color:var(--ink-dim);background:rgba(10,12,16,.4);
+    padding:6px 14px;border-radius:999px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button data-s="tree" class="on">🌳 生命树</button>
+  <button data-s="garden">🍅 番茄花园</button>
+  <button data-s="rest">🏔 休息模式</button>
+</div>
+<div class="hint">纯代码实景草稿 · 非 AI 照片 · 看方向对不对</div>
+
+<!-- 1. 生命树 -->
+<section class="scene on" id="s-tree">
+  <div class="shaft" style="left:18%"></div>
+  <div class="shaft" style="left:54%;opacity:.7"></div>
+  <div class="fog" style="top:30%"></div>
+  <div class="fog" style="top:52%;opacity:.7"></div>
+  <div class="fog" style="top:70%;opacity:.5"></div>
+  <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="trunk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#5a3d28"/><stop offset="1" stop-color="#2c1c12"/>
+      </linearGradient>
+      <radialGradient id="canopy" cx="50%" cy="42%" r="60%">
+        <stop offset="0" stop-color="#8fe6a8"/><stop offset="55%" stop-color="#3f9d6b"/>
+        <stop offset="100%" stop-color="#1d5a3e"/>
+      </radialGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <ellipse cx="100" cy="295" rx="60" ry="6" fill="#000" opacity=".45"/>
+    <g>
+      <path d="M100 295 L100 165" stroke="url(#trunk)" stroke-width="22" stroke-linecap="round"/>
+      <path d="M100 220 L70 175" stroke="url(#trunk)" stroke-width="11" stroke-linecap="round"/>
+      <path d="M100 205 L132 158" stroke="url(#trunk)" stroke-width="11" stroke-linecap="round"/>
+      <path d="M100 185 L78 142" stroke="url(#trunk)" stroke-width="9" stroke-linecap="round"/>
+      <path d="M100 178 L122 135" stroke="url(#trunk)" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="100" cy="112" r="62" fill="url(#canopy)"/>
+      <circle cx="64" cy="128" r="36" fill="url(#canopy)" opacity=".95"/>
+      <circle cx="138" cy="126" r="38" fill="url(#canopy)" opacity=".95"/>
+      <circle cx="98" cy="74" r="40" fill="url(#canopy)" opacity=".95"/>
+      <!-- 内层亮叶簇，给眼睛抓到层次 -->
+      <circle cx="100" cy="108" r="22" fill="#9ff0b3" opacity=".35"/>
+      <circle cx="70" cy="124" r="13" fill="#9ff0b3" opacity=".35"/>
+      <circle cx="134" cy="122" r="14" fill="#9ff0b3" opacity=".35"/>
+    </g>
+  </svg>
+  <div class="ground"></div>
+  <canvas class="fx" data-kind="fire"></canvas>
+  <div class="grain"></div><div class="vignette"></div>
+  <div class="panel">
+    <div class="k">YOUR GROWTH</div>
+    <div class="t">生命树 · 第 128 天</div>
+    <div class="row">
+      <div class="stat"><b>73%</b><span>成熟进度</span></div>
+      <div class="stat"><b>42</b><span>连续打卡</span></div>
+      <div class="stat"><b>9</b><span>养成习惯</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 番茄花园 -->
+<section class="scene" id="s-garden">
+  <div class="flare"></div>
+  <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fae4e"/><stop offset="1" stop-color="#2f6b2c"/></linearGradient>
+      <radialGradient id="tom" cx="38%" cy="34%" r="65%"><stop offset="0" stop-color="#ff8a5c"/><stop offset="55%" stop-color="#e8412b"/><stop offset="100%" stop-color="#a31f12"/></radialGradient>
+    </defs>
+    <g id="rows"></g>
+  </svg>
+  <div class="soil"></div>
+  <canvas class="fx" data-kind="pollen"></canvas>
+  <div class="grain"></div><div class="vignette"></div>
+  <div class="panel">
+    <div class="k">FOCUS HARVEST</div>
+    <div class="t">番茄花园 · 今日 8 株</div>
+    <div class="row">
+      <div class="stat"><b>8</b><span>今日番茄</span></div>
+      <div class="stat"><b>200</b><span>专注分钟</span></div>
+      <div class="stat"><b>31</b><span>本周累计</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 休息模式 -->
+<section class="scene" id="s-rest">
+  <div class="stars"></div><div class="aurora"></div>
+  <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b4a30"/><stop offset="1" stop-color="#3a2516"/></linearGradient>
+      <radialGradient id="win" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#fff2c4"/><stop offset="60%" stop-color="#ffb44d"/><stop offset="100%" stop-color="#e07a1e"/></radialGradient>
+      <filter id="wglow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <!-- 雪地后景 -->
+    <rect x="0" y="150" width="240" height="60" fill="#dfe9f2"/>
+    <!-- 木屋 -->
+    <g filter="url(#wglow)">
+      <rect x="78" y="96" width="84" height="60" rx="3" fill="url(#wood)"/>
+      <path d="M70 96 L120 60 L170 96 Z" fill="#523522"/>
+      <path d="M70 96 L120 60 L170 96 Z" fill="none" stroke="#2c1c12" stroke-width="2"/>
+      <!-- 窗 -->
+      <rect x="92" y="112" width="22" height="22" rx="2" fill="url(#win)"/>
+      <rect x="126" y="112" width="22" height="22" rx="2" fill="url(#win)"/>
+      <!-- 门 -->
+      <rect x="112" y="128" width="16" height="28" rx="2" fill="#2c1c12"/>
+      <!-- 烟囱 -->
+      <rect x="150" y="66" width="12" height="22" fill="#3a2516"/>
+    </g>
+    <!-- 雪檐 -->
+    <path d="M70 96 L120 60 L170 96 Z" fill="none" stroke="#eef4fa" stroke-width="4" stroke-linejoin="round" opacity=".85"/>
+    <rect x="78" y="94" width="84" height="5" rx="2" fill="#eef4fa" opacity=".8"/>
+  </svg>
+  <div class="snowg"></div>
+  <canvas class="fx" data-kind="snow"></canvas>
+  <div class="grain"></div><div class="vignette"></div>
+  <div class="panel">
+    <div class="k">REST MODE</div>
+    <div class="t">雪夜小屋 · 休息 5 分钟</div>
+    <div class="row">
+      <div class="stat"><b>5:00</b><span>倒计时</span></div>
+      <div class="stat"><b>雪夜</b><span>魁北克</span></div>
+      <div class="stat"><b>暖灯</b><span>已点亮</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // 切换场景
+  const btns=document.querySelectorAll('.switcher button');
+  const scenes=document.querySelectorAll('.scene');
+  function show(id){
+    btns.forEach(b=>b.classList.toggle('on',b.dataset.s===id));
+    scenes.forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+  }
+  btns.forEach(b=>b.addEventListener('click',()=>show(b.dataset.s)));
+  show('tree');
+
+  // 番茄花园：按透视铺几排番茄丛
+  const rows=document.getElementById('rows');
+  // 远近4排，每排多株、位置错开；远排更小更淡
+  const bands=[
+    {y:258, s:1.4, o:1,   n:4},
+    {y:230, s:1.0, o:.95, n:5},
+    {y:208, s:.72,o:.85, n:6},
+    {y:192, s:.5, o:.65, n:7},
+  ];
+  bands.forEach((b,bi)=>{
+    const gap=400/(b.n+1);
+    for(let i=1;i<=b.n;i++){
+      const x=gap*i, sc=b.s;
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('transform',`translate(${x},${b.y}) scale(${sc})`);
+      g.setAttribute('opacity',b.o);
+      g.innerHTML=`
+        <path d="M0 0 q-18 -28 -6 -50 q5 22 16 26 q-12 -2 -10 24 z" fill="url(#leaf)"/>
+        <path d="M0 0 q18 -28 6 -50 q-5 22 -16 26 q12 -2 10 24 z" fill="url(#leaf)"/>
+        <path d="M0 -16 q-10 -22 0 -38 q10 16 0 38 z" fill="url(#leaf)" opacity=".9"/>
+        <circle cx="-9" cy="-10" r="7" fill="url(#tom)"/>
+        <circle cx="10" cy="-6"  r="7" fill="url(#tom)"/>
+        <circle cx="-3" cy="-26" r="7" fill="url(#tom)"/>
+        <circle cx="11" cy="-30" r="6" fill="url(#tom)"/>
+      `;
+      rows.appendChild(g);
+    }
+  });
+
+  // 粒子系统
+  const cv=document.querySelector('#s-'+(document.querySelector('.scene.on').id.split('-')[1])+' canvas.fx');
+  function setup(canvas,kind){
+    const ctx=canvas.getContext('2d');
+    function resize(){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio;}
+    resize(); addEventListener('resize',resize);
+    let ps=[];
+    function spawn(){
+      const w=canvas.width,h=canvas.height;
+      if(kind==='snow') ps=Array.from({length:160},()=>({x:Math.random()*w,y:Math.random()*h,r:(Math.random()*2+1)*devicePixelRatio,vx:(Math.random()-.5)*.4*devicePixelRatio,vy:(Math.random()*1+.6)*devicePixelRatio}));
+      if(kind==='fire') ps=Array.from({length:46},()=>({x:w/2+(Math.random()-.5)*w*.4,y:h*.9-Math.random()*h*.5,r:(Math.random()*1.6+1)*devicePixelRatio,vy:-(Math.random()*.5+.2)*devicePixelRatio,ph:Math.random()*6}));
+      if(kind==='pollen') ps=Array.from({length:60},()=>({x:Math.random()*w,y:Math.random()*h,r:(Math.random()*1.4+.6)*devicePixelRatio,vx:(Math.random()-.5)*.3*devicePixelRatio,vy:-(Math.random()*.3+.1)*devicePixelRatio,ph:Math.random()*6}));
+    }
+    spawn();
+    function tick(t){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const w=canvas.width,h=canvas.height;
+      for(const p of ps){
+        if(kind==='snow'){p.x+=p.vx;p.y+=p.vy;if(p.y>h){p.y=-5;p.x=Math.random()*w;}
+          ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle='rgba(255,255,255,.85)';ctx.fill();}
+        if(kind==='fire'){p.y+=p.vy;p.x+=Math.sin((t/900)+p.ph)*.3*devicePixelRatio;p.ph+=.01;
+          if(p.y<-10){p.y=h*.9;p.x=w/2+(Math.random()-.5)*w*.4;}
+          const a=Math.max(0,1-p.y/(h*.6));
+          ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);
+          ctx.fillStyle='rgba(180,255,170,'+(a*.9)+')';ctx.shadowColor='rgba(140,255,150,.9)';ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;}
+        if(kind==='pollen'){p.x+=p.vx;p.y+=p.vy;if(p.y<-10)p.y=h;if(p.x<-10)p.x=w;if(p.x>w)p.x=0;
+          const fl=0.5+0.5*Math.sin(t/600+p.ph);
+          ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle='rgba(255,240,190,'+(fl*.6)+')';ctx.fill();}
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  document.querySelectorAll('canvas.fx').forEach(c=>setup(c,c.dataset.kind));
+})();
+</script>
+</body>
+</html>
