@@ -320,6 +320,41 @@ body::after{
 /* 关联区块的统一"次级卡"语感 */
 .card[style*="card-soft"]{border:1px dashed var(--line);}
 
+/* ---- AI 对话面板 ---- */
+.ai-panel{position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;height:100dvh;
+  background:var(--glass-bg);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);
+  border-left:1px solid var(--glass-border);box-shadow:-10px 0 40px rgba(0,0,0,.2),var(--glass-inset);
+  z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.22,.61,.36,1);}
+.ai-panel.open{transform:translateX(0);}
+.ai-panel .ai-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);
+  flex-shrink:0;padding-top:max(16px,env(safe-area-inset-top));}
+.ai-panel .ai-head .ai-title{flex:1;font-weight:700;font-size:16px;}
+.ai-panel .ai-head .ai-close{width:32px;height:32px;border-radius:8px;background:var(--card-soft);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--ink-2);}
+.ai-panel .ai-context{font-size:11px;color:var(--muted);padding:6px 18px;background:var(--card-soft);flex-shrink:0;}
+.ai-panel .ai-msgs{flex:1;overflow-y:auto;padding:14px 18px;scrollbar-width:thin;}
+.ai-panel .ai-msg{margin-bottom:12px;max-width:92%;}
+.ai-panel .ai-msg.user{margin-left:auto;text-align:right;}
+.ai-panel .ai-msg .bubble{display:inline-block;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.ai-panel .ai-msg.user .bubble{background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px;}
+.ai-panel .ai-msg.bot .bubble{background:var(--card-soft);color:var(--ink);border-bottom-left-radius:4px;}
+.ai-panel .ai-msg.bot.thinking .bubble{color:var(--muted);font-style:italic;}
+.ai-panel .ai-quick{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 8px;flex-shrink:0;}
+.ai-panel .ai-quick button{font-size:12px;padding:5px 12px;border-radius:999px;background:var(--card-soft);
+  border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;}
+.ai-panel .ai-quick button:active{transform:scale(.96);}
+.ai-panel .ai-input{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-shrink:0;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));}
+.ai-panel .ai-input textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;font-size:14px;background:var(--card);color:var(--ink);outline:none;
+  font-family:inherit;line-height:1.5;max-height:100px;}
+.ai-panel .ai-input textarea:focus{border-color:var(--warm);}
+.ai-panel .ai-input button{width:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);
+  font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ai-panel .ai-input button:active{transform:scale(.95);}
+.ai-panel .ai-input button:disabled{opacity:.5;}
+@media(max-width:540px){.ai-panel{width:100vw;}}
+
 /* ---- Common card ---- */
 .card{
   background:var(--glass-bg);border:1px solid var(--glass-border);
@@ -1483,6 +1518,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <button class="top-icon" data-nav="sound" title="声音 · 白噪音/闹钟">🎵</button>
+        <button class="top-icon" id="aiBtn" title="AI 助手 · 问答/总结/建议" style="font-size:15px">🤖</button>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
@@ -9370,8 +9406,259 @@ window.addEventListener("error",function(e){
 window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
 });
+
+/* ============== AI 助手（DeepSeek） ============== */
+// DeepSeek API key 由用户在首次使用时填入，存到 localStorage（不在代码中写死，避免泄露）
+const DEEPSEEK_URL="https://api.deepseek.com/v1/chat/completions";
+let DEEPSEEK_KEY=localStorage.getItem("ai_deepseek_key")||"";
+
+// 收集工作台数据给 AI
+function collectContextData(){
+  const today=currentDate;
+  const r=getDay(today);
+  const now=new Date();
+  const weekAgo=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-7));
+  // 本周数据
+  const weekEntries=[];
+  Object.keys(state.entries||{}).sort().reverse().forEach(d=>{
+    if(d>=weekAgo&&d<=today){const e=state.entries[d];if(e)weekEntries.push({date:d,tasksDone:(e.tasks||[]).filter(t=>t.done).length,tasksTotal:(e.tasks||[]).length,pomodoros:e.pomodoros||0,checkIn:!!e.checkIn,studyMin:(e.focusSessions||[]).reduce((s,f)=>s+Math.round((f.duration||0)/60),0),finOut:((e.finance&&e.finance.out)||[]).reduce((s,x)=>s+(+x.amount||0),0),sleep:e.sleep||{}});}
+  });
+  // 目标
+  const goals=(state.goals||[]).map(g=>({title:g.title,level:g.level,progress:g.progress||0,status:g.status||""}));
+  // 书
+  const books={read:(state.books||[]).filter(b=>b.status==="read").length,reading:(state.books||[]).filter(b=>b.status==="reading").length,want:(state.books||[]).filter(b=>b.status==="want").length};
+  // 习惯打卡近7天
+  const checkin=weekEntries.map(e=>({date:e.date,done:e.checkIn}));
+  // 生命树
+  const tree=state.treeData?{level:state.treeData.level,nutrients:state.treeData.nutrients}:{};
+  // 番茄
+  const totalPomo=weekEntries.reduce((s,e)=>s+e.pomodoros,0);
+  // 身体数据近7天
+  const bodyData={};
+  Object.keys(state.bodyData||{}).sort().reverse().slice(0,7).forEach(d=>{if(state.bodyData[d])bodyData[d]=state.bodyData[d];});
+  // 提醒
+  const reminders=(state.reminders||[]).filter(r=>r.enabled).map(r=>r.title);
+  // 购物
+  const shopPending=state.shopping?Object.values(state.shopping.lists||{}).reduce((s,l)=>s+l.filter(i=>!i.done).length,0):0;
+
+  return {
+    currentDate:today,
+    streak:streakDays(),
+    today:{
+      tasksDone:(r.tasks||[]).filter(t=>t.done).length,
+      tasksTotal:(r.tasks||[]).length,
+      pomodoros:r.pomodoros||0,
+      checkIn:!!r.checkIn,
+      studyMood:r.study?r.study.mood:"",
+      sleep:r.health?r.health.sleep:{},
+      exercise:r.health?r.health.exercise:{},
+      water:r.health?Object.values(r.health.water||{}).filter(Boolean).length:0,
+      financeOut:((r.finance&&r.finance.out)||[]).map(x=>x.cat+":"+x.amount).join(", "),
+    },
+    week:weekEntries,
+    goals,books,checkin,tree,totalPomo,bodyData,reminders,shopPending
+  };
+}
+
+// 构造系统提示
+function buildSystemPrompt(){
+  const ctx=collectContextData();
+  return `你是"人生工作台"的 AI 助手，服务于用户鹿7铭。你能读取用户的实时工作台数据来帮他分析、总结、建议。
+
+当前工作台数据（JSON）：
+${JSON.stringify(ctx,null,2)}
+
+规则：
+1. 回答简洁有力，用中文，不要过度客套
+2. 基于真实数据分析，不要编造数据里没有的东西
+3. 给建议要具体可执行，不要空话
+4. 如果用户要求"记一笔/加提醒/加目标/加购物"等录入操作，只回复纯 JSON（不要 markdown 代码块、不要多余文字）：{"action":"record","type":"finance|reminder|goal|shopping|body","data":{...}}
+   - finance: data={cat:"餐饮|学习|娱乐|交通|其他",amount:数字,note:"说明"}（cat 必须是这5个之一，根据用户描述判断：吃饭/咖啡/外卖→餐饮，书/课→学习，玩乐→娱乐，出行→交通，其他→其他）
+   - shopping: data={name:"物品名",qty:"数量或单位"}
+   - reminder: data={title:"标题",date:"YYYY-MM-DD(可选)",time:"HH:MM(可选)",type:"once|daily|weekly",intervalMin:分钟数(仅type非once时)}
+   - goal: data={title:"目标",level:"annual|quarter|month"}
+   - body: data={weight:数字,bodyFat:数字,hr:数字,steps:数字}(只填用户提到的字段)
+5. 保持温暖但务实的语气，像一个懂你的朋友`;
+}
+
+let aiMsgs=[];
+function aiRenderMsgs(){
+  const el=document.getElementById("aiMsgs");
+  if(!el)return;
+  el.innerHTML=aiMsgs.map(m=>
+    `<div class="ai-msg ${m.role==='user'?'user':'bot'} ${m.thinking?'thinking':''}">
+      <div class="bubble">${esc(m.content)}</div>
+    </div>`
+  ).join("");
+  el.scrollTop=el.scrollHeight;
+}
+function aiAddMsg(role,content,thinking){
+  aiMsgs.push({role,content,thinking});
+  aiRenderMsgs();
+}
+function aiUpdateLast(content){
+  if(aiMsgs.length){aiMsgs[aiMsgs.length-1].content=content;aiMsgs[aiMsgs.length-1].thinking=false;aiRenderMsgs();}
+}
+
+async function aiSend(text){
+  text=(text||"").trim();
+  if(!text)return;
+  // 拦截：用户要求配置 key
+  if(text.includes("配置")&&text.includes("key")){
+    aiAddMsg("user",text);
+    const newKey=prompt("请粘贴你的 DeepSeek API key（get → https://platform.deepseek.com/）\n\n说明：key 只存本地 localStorage，刷新不丢失，绝不上传。\n\n如需清除：在控制台运行 localStorage.removeItem('ai_deepseek_key')");
+    if(newKey&&newKey.trim()){
+      DEEPSEEK_KEY=newKey.trim();
+      localStorage.setItem("ai_deepseek_key",DEEPSEEK_KEY);
+      aiAddMsg("bot","✅ key 已保存，刷新也不丢失。可以问我任何事了～");
+    }else{
+      aiAddMsg("bot","好的，需要时随时说「配置 key」");
+    }
+    const input=document.getElementById("aiInput");if(input)input.value="";
+    return;
+  }
+  if(!DEEPSEEK_KEY){
+    aiAddMsg("user",text);
+    aiAddMsg("bot","⚠️ 还没配置 API key。先点「⚙ 配置 key」按钮贴上你的 DeepSeek key 吧。");
+    const input=document.getElementById("aiInput");if(input)input.value="";
+    return;
+  }
+  aiAddMsg("user",text);
+  aiAddMsg("bot","正在分析你的工作台数据…",true);
+  const input=document.getElementById("aiInput");
+  const btn=document.getElementById("aiSendBtn");
+  if(input){input.value="";input.style.height="auto";}
+  if(btn)btn.disabled=true;
+  try{
+    const resp=await fetch(DEEPSEEK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+      body:JSON.stringify({
+        model:"deepseek-chat",
+        messages:[
+          {role:"system",content:buildSystemPrompt()},
+          ...aiMsgs.filter(m=>!m.thinking).map(m=>({role:m.role==="bot"?"assistant":"user",content:m.content}))
+        ],
+        max_tokens:1200,
+        temperature:0.7
+      })
+    });
+    const data=await resp.json();
+    if(data.error){aiUpdateLast("⚠️ 出错了："+(data.error.message||JSON.stringify(data.error)));return;}
+    const reply=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:"（无回复）";
+    // 检查是否是录入操作（兼容 markdown 代码块包裹的 JSON）
+    let raw=reply.trim();
+    const fenceMatch=raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if(fenceMatch)raw=fenceMatch[1].trim();
+    if(raw.startsWith("{")&&raw.includes('"action"')){
+      try{
+        const parsed=JSON.parse(raw);
+        if(parsed.action==="record"){aiHandleRecord(parsed);return;}
+      }catch(e){}
+    }
+    aiUpdateLast(reply);
+  }catch(e){
+    aiUpdateLast("⚠️ 网络错误："+e.message);
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+
+// 处理 AI 返回的录入操作
+function aiHandleRecord(parsed){
+  const t=parsed.type,d=parsed.data||{};
+  let msg="";
+  if(t==="finance"){
+    const r=getDay(currentDate);if(!r.finance)r.finance={out:[]};
+    if(!r.finance.out)r.finance.out=[];
+    r.finance.out.push({cat:d.cat||"其他",amount:+d.amount||0,note:d.note||""});
+    save();msg="✅ 已记一笔："+(d.cat||"其他")+" "+(d.amount||0)+"元";
+  }else if(t==="shopping"){
+    state.shopping=state.shopping||{lists:{default:[]},active:"default"};
+    state.shopping.lists[state.shopping.active||"default"].push({name:d.name||"",qty:d.qty||"",done:false});
+    save();msg="✅ 已加入购物清单："+d.name;
+  }else if(t==="reminder"){
+    state.reminders=state.reminders||[];
+    state.reminders.push({id:uid(),title:d.title||"",type:d.type||"once",date:d.date||"",time:d.time||"",intervalMin:+d.intervalMin||60,enabled:true});
+    save();msg="✅ 已添加提醒："+d.title;
+  }else if(t==="goal"){
+    state.goals=state.goals||[];
+    state.goals.push({id:uid(),title:d.title||"",level:d.level||"annual",progress:0,status:"active",createdAt:Date.now()});
+    save();msg="✅ 已添加目标："+d.title;
+  }else if(t==="body"){
+    state.bodyData=state.bodyData||{};
+    if(!state.bodyData[currentDate])state.bodyData[currentDate]={};
+    if(d.weight)state.bodyData[currentDate].weight=+d.weight;
+    if(d.bodyFat)state.bodyData[currentDate].bodyFat=+d.bodyFat;
+    if(d.hr)state.bodyData[currentDate].hr=+d.hr;
+    if(d.steps)state.bodyData[currentDate].steps=+d.steps;
+    save();msg="✅ 已记录身体数据";
+  }
+  aiUpdateLast(msg);
+  render();
+}
+
+window.__aiSend=function(){
+  const input=document.getElementById("aiInput");
+  if(input)aiSend(input.value);
+};
+
+// 绑定 AI 面板事件
+(function bindAI(){
+  function ready(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);}
+  ready(()=>{
+    const panel=document.getElementById("aiPanel");
+    const btn=document.getElementById("aiBtn");
+    const close=document.getElementById("aiClose");
+    const sendBtn=document.getElementById("aiSendBtn");
+    const input=document.getElementById("aiInput");
+    if(btn)btn.onclick=()=>{
+      if(!panel)return;
+      panel.classList.add("open");
+      if(aiMsgs.length===0){
+        if(!DEEPSEEK_KEY){
+          aiAddMsg("bot","👋 首次使用，需要先配置你的 DeepSeek API key（在设置里填，存本地不外传）");
+        }else{
+          aiAddMsg("bot","你好鹿7铭 👋\n\n我能看到你工作台的所有数据：今天的任务、打卡、番茄、账目、学习、身体数据，以及本周/本月的历史记录。\n\n你可以问我任何事，比如：\n• 总结我今天的情况\n• 根据数据给我建议\n• 记一笔午餐 25 块\n• 我这周过得怎么样");
+        }
+      }
+      setTimeout(()=>{if(input)input.focus();},350);
+    };
+    if(close)close.onclick=()=>{if(panel)panel.classList.remove("open");};
+    if(sendBtn)sendBtn.onclick=window.__aiSend;
+    // 自动高度
+    if(input)input.oninput=function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,100)+"px";};
+    // 快捷问题
+    document.querySelectorAll("[data-ai-q]").forEach(b=>{
+      b.onclick=()=>aiSend(b.dataset.aiQ);
+    });
+  });
+})();
+
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
 </script>
+
+<!-- AI 对话面板 -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-head">
+    <span style="font-size:20px">🤖</span>
+    <span class="ai-title">AI 助手</span>
+    <div class="ai-close" id="aiClose">✕</div>
+  </div>
+  <div class="ai-context" id="aiContext">已连接工作台数据 · 可问"总结我今天""给我建议""记一笔午餐25"</div>
+  <div class="ai-msgs" id="aiMsgs"></div>
+  <div class="ai-quick" id="aiQuick">
+    <button data-ai-q="⚙ 配置 DeepSeek API key">⚙ 配置 key</button>
+    <button data-ai-q="总结我今天的情况">📝 总结今天</button>
+    <button data-ai-q="根据我最近的数据给我3条建议">💡 给我建议</button>
+    <button data-ai-q="我这周过得怎么样">📊 本周回顾</button>
+    <button data-ai-q="我最近哪个习惯在退步">🔍 习惯分析</button>
+  </div>
+  <div class="ai-input">
+    <textarea id="aiInput" rows="1" placeholder="问我任何事，或让我帮你记录…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.__aiSend&&window.__aiSend();}"></textarea>
+    <button id="aiSendBtn" title="发送">↑</button>
+  </div>
+</div>
 </body>
 </html>
