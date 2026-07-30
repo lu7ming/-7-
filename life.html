@@ -845,6 +845,37 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .ub-btn{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;}
 .ub-btn.ghost{background:var(--card-soft);color:var(--muted);}
 
+/* ---- 灵感速记悬浮入口 ---- */
+.qc-fab{position:fixed;right:18px;bottom:20px;z-index:9000;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--warm),#E0A85C);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(200,150,80,.45);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;border:none;}
+.qc-fab:hover{transform:scale(1.08) rotate(8deg);box-shadow:0 8px 26px rgba(200,150,80,.6);}
+.qc-fab:active{transform:scale(.95);}
+.qc-panel{position:fixed;right:18px;bottom:82px;z-index:9001;width:min(320px,calc(100vw - 36px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:14px;animation:qcPop .2s ease;}
+.qc-panel.hidden{display:none;}
+@keyframes qcPop{from{opacity:0;transform:translateY(8px) scale(.96);}to{opacity:1;transform:none;}}
+.qc-head{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.qc-input{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--card-soft);color:var(--ink);padding:8px 10px;font-size:13px;resize:none;box-sizing:border-box;}
+.qc-input:focus{outline:none;border-color:var(--warm);box-shadow:0 0 0 3px var(--warm-soft);}
+.qc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;}
+.qc-cat{padding:6px 14px;border-radius:999px;background:var(--card-soft);border:1px solid var(--line);font-size:13px;color:var(--ink-2);font-weight:600;cursor:pointer;}
+.qc-cat:hover{background:var(--warm-soft);}
+/* 速记列表 */
+.inbox-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.inbox-item{background:var(--card-soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.inbox-item.catered{opacity:.6;}
+.inbox-text{font-size:14px;color:var(--ink);white-space:pre-wrap;word-break:break-word;line-height:1.5;}
+.inbox-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.inbox-cat{font-size:12px;font-weight:600;color:var(--warm);background:var(--warm-soft);padding:2px 10px;border-radius:999px;cursor:pointer;}
+.inbox-time{font-size:11px;color:var(--muted);}
+.ib-btn{font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;cursor:pointer;}
+.ib-btn:hover{color:var(--ink);}
+/* 心情日志 */
+.mood-pick-wrap{display:flex;gap:10px;justify-content:center;margin:10px 0 14px;}
+.mood-pick{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--card-soft);border:2px solid transparent;cursor:pointer;transition:.15s;}
+.mood-pick:hover{transform:scale(1.1);}
+.mood-pick.active{border-color:var(--warm);background:var(--warm-soft);transform:scale(1.08);}
+.mood-avg{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
+.mood-corr{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px;background:var(--card-soft);border-radius:10px;padding:8px 10px;}
+
 /* ---- 语音录入 ---- */
 .top-icon.recording{background:#E0584A!important;color:#fff!important;animation:pulse-red 1s infinite;}
 @keyframes pulse-red{0%,100%{opacity:1;}50%{opacity:0.6;}}
@@ -1169,6 +1200,15 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
 .goal-proj-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-radius:8px;background:var(--card);margin-bottom:4px;font-size:13px;cursor:pointer;}
 .goal-proj-item:hover{background:var(--card-2);}
 .goal-proj-item span:first-child{color:var(--ink-2);}
+/* 目标子任务（拆解看板） */
+.goal-tasks{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.gt-item{display:flex;align-items:center;gap:8px;padding:4px 2px;}
+.gt-cb{width:18px;height:18px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;transition:all .15s;}
+.gt-cb.on{background:var(--good);border-color:var(--good);}
+.gt-text{flex:1;font-size:13px;color:var(--ink);}
+.gt-item.done .gt-text{text-decoration:line-through;color:var(--muted);}
+.gt-del{border:none;background:none;color:var(--muted);font-size:12px;padding:2px 4px;cursor:pointer;}
+.gt-del:hover{color:var(--warn);}
 
 /* ---- 复盘范围切换 ---- */
 .scope-tabs{display:flex;gap:8px;margin:10px 0 4px;}
@@ -1340,6 +1380,10 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .hm-cell.out{background:transparent;}
 .hm-legend{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:11px;color:var(--muted);}
 .hm-legend .sq{width:11px;height:11px;border-radius:3px;}
+.hm-chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;}
+.hm-chip{font-size:12px;padding:4px 12px;border-radius:999px;background:var(--card-soft);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.hm-chip:hover{border-color:var(--warm);}
+.hm-chip.active{background:var(--warm);border-color:var(--warm);color:#fff;font-weight:600;}
 @media (prefers-reduced-motion:reduce){
   .hm-cell{transition:none;}
   .hm-cell.in:hover{transform:none;}
@@ -1518,6 +1562,15 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 <body data-theme="light">
 <div id="bgLayer" class="bg-layer"></div>
 <div id="bgOverlay" class="bg-overlay"></div>
+<button id="quickCaptureBtn" class="qc-fab" title="灵感速记">💡</button>
+<div id="quickCapturePanel" class="qc-panel hidden">
+  <div class="qc-head">💡 灵感速记</div>
+  <textarea id="qcInput" class="qc-input" rows="3" placeholder="随手记一句话 / 链接 / 想法…"></textarea>
+  <div class="qc-row">
+    <button class="qc-cat" id="qcCat" data-cat="">未分类</button>
+    <button class="btn" id="qcSave">保存</button>
+  </div>
+</div>
 <div class="app">
 
   <!-- ============ Sidebar ============ -->
@@ -1742,6 +1795,8 @@ let state={
   soundPresets:[],      // 音效收藏
   soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],  // 声音设置
   memos:[],             // 备忘录（自动归类）
+  moods:{},             // 心情日志：日期→{emoji,val,note}
+  inbox:[],             // 灵感速记收集箱：[{id,text,kind:"idea"|"link",cat:"",catered:false,createdAt}]
   unlockedAch:[]        // 已解锁成就
 };
 let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3}};
@@ -1840,11 +1895,14 @@ function load(){
           {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
           {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
         ],
-        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[]
+        customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[],moods:{},inbox:[]
       },p);
       // 类型安全修正：防止 localStorage 被外部篡改成错误类型
-      const obj=()=>({}),arr=()=>[];
+      const         obj=()=>({}),arr=()=>[];
       state.entries=(state.entries&&typeof state.entries==="object"&&!Array.isArray(state.entries))?state.entries:{};
+      state.goals=Array.isArray(state.goals)?state.goals:[];
+      state.moods=(state.moods&&typeof state.moods==="object"&&!Array.isArray(state.moods))?state.moods:{};
+      state.inbox=Array.isArray(state.inbox)?state.inbox:[];
       state.contacts=Array.isArray(state.contacts)?state.contacts:[];
       state.books=Array.isArray(state.books)?state.books:[];
       state.countdowns=Array.isArray(state.countdowns)?state.countdowns:[];
@@ -2629,6 +2687,8 @@ const NAV_ITEMS=[
  {id:"course",l:"课程",ico:"🗓"},
  {id:"project",l:"项目",ico:"🎯"},
  {id:"memo",l:"备忘录",ico:"📌"},
+ {id:"mood",l:"心情",ico:"🌈"},
+ {id:"inbox",l:"速记",ico:"💡"},
  {id:"tree",l:"生命树",ico:"🌳"},
  {id:"data",l:"数据",ico:"📊"},
  {id:"ai",l:"AI 助手",ico:"🤖"}
@@ -2685,6 +2745,12 @@ function renderData(){
      <div class="data-row">
        <button class="btn-ghost" data-nav="library">📦 储备库</button>
        <button class="btn-ghost" data-nav="capsule">⏳ 胶囊</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🌈 记录与灵感</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="mood">🌈 心情日志</button>
+       <button class="btn-ghost" data-nav="inbox">💡 灵感速记</button>
      </div>
    </div>`;
 }
@@ -5876,20 +5942,32 @@ function viewGoals(){
   const levels=[{k:"vision",t:"🌟 五年愿景"},{k:"annual",t:"📅 年度目标"},{k:"monthly",t:"🗓️ 月度重点"}];
   const uncat=state.projects.filter(p=>!p.goalRef);
   const goalCard=g=>{
-    const linked=state.projects.filter(p=>p.goalRef===g.id);
-    const prog=linked.reduce((a,p)=>{const o=p.outline||[];return a+o.filter(x=>x.done).length;},0);
-    const tot=linked.reduce((a,p)=>a+(p.outline||[]).length,0);
-    const pct=tot?Math.round(prog*100/tot):0;
+    const tasks=g.tasks||[];
+    const doneT=tasks.filter(t=>t.done).length;
+    const totT=tasks.length;
+    let pct, progTxt;
+    if(totT){
+      pct=Math.round(doneT*100/totT);
+      progTxt=`子任务 ${doneT}/${totT}（${pct}%）`;
+    }else{
+      const linked=state.projects.filter(p=>p.goalRef===g.id);
+      const prog=linked.reduce((a,p)=>{const o=p.outline||[];return a+o.filter(x=>x.done).length;},0);
+      const tot=linked.reduce((a,p)=>a+(p.outline||[]).length,0);
+      pct=tot?Math.round(prog*100/tot):0;
+      progTxt=linked.length?`关联 ${linked.length} 个项目 · 提纲 ${prog}/${tot}（${pct}%）`:`暂无子任务 / 关联项目`;
+    }
     return `<div class="goal-card">
       <div class="goal-head"><b>${esc(g.title)}</b><button class="refl-del" data-goal-del="${g.id}">✕</button></div>
-      ${linked.length?`<div class="goal-proj">
-        <div class="goal-pct">关联 ${linked.length} 个项目 · 提纲 ${prog}/${tot}（${pct}%）</div>
-        <div class="pc-bar"><i style="width:${pct}%"></i></div>
-        ${linked.sort((a,b)=>(a.deadline||"9999").localeCompare(b.deadline||"9999")).map(p=>{
-          const days=p.deadline?diffDays(currentDate,p.deadline):null;
-          return `<div class="goal-proj-item" data-nav="project"><span>${esc(p.name)}</span>${p.deadline?`<span class="cp-dl ${days<0?"over":days<=3?"soon":""}">${days<0?"已过期":"剩"+days+"天"}</span>`:""}</div>`;
-        }).join("")}
-      </div>`:`<div class="empty" style="margin:6px 0">暂无关联项目</div>`}
+      <div class="goal-pct">${progTxt}</div>
+      <div class="pc-bar"><i style="width:${pct}%"></i></div>
+      <div class="goal-tasks">
+        ${tasks.length?tasks.map(t=>`<div class="gt-item ${t.done?"done":""}">
+          <div class="gt-cb ${t.done?"on":""}" data-goal-task-toggle="${t.id}" data-gid="${g.id}">✓</div>
+          <span class="gt-text">${esc(t.text)}</span>
+          <button class="gt-del" data-goal-task-del="${t.id}" data-gid="${g.id}">✕</button>
+        </div>`).join(""):`<div class="empty" style="margin:4px 0">尚未拆解子任务</div>`}
+      </div>
+      <div class="input-row"><input class="tl-input" id="newGoalTask-${g.id}" placeholder="拆解一个子任务…"/><button class="btn" data-action="add-goal-task" data-gid="${g.id}">＋</button></div>
     </div>`;
   };
   return `
@@ -5915,6 +5993,67 @@ function viewGoals(){
   `;
 }
 
+/* ============== 心情日志 ============== */
+function viewMood(){
+  const today=currentDate;
+  const m=state.moods[today]||{};
+  const MOOD_PICK=[{e:"😭",v:1,t:"难过"},{e:"😔",v:2,t:"低落"},{e:"😐",v:3,t:"一般"},{e:"🙂",v:4,t:"平静"},{e:"😊",v:5,t:"开心"},{e:"✨",v:5,t:"灵光"}];
+  const picker=MOOD_PICK.map(x=>`<div class="mood-pick ${m.emoji===x.e?"active":""}" data-mood-pick="${x.e}" data-v="${x.v}" title="${x.t}">${x.e}</div>`).join("");
+  const days=[];for(let i=29;i>=0;i--)days.push(addDays(today,-i));
+  const vals=days.map(d=>{const mm=state.moods[d];return mm&&mm.val?mm.val:null;});
+  const valid=vals.filter(v=>v!=null);
+  const avg=valid.length?Math.round(valid.reduce((a,b)=>a+b,0)/valid.length*10)/10:null;
+  const W=300,H=80,pad=10,n=days.length;
+  const xx=i=>pad+i*(W-2*pad)/(n-1);
+  const yy=v=>H-pad-((v-1)/4)*(H-2*pad);
+  let path="",started=false,dots="";
+  vals.forEach((v,i)=>{if(v==null){started=false;return;}const px=xx(i),py=yy(v);if(!started){path+="M"+px+" "+py;started=true;}else path+=" L"+px+" "+py;dots+=`<circle cx="${px}" cy="${py}" r="2.4" fill="var(--warm)"/>`;});
+  if(!path)path=`M${pad} ${H/2} L${W-pad} ${H/2}`;
+  const trendSvg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:${W}px;margin:0 auto"><line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="var(--line)"/><path d="${path}" fill="none" stroke="var(--warm)" stroke-width="2" stroke-linejoin="round"/><line x1="${pad}" y1="${yy(5)}" x2="${W-pad}" y2="${yy(5)}" stroke="var(--line)" stroke-dasharray="2 3"/><line x1="${pad}" y1="${yy(3)}" x2="${W-pad}" y2="${yy(3)}" stroke="var(--line)" stroke-dasharray="2 3"/>${dots}</svg>`;
+  const hasEx=d=>{const h=getDay(d).health;return !!(h&&h.exercise&&(h.exercise.minutes||h.exercise.done));};
+  const avgOf=arr=>{const vs=arr.map(d=>state.moods[d]&&state.moods[d].val).filter(v=>v);return vs.length?Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*10)/10:null;};
+  const ae=avgOf(days.filter(hasEx)),an=avgOf(days.filter(d=>!hasEx(d)));
+  let corr="记录越多，越能看到心情与运动、睡眠之间的关联。";
+  if(ae!=null&&an!=null&&valid.length>=5)corr=`近 30 天：运动日心情均值 <b>${ae}</b>，非运动日 <b>${an}</b>${ae>an?" —— 动一动确实更开心 😊":"。"}`;
+  return `<div class="card">
+    <div class="section-eyebrow">MOOD LOG</div>
+    <div class="section-title">🌈 心情日志</div>
+    <p class="section-desc">每天花 3 秒记一下心情，30 天后回看这条情绪曲线。</p>
+    <div class="mood-pick-wrap">${picker}</div>
+    <textarea class="big-text" rows="2" data-mood-note placeholder="今天为什么是这种心情？（可选）">${esc(m.note||"")}</textarea>
+    <div class="section-eyebrow" style="margin-top:14px">近 30 天情绪曲线</div>
+    ${valid.length?trendSvg:`<div class="empty">还没有足够数据，先挑个表情吧 👆</div>`}
+    <div class="mood-avg">均值 ${avg!=null?avg:"—"} · 已记录 ${valid.length} 天</div>
+    <div class="mood-corr">💡 ${corr}</div>
+  </div>`;
+}
+
+/* ============== 灵感速记收集箱 ============== */
+function viewInbox(){
+  const list=(state.inbox||[]).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const cats=[{k:"",t:"未分类"},{k:"思考",t:"💭 思考"},{k:"项目",t:"🎯 项目"},{k:"目标",t:"🏹 目标"},{k:"待办",t:"✅ 待办"}];
+  const catName=k=>{const c=cats.find(x=>x.k===k);return c?c.t:"未分类";};
+  const items=list.length?list.map(it=>{
+    const d=parseDate(it.createdAt?fmtDate(new Date(it.createdAt)):currentDate);
+    const time=it.createdAt?`${fmtDate(new Date(it.createdAt)).slice(5)} ${String(new Date(it.createdAt).getHours()).padStart(2,"0")}:${String(new Date(it.createdAt).getMinutes()).padStart(2,"0")}`:"";
+    return `<div class="inbox-item ${it.catered?"catered":""}">
+      <div class="inbox-text">${esc(it.text)}</div>
+      <div class="inbox-meta">
+        <span class="inbox-cat" data-inbox-cat="${it.id}">${catName(it.cat)}</span>
+        <span class="inbox-time">${time}</span>
+        ${it.cat==="思考"&&!it.catered?`<button class="ib-btn" data-inbox-to-reflect="${it.id}">转思考流</button>`:""}
+        <button class="ib-btn" data-inbox-del="${it.id}">删除</button>
+      </div>
+    </div>`;
+  }).join(""):`<div class="empty">速记箱是空的。点右下角 💡 随手记一句话吧。</div>`;
+  return `<div class="card">
+    <div class="section-eyebrow">QUICK CAPTURE</div>
+    <div class="section-title">💡 灵感速记</div>
+    <p class="section-desc">任何碎片想法、链接、待办，先丢进来，之后再整理归类。</p>
+    <div class="inbox-list">${items}</div>
+  </div>`;
+}
+
 /* ============== 主渲染 ============== */
 function render(){
   renderTop();
@@ -5937,6 +6076,8 @@ function render(){
    case"week":html=viewWeek();break;
    case"note":html=viewNotes();break;
    case"memo":html=viewMemo();break;
+   case"mood":html=viewMood();break;
+   case"inbox":html=viewInbox();break;
    case"board":html=viewBoard();break;
    case"tree":html=viewTree();break;
    case"sound":html=viewSound();break;
@@ -6141,6 +6282,41 @@ function onClick(e){
   if(t.dataset.goalDel!=null){
     state.goals=state.goals.filter(g=>g.id!==t.dataset.goalDel);
     save();render();return;
+  }
+  if(t.dataset.action==="add-goal-task"){
+    const gid=t.dataset.gid;const i=document.getElementById("newGoalTask-"+gid);const v=(i&&i.value.trim())||"";if(!v)return;
+    const g=state.goals.find(x=>x.id===gid);if(g){(g.tasks=g.tasks||[]).push({id:uid(),text:v,done:false});}
+    save();render();return;
+  }
+  if(t.dataset.goalTaskToggle!=null){
+    const g=state.goals.find(x=>x.id===t.dataset.gid);
+    if(g&&g.tasks){const tk=g.tasks.find(x=>x.id===t.dataset.goalTaskToggle);if(tk)tk.done=!tk.done;}
+    save();render();return;
+  }
+  if(t.dataset.goalTaskDel!=null){
+    const g=state.goals.find(x=>x.id===t.dataset.gid);
+    if(g&&g.tasks)g.tasks=g.tasks.filter(x=>x.id!==t.dataset.goalTaskDel);
+    save();render();return;
+  }
+  if(t.dataset.moodPick){
+    const em=t.dataset.moodPick,v=+t.dataset.v;
+    const cur=state.moods[currentDate]||{};
+    state.moods[currentDate]={emoji:em,val:v,note:cur.note||""};
+    save();render();return;
+  }
+  if(t.dataset.inboxCat!=null){
+    const it=(state.inbox||[]).find(x=>x.id===t.dataset.inboxCat);
+    if(it){const order=["","思考","项目","目标","待办"];const i=order.indexOf(it.cat);it.cat=order[(i+1)%order.length];save();render();}
+    return;
+  }
+  if(t.dataset.inboxDel!=null){
+    state.inbox=(state.inbox||[]).filter(x=>x.id!==t.dataset.inboxDel);
+    save();render();return;
+  }
+  if(t.dataset.inboxToReflect!=null){
+    const it=(state.inbox||[]).find(x=>x.id===t.dataset.inboxToReflect);
+    if(it){addReflection(currentDate,{text:it.text,mood:""});it.catered=true;save();render();toast("已转入思考流 💭");}
+    return;
   }
   if(t.dataset.action==="add-countdown"){
     const n=document.getElementById("cdName");
@@ -6561,6 +6737,11 @@ function onClick(e){
   if(t.dataset.reviewScope!=null){
     reviewScope=t.dataset.reviewScope;render();return;
   }
+  if(t.dataset.moodNote!=null){
+    const cur=state.moods[currentDate]||{};
+    state.moods[currentDate]={emoji:cur.emoji||"",val:cur.val||3,note:t.value};
+    markSaved();return;
+  }
 }
 let _saveIndicatorT;
 const markSaved=debounce(()=>{
@@ -6791,6 +6972,7 @@ function onKey(e){
     if(t.id==="newTask"){e.preventDefault();t.previousElementSibling&&t.click();}
     if(t.id&&t.id.startsWith("newContact-")){e.preventDefault();document.querySelector('[data-action="add-contact"][data-cat="'+t.id.replace("newContact-","")+'"]').click();}
     if(t.id&&t.id.startsWith("newGoal-")){e.preventDefault();document.querySelector('[data-action="add-goal"][data-level="'+t.id.replace("newGoal-","")+'"]').click();}
+    if(t.id&&t.id.startsWith("newGoalTask-")){e.preventDefault();const gid=t.id.replace("newGoalTask-","");document.querySelector('[data-action="add-goal-task"][data-gid="'+gid+'"]').click();}
     if(t.id==="newBookTitle"||t.id==="newBookAuthor"){e.preventDefault();document.querySelector('[data-action="add-book"]').click();}
   }
 }
@@ -6963,6 +7145,42 @@ function bindBgControls(){
   const blur=document.getElementById("bgBlur"),dim=document.getElementById("bgDim");
   if(blur&&!blur._bound){blur._bound=true;blur.oninput=()=>{settings.bg.blur=parseInt(blur.value,10)||0;document.getElementById("bgBlurV").textContent=blur.value;applyBackground();saveSettings();};}
   if(dim&&!dim._bound){dim._bound=true;dim.oninput=()=>{settings.bg.dim=parseFloat(dim.value)||0;document.getElementById("bgDimV").textContent=parseFloat(dim.value).toFixed(2);applyBackground();saveSettings();};}
+}
+/* ============== 灵感速记悬浮入口 ============== */
+function bindQuickCapture(){
+  const btn=document.getElementById("quickCaptureBtn");
+  const panel=document.getElementById("quickCapturePanel");
+  if(!btn||!panel)return;
+  const input=document.getElementById("qcInput");
+  const catBtn=document.getElementById("qcCat");
+  const saveBtn=document.getElementById("qcSave");
+  const QC_CATS=["","思考","项目","目标","待办"];
+  const QC_NAME={"":"未分类","思考":"💭 思考","项目":"🎯 项目","目标":"🏹 目标","待办":"✅ 待办"};
+  btn.onclick=()=>{
+    const hidden=panel.classList.contains("hidden");
+    panel.classList.toggle("hidden");
+    if(hidden)input.focus();
+  };
+  catBtn.onclick=()=>{
+    const i=QC_CATS.indexOf(catBtn.dataset.cat||"");
+    const nx=QC_CATS[(i+1)%QC_CATS.length];
+    catBtn.dataset.cat=nx;catBtn.textContent=QC_NAME[nx];
+  };
+  const doSave=()=>{
+    const v=input.value.trim();if(!v){toast("写点什么再保存～");return;}
+    const cat=catBtn.dataset.cat||"";
+    state.inbox=state.inbox||[];
+    state.inbox.push({id:uid(),text:v,kind:/^https?:\/\//.test(v)?"link":"idea",cat:cat,catered:false,createdAt:Date.now()});
+    save();input.value="";panel.classList.add("hidden");
+    toast("已收入速记箱 💡");
+  };
+  saveBtn.onclick=doSave;
+  input.onkeydown=e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();doSave();}};
+  // 点击面板外部关闭
+  document.addEventListener("click",e=>{
+    if(panel.classList.contains("hidden"))return;
+    if(!panel.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))panel.classList.add("hidden");
+  },true);
 }
 
 /* ============== 语音录入 ============== */
@@ -8216,6 +8434,7 @@ function bind(){
   document.getElementById("sidebar").classList.remove("open");
   document.getElementById("sbOverlay").classList.remove("show");
  });
+ bindQuickCapture();
  document.querySelectorAll("[data-top]").forEach(el=>el.addEventListener("click",()=>{
   const a=el.dataset.top;
   if(a==="search")openSearch("");
@@ -8611,10 +8830,16 @@ function hmLevel(s){
   if(s<=9)return 3;
   return 4;
 }
-function hmDayScore(date){
+function hmDayScore(date,filter){
   const e=state.entries[date];
   if(!e)return 0;
   const d=getDay(date);
+  if(filter==="签到")return d.checkIn?1:0;
+  if(filter&&filter!=="全部"){
+    const prefix=filter+"-";let n=0;
+    for(const k in (d.checks||{})){if(k.indexOf(prefix)===0&&d.checks[k])n++;}
+    return n;
+  }
   let s=0;
   if(d.checkIn)s+=3;
   const done=(d.tasks||[]).filter(t=>t.done).length;
@@ -8631,7 +8856,7 @@ function hmDayScore(date){
   if(rev||grw)s+=2;
   return s;
 }
-function hmBuildGrid(y){
+function hmBuildGrid(y,filter){
   const jan1=new Date(y,0,1);
   const janDow=jan1.getDay(); // 0=周日
   const off=(janDow===0?6:janDow-1);
@@ -8646,7 +8871,7 @@ function hmBuildGrid(y){
       const ds=addDays(colFirst,r);
       const dt=parseDate(ds);
       const inYear=dt.getFullYear()===y;
-      const score=inYear?hmDayScore(ds):0;
+      const score=inYear?hmDayScore(ds,filter):0;
       if(inYear){
         if(score>0){ activeDays++; cur++; if(cur>maxStreak)maxStreak=cur; }
         else cur=0;
@@ -8664,14 +8889,17 @@ function hmBuildGrid(y){
 function viewHeatmap(){
   const curY=new Date().getFullYear();
   const y=(state.heatmap&&state.heatmap.year)||curY;
-  const g=hmBuildGrid(y);
+  const filter=(state.heatmap&&state.heatmap.filter)||"全部";
+  const g=hmBuildGrid(y,filter);
   const monthsHtml=g.monthMarks.map(m=>`<span style="left:${m.col*14}px">${m.label}</span>`).join("");
   const weekLabels=["一","","三","","五","","日"].map(w=>`<span>${w}</span>`).join("");
   const legend=[0,1,2,3,4].map(l=>`<div class="sq l${l}"></div>`).join("");
+  const cats=["全部","签到"].concat(CHECK_TPL.map(c=>c.cat));
+  const chips=cats.map(c=>`<span class="hm-chip ${c===filter?"active":""}" data-mod-action="hm-filter" data-cat="${c}">${c==="全部"?"🌟 全部":c==="签到"?"✅ 签到":c}</span>`).join("");
   return `<div class="card">
     <div class="section-eyebrow">HABIT HEATMAP</div>
     <div class="section-title">🔥 习惯热力图</div>
-    <p class="section-desc">一整年的活跃度贡献图——越亮代表当天越充实</p>
+    <p class="section-desc">一整年的活跃度贡献图——越亮代表当天越充实。可按具体习惯筛选查看坚持度。</p>
     <div class="hm-head">
       <div class="hm-year">${y} 年</div>
       <div class="hm-nav">
@@ -8679,10 +8907,11 @@ function viewHeatmap(){
         <button class="btn-ghost" data-mod-action="hm-next" ${y>=curY+1?"disabled":""}>下一年 ›</button>
       </div>
     </div>
+    <div class="hm-chips">${chips}</div>
     <div class="hm-stats">
       <div class="hm-stat">活跃天数<b>${g.activeDays}</b></div>
       <div class="hm-stat">最长连续活跃<b>${g.maxStreak}</b></div>
-      <div class="hm-stat">年度总分<b>${g.total}</b></div>
+      <div class="hm-stat">${filter==="全部"?"年度总分":"累计打卡"}<b>${g.total}</b></div>
     </div>
     <div class="hm-wrap">
       <div class="hm-days">${weekLabels}</div>
@@ -8694,22 +8923,32 @@ function viewHeatmap(){
     <div class="hm-legend"><span>少</span>${legend}<span>多</span></div>
   </div>`;
 }
+MODULE_ACTIONS["hm-filter"]=function(t){
+  const cat=t.dataset.cat||"全部";
+  state.heatmap=state.heatmap||{};
+  state.heatmap.filter=cat;
+  save();render();
+};
 MODULE_ACTIONS["hm-prev"]=function(){
   const curY=new Date().getFullYear();
   const y=(state.heatmap&&state.heatmap.year)||curY;
-  state.heatmap={year:Math.max(2000,y-1)}; save(); render();
+  state.heatmap=(state.heatmap&&typeof state.heatmap==="object")?state.heatmap:{};
+  state.heatmap.year=Math.max(2000,y-1); save(); render();
 };
 MODULE_ACTIONS["hm-next"]=function(){
   const curY=new Date().getFullYear();
   const y=(state.heatmap&&state.heatmap.year)||curY;
-  state.heatmap={year:Math.min(curY+1,y+1)}; save(); render();
+  state.heatmap=(state.heatmap&&typeof state.heatmap==="object")?state.heatmap:{};
+  state.heatmap.year=Math.min(curY+1,y+1); save(); render();
 };
 MODULE_ACTIONS["hm-day"]=function(t){
   const ds=t.dataset.date; if(!ds)return;
-  const s=hmDayScore(ds);
+  const filter=(state.heatmap&&state.heatmap.filter)||"全部";
+  const s=hmDayScore(ds,filter);
   const d=getDay(ds);
   const done=(d.tasks||[]).filter(x=>x.done).length;
-  toast(`${ds} · 活跃 ${s}　任务 ${done}　${d.checkIn?"已签到":"未签到"}`);
+  const label=filter==="全部"?"活跃":(filter==="签到"?"签到":"打卡");
+  toast(`${ds} · ${label} ${s}　任务 ${done}　${d.checkIn?"已签到":"未签到"}`);
 };
 /* === MODULE JS: tomgarden === */
 /* === MODULE JS: tomgarden === */
