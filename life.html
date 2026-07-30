@@ -2499,26 +2499,59 @@ const NAV_ITEMS=[
  {id:"project",l:"项目",ico:"🎯"},
  {id:"goals",l:"目标",ico:"🏹"},
  {id:"reflect",l:"思考",ico:"💭"},
- {id:"capsule",l:"胶囊",ico:"⏳"},
  {id:"quote",l:"摘抄",ico:"✒️"},
- {id:"review",l:"周复盘",ico:"🔄"},
- {id:"week",l:"周计划",ico:"🗓"},
  {id:"note",l:"笔记",ico:"📝"},
  {id:"memo",l:"备忘录",ico:"📌"},
- {id:"board",l:"看板",ico:"📈"},
  {id:"tree",l:"生命树",ico:"🌳"},
  {id:"sound",l:"声音",ico:"🎵"},
- {id:"library",l:"储备库",ico:"📦"},
- {id:"trends",l:"趋势",ico:"📊"},
- {id:"yearreview",l:"年回顾",ico:"📅"},
- {id:"heatmap",l:"热力图",ico:"🔥"},
- {id:"tomgarden",l:"番茄花园",ico:"🌱"},
- {id:"spaced",l:"复习",ico:"🔁"},
- {id:"remind",l:"提醒",ico:"🔔"},
- {id:"graph",l:"图谱",ico:"🕸"},
  {id:"shopping",l:"购物",ico:"🛒"},
- {id:"body",l:"身体",ico:"⚖️"}
+ {id:"body",l:"身体",ico:"⚖️"},
+ {id:"data",l:"数据",ico:"📊"}
 ];
+// "数据"是新增的统一入口，承载多个子视图（看板/趋势/复盘/周计划/年回顾/热力图/图谱/番茄花园/休息）
+function renderData(){
+  // 内部用一个二级卡片分组承载
+  return `
+   <div class="card">
+     <div class="section-eyebrow">DATA HUB</div>
+     <div class="section-title">📊 数据中心</div>
+     <p class="section-desc">把分散的数据视图收拢到一起：热力图、年回顾、复盘、图谱、休息，一页掌握。</p>
+
+     <div class="section-eyebrow" style="margin-top:8px">📈 看板 · 趋势</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="board">📊 看板</button>
+       <button class="btn-ghost" data-nav="trends">📈 趋势</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🔁 复盘 · 计划</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="week">🗓 周计划</button>
+       <button class="btn-ghost" data-nav="review">🔄 周复盘</button>
+       <button class="btn-ghost" data-nav="yearreview">📅 年回顾</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🔥 习惯与图谱</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="heatmap">🔥 热力图</button>
+       <button class="btn-ghost" data-nav="graph">🕸 模块图谱</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🌱 自律花园与休息</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="tomgarden">🌱 番茄花园</button>
+       <button class="btn-ghost" data-nav="spaced">🔁 间隔复习</button>
+       <button class="btn-ghost" data-nav="remind">🔔 提醒中心</button>
+       <button class="btn-ghost" data-top="rest">🏔 休息模式</button>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🏗 储备库</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-nav="library">📦 储备库</button>
+       <button class="btn-ghost" data-nav="capsule">⏳ 胶囊</button>
+     </div>
+   </div>`;
+}
+
 function renderTop(){
   const d=parseDate(currentDate);
   const wk=["日","一","二","三","四","五","六"][d.getDay()];
@@ -3000,6 +3033,22 @@ function viewLearn(){
      <div class="section-eyebrow" style="margin-top:14px">📰 政策感知</div>
      <div class="list">${recHtml("s",POLICY_REC,"policy")}</div>
 
+     <div class="section-eyebrow" style="margin-top:14px">🔁 间隔复习（知识内化）</div>
+     ${(()=>{ /* 复习嵌入学习页：显示待复习数 + 一键跳到完整复习 */
+       state.spaced=state.spaced||{cards:[]};
+       try{srSync();}catch(e){}
+       const now=Date.now();
+       const pending=(state.spaced.cards||[]).filter(c=>c.next<=now).length;
+       const total=(state.spaced.cards||[]).length;
+       return `<div class="card" style="margin-top:6px;background:var(--card-soft);box-shadow:none">
+         <div class="data-row">
+           <span style="font-size:14px;font-weight:600">待复习 ${pending} · 总卡 ${total}</span>
+           <button class="btn-ghost" data-nav="spaced">去复习 →</button>
+         </div>
+         <div class="section-desc" style="margin:6px 0 0">摘抄/备忘/笔记会自动变成复习卡，滚动到这里就能看到进度。</div>
+       </div>`;
+     })()}
+
      <div class="section-eyebrow" style="margin-top:14px">🌡 学习状态</div>
      <textarea class="big-text" rows="2" data-study="s-mood" placeholder="今天的学习感受…">${esc(m)}</textarea>
    </div>
@@ -3108,6 +3157,23 @@ function viewHealthModule(){
        <div class="meditate-status" id="medStatus">${medRunning?'跟随节奏呼吸…':'选一个时长，开始放松'}</div>
        <div class="meditate-count">今日冥想：${((getDay(currentDate).health.meditation||[]).reduce((s,m)=>s+(m.duration||0),0))/60|0} 分钟</div>
      </div>
+
+     ${(()=>{ /* 提醒中心嵌入健康页 */
+       state.reminders=state.reminders||[];
+       const active=state.reminders.filter(r=>r.enabled).length;
+       return `<div class="card" style="margin-top:14px;background:var(--card-soft);box-shadow:none">
+         <div class="section-eyebrow">REMIND · 健康提醒</div>
+         <div class="data-row" style="margin-top:6px">
+           <span style="font-size:14px;font-weight:600">启用中 ${active} 条</span>
+           <button class="btn-ghost" data-nav="remind">管理提醒 →</button>
+         </div>
+         <div class="data-row" style="margin-top:8px">
+           <button class="btn" data-mod-action="rm-health" data-kind="water">💧 喝水</button>
+           <button class="btn" data-mod-action="rm-health" data-kind="stand">🚶 起身</button>
+           <button class="btn" data-mod-action="rm-health" data-kind="eye">👀 护眼</button>
+         </div>
+       </div>`;
+     })()}
    </div>
   `;
 }
@@ -5690,6 +5756,7 @@ function render(){
    case"graph":html=viewGraph();break;
    case"shopping":html=viewShopping();break;
    case"body":html=viewBody();break;
+   case"data":html=renderData();break;
    default:html=viewHome();
   }
   // 工具区始终追加在最后
