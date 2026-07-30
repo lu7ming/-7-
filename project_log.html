@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>人生工作台 · 项目全记录</title>
+<style>
+:root{
+  --bg:#faf8f5;--ink:#2a2a2a;--muted:#888;--line:#e8e4dd;
+  --accent:#c8956d;--accent-ink:#fff;--card:#fff;--card-soft:#f5f1ea;
+  --warm:#e8c9a0;--shadow:0 2px 12px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;line-height:1.8;font-size:15px;}
+.wrap{max-width:780px;margin:0 auto;padding:32px 20px 80px;}
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(135deg,#f5e6d3,#faf8f5);border-radius:20px;margin-bottom:40px;}
+.hero h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;}
+.hero .sub{color:var(--muted);font-size:15px;}
+.hero .meta{margin-top:16px;font-size:12px;color:var(--muted);}
+.hero .links{margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.hero .links a{display:inline-block;padding:10px 20px;border-radius:12px;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-size:14px;font-weight:600;box-shadow:var(--shadow);}
+.hero .links a.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line);}
+section{margin-bottom:40px;}
+h2{font-size:22px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:inline-block;}
+h3{font-size:17px;font-weight:600;margin:20px 0 10px;color:var(--accent);}
+p{margin-bottom:12px;}
+.tl{position:relative;padding-left:28px;}
+.tl::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:var(--line);}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-item::before{content:'';position:absolute;left:-28px;top:8px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);}
+.tl-date{font-size:12px;color:var(--muted);font-weight:600;}
+.tl-title{font-weight:600;margin:2px 0;}
+.tl-desc{font-size:14px;color:#555;}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);}
+th{background:var(--card-soft);font-weight:600;}
+tr:hover{background:var(--card-soft);}
+.card{background:var(--card);border-radius:12px;padding:20px;margin:12px 0;box-shadow:var(--shadow);}
+.card.soft{background:var(--card-soft);box-shadow:none;}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;margin:2px;}
+.tag.done{background:#d4edda;color:#155724;}
+.tag.wip{background:#fff3cd;color:#856404;}
+.tag.future{background:#e2e3e5;color:#383d41;}
+.tag.bug{background:#f8d7da;color:#721c24;}
+ul{padding-left:20px;margin:10px 0;}
+li{margin-bottom:6px;}
+blockquote{border-left:4px solid var(--accent);padding:12px 16px;background:var(--card-soft);margin:12px 0;border-radius:0 8px 8px 0;font-size:14px;}
+code{background:var(--card-soft);padding:2px 6px;border-radius:4px;font-size:13px;font-family:"SF Mono",Consolas,monospace;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0;}
+.stat{text-align:center;padding:16px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);}
+.stat .num{font-size:28px;font-weight:800;color:var(--accent);}
+.stat .label{font-size:12px;color:var(--muted);margin-top:4px;}
+.msg-flow{background:var(--card);border-radius:12px;padding:16px;margin:10px 0;box-shadow:var(--shadow);}
+.msg-flow .role{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.msg-flow .role.user{color:#666;}
+footer{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:40px;}
+@media(max-width:600px){.hero h1{font-size:24px;}.wrap{padding:20px 14px 60px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>🌳 人生工作台 · 项目全记录</h1>
+  <div class="sub">鹿7铭 的 iPad Life OS · 从构想到落地的完整历程</div>
+  <div class="meta">项目周期：2026年7月30日 · 单文件 HTML PWA · 部署于 GitHub Pages</div>
+  <div class="links">
+    <a href="https://lu7ming.github.io/-7-/life.html" target="_blank">🔗 打开工作台</a>
+    <a href="https://lu7ming.github.io/-7-/concept_realistic.html" target="_blank">🎨 写实场景 PoC</a>
+    <a href="https://lu7ming.github.io/-7-/brief.html" target="_blank">📋 项目简介页</a>
+  </div>
+</div>
+
+<!-- 项目概览 -->
+<section>
+  <h2>📋 项目概览</h2>
+  <p><strong>人生工作台</strong>是鹿7铭为自己打造的 iPad "Life OS"——一个单文件 HTML PWA，覆盖日常学习、休息、记录、效率管理（不含游戏/刷网页/外卖）。纯本地存储，无需后端，离线可用。</p>
+  
+  <div class="stat-grid">
+    <div class="stat"><div class="num">9400+</div><div class="label">代码行数</div></div>
+    <div class="stat"><div class="num">11</div><div class="label">导航模块</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">版本（手动/AI/扣子）</div></div>
+    <div class="stat"><div class="num">31/32</div><div class="label">压力测试通过</div></div>
+  </div>
+
+  <h3>导航结构（11 项）</h3>
+  <table>
+    <tr><th>模块</th><th>包含内容</th></tr>
+    <tr><td>▦ 工作台</td><td>日历 / 问候 / 任务 / 番茄 / 倒计时 / 快捷工具 / AI 小结</td></tr>
+    <tr><td>📖 学习</td><td>番茄钟 + 番茄花园（种植）+ 间隔复习 + 学习状态</td></tr>
+    <tr><td>💪 健康</td><td>习惯打卡 + 提醒中心 + 身体数据（体重/体脂/心率/步数）</td></tr>
+    <tr><td>💰 资产</td><td>收入/支出记录 + 预算 + 余额 + 趋势</td></tr>
+    <tr><td>🤝 关系</td><td>ABCD 四层联系人管理 + 互动记录</td></tr>
+    <tr><td>📚 书架</td><td>书籍管理 + 摘抄 + 笔记（Tab 切换）</td></tr>
+    <tr><td>🗓 课程</td><td>课程表 + 空闲时段</td></tr>
+    <tr><td>🎯 项目</td><td>项目追踪 + 目标联动</td></tr>
+    <tr><td>📌 备忘录</td><td>备忘 + 购物清单</td></tr>
+    <tr><td>🌳 生命树</td><td>养分积累 + 等级成长 + 写实 SVG</td></tr>
+    <tr><td>📊 数据</td><td>看板/趋势/复盘/计划/年回顾/热力图/图谱/目标/思考</td></tr>
+    <tr><td>🤖 AI 助手</td><td>DeepSeek 对话 + 自然语言录入（侧栏入口）</td></tr>
+  </table>
+</section>
+
+<!-- 时间线 -->
+<section>
+  <h2>📅 完整时间线</h2>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">项目启动 · 单文件 HTML PWA</div>
+      <div class="tl-desc">确定做 iPad Life OS，单文件 HTML，localStorage 存储，GitHub Pages 部署。初版含 30 个侧栏入口。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">写实场景 PoC</div>
+      <div class="tl-desc">做 concept_realistic.html——生命树/番茄花园/休息模式三场景的写实 CSS/SVG 渲染（无 AI 生图，用纯 CSS 绘制）。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">模块深度整合 · 30→18→11 项</div>
+      <div class="tl-desc">三轮精简：身体→健康、购物→备忘录、摘抄笔记→书架、目标思考→数据、声音→顶栏。子模块改为内嵌母模块。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">新增购物 + 身体模块</div>
+      <div class="tl-desc">🛒 多清单购物（勾选/数量）+ ⚖️ 身体数据（体重/体脂/心率/步数 + 趋势图）。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">三手准备决策</div>
+      <div class="tl-desc">用户决定做三版：① 纯手动工作台 ② 页面内 AI ③ 扣子自动化。原文件保存为 人生工作台_原文件_20260730_1721.html。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">DeepSeek 接入</div>
+      <div class="tl-desc">推荐国内 AI（无 VPN）→ DeepSeek。用户充 ¥10。Key 方案选 C（运行时填入存 localStorage，避免 GitHub Secret Scanning）。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">AI 助手上线</div>
+      <div class="tl-desc">顶栏 🤖 按钮 + 侧栏入口，右侧抽屉面板。Context 注入工作台数据。支持对话/总结/建议/翻译/自然语言录入。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 下午</div>
+      <div class="tl-title">扣子桥配对 → 卸载扣子</div>
+      <div class="tl-desc">coze-bridge 配对成功（pid 157525）。分析后结论：桥在沙箱里 iPad 用不上，数据割裂。用户卸载扣子 App，放弃这条路。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 傍晚</div>
+      <div class="tl-title">Bug 修复马拉松</div>
+      <div class="tl-desc">修了一连串 bug：AI 快捷按钮失灵、问候语永远凌晨好、treeData 缺 history 导致崩溃、AI 记账类别乱归、收入支出方向错、余额不刷新。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7/30 傍晚</div>
+      <div class="tl-title">压力测试 31/32 通过</div>
+      <div class="tl-desc">10 套件 32 项：空数据/损坏数据/365 天大数据/快速操作/XSS/存储满溢/并发/超长输入/PWA/日期边界。修复 3 个数据容错问题。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 我们讨论的所有想法 -->
+<section>
+  <h2>💭 我们讨论过的所有想法</h2>
+
+  <h3>✅ 已实现</h3>
+  <ul>
+    <li><strong>模块深度整合</strong>：30→11 项，子模块内嵌母模块（番茄花园→学习、身体→健康、购物→备忘录等）</li>
+    <li><strong>AI 助手接入</strong>：DeepSeek API，运行时填 key 存 localStorage，对话式问答 + 自然语言录入</li>
+    <li><strong>自然语言记账</strong>：说「吃饭 30」自动归类餐饮、说「奶奶转账 400」自动入收入栏</li>
+    <li><strong>AI 快捷按钮</strong>：总结今天 / 给我建议 / 本周回顾 / 习惯分析 / 配置 key</li>
+    <li><strong>写实场景 PoC</strong>：生命树/番茄花园/休息模式的 CSS/SVG 写实渲染</li>
+    <li><strong>身体数据模块</strong>：体重/体脂/心率/步数 + 趋势图</li>
+    <li><strong>购物清单模块</strong>：多清单 + 勾选 + 数量</li>
+    <li><strong>数据容错加固</strong>：localStorage 被篡改也不崩溃</li>
+  </ul>
+
+  <h3>🔵 备选/暂缓</h3>
+  <ul>
+    <li><strong>数据自动云同步</strong>：列为备选，不急。目前靠手动导出 JSON 备份</li>
+    <li><strong>首次引导流程</strong>：不需要，个人使用</li>
+    <li><strong>快捷键体系</strong>：暂时放一边</li>
+    <li><strong>扣子自动化</strong>：已配对桥但放弃（桥在沙箱 iPad 用不上，数据割裂）。用户卸载扣子 App</li>
+    <li><strong>定时提醒推送</strong>：扣子那路的遗留想法，等用一周后再决定</li>
+  </ul>
+
+  <h3>🟡 未来计划</h3>
+  <ul>
+    <li><strong>写实化三场景</strong>：需要有效的图片生成 API key（当前用 CSS/SVG 替代）</li>
+    <li><strong>iPad 试用一周反馈</strong>：用一周后根据实际体验迭代</li>
+    <li><strong>扣子定时提醒</strong>：如果发现老忘记打卡/复盘，再考虑扣子或更轻方案</li>
+  </ul>
+</section>
+
+<!-- Bug 修复记录 -->
+<section>
+  <h2>🐛 Bug 修复记录</h2>
+  <table>
+    <tr><th>#</th><th>Bug</th><th>根因</th><th>状态</th></tr>
+    <tr><td>1</td><td>AI 快捷按钮点不动</td><td>bindAI() 里 input 变量未声明，抛 ReferenceError 导致绑定全跳过</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>2</td><td>问候语永远"凌晨好"</td><td>parseDate(currentDate) 解析出时分秒=00:00→永远命中凌晨</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>3</td><td>18点就叫"晚上好"</td><td>时段分界线太早</td><td><span class="tag done">已调</span></td></tr>
+    <tr><td>4</td><td>工作台启动崩溃</td><td>treeData 缺 history 字段→td.history[today] 报 undefined</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>5</td><td>损坏数据崩溃×3</td><td>entries/goals/treeData 被篡改为错误类型</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>6</td><td>AI 记账类别乱归</td><td>prompt 关键词不全，简短输入全归"其他"</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>7</td><td>收入记成支出</td><td>aiHandleRecord 没有 direction 字段，全 push 到 out</td><td><span class="tag done">已修</span></td></tr>
+    <tr><td>8</td><td>余额不刷新</td><td>AI 记账后没调 recalcFinanceBalance + updateFinanceKpi</td><td><span class="tag done">已修</span></td></tr>
+  </table>
+</section>
+
+<!-- AI 能力 -->
+<section>
+  <h2>🤖 AI 助手能力清单</h2>
+  <div class="card">
+    <h3>对话能力（开箱即用）</h3>
+    <ul>
+      <li>💬 <strong>看数据</strong>：「我今天任务完成率多少」「这周学习多少分钟」</li>
+      <li>🧠 <strong>给建议</strong>：「根据今天数据给我下一步建议」</li>
+      <li>📊 <strong>总结复盘</strong>：「总结我这周」「本月和上月对比」</li>
+      <li>🔍 <strong>习惯分析</strong>：「我连续打卡断了几次」</li>
+      <li>🌍 <strong>翻译</strong>：单词/句子/段落（中英日韩）+ 音标 + 例句</li>
+      <li>📖 <strong>背单词</strong>：「给我5个雅思高频词带音标例句」</li>
+      <li>✍️ <strong>写作</strong>：润色/文案/头脑风暴</li>
+      <li>💻 <strong>写代码</strong>：debug/解释报错/写函数</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>自然语言录入（自动写回工作台）</h3>
+    <ul>
+      <li>💰 <strong>记账</strong>：「记一笔午餐 25」→ 餐饮支出 / 「奶奶转账 400」→ 收入</li>
+      <li>🛒 <strong>购物</strong>：「加个牛奶到购物清单」</li>
+      <li>⏰ <strong>提醒</strong>：「提醒我明早7点起床」</li>
+      <li>🎯 <strong>目标</strong>：「加个目标：读完《原则》」</li>
+      <li>⚖️ <strong>身体数据</strong>：「记体重 65.5」</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 技术架构 -->
+<section>
+  <h2>⚙️ 技术架构</h2>
+  <div class="card soft">
+    <h3>核心设计</h3>
+    <ul>
+      <li><strong>单文件 HTML</strong>：~9400 行，IIFE 包裹，无框架，无后端</li>
+      <li><strong>存储</strong>：localStorage（life_data_v1 + life_settings_v1 + ai_deepseek_key）</li>
+      <li><strong>PWA</strong>：Service Worker 缓存离线可用，manifest 可「添加到主屏幕」</li>
+      <li><strong>部署</strong>：GitHub Pages，git push 自动上线</li>
+      <li><strong>AI</strong>：DeepSeek API（deepseek-chat 模型），OpenAI 兼容格式</li>
+      <li><strong>Context 注入</strong>：collectContextData() 序列化今日/本周/目标/书籍/树/番茄/身体/提醒/购物 → 系统 prompt</li>
+      <li><strong>JSON 动作协议</strong>：AI 返回 {"action":"record","type":"finance|shopping|reminder|goal|body","data":{...}} → aiHandleRecord 写入</li>
+    </ul>
+  </div>
+  <div class="card soft">
+    <h3>Key 安全方案</h3>
+    <p>选了 <strong>方案 C：运行时填 key</strong>。Key 不硬编码在代码里（避免 GitHub Secret Scanning 拦截），首次用 AI 时点「⚙ 配置 key」→ prompt() 输入 → 存 localStorage → 刷新不丢失。</p>
+  </div>
+</section>
+
+<!-- 关键文件 -->
+<section>
+  <h2>📁 关键文件清单</h2>
+  <table>
+    <tr><th>文件</th><th>说明</th></tr>
+    <tr><td><code>life.html</code></td><td>主应用（~9400 行），线上版</td></tr>
+    <tr><td><code>concept_realistic.html</code></td><td>三场景写实 PoC</td></tr>
+    <tr><td><code>brief.html</code></td><td>项目简介页</td></tr>
+    <tr><td><code>人生工作台_原文件_20260730_1721.html</code></td><td>AI 接入前的原版备份</td></tr>
+  </table>
+</section>
+
+<!-- 使用指南 -->
+<section>
+  <h2>📖 使用指南</h2>
+  <div class="card">
+    <h3>首次使用</h3>
+    <ol>
+      <li>打开 <a href="https://lu7ming.github.io/-7-/life.html">工作台</a></li>
+      <li>点右上角 🤖 或侧栏「AI 助手」</li>
+      <li>输入「配置 key」→ 粘贴 DeepSeek key → 回车</li>
+      <li>开始用</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>日常使用</h3>
+    <ul>
+      <li>📱 <strong>添加到主屏幕</strong>：Safari 分享 → 添加到主屏幕 → 像 App 一样用</li>
+      <li>🔄 <strong>刷新</strong>：URL 加 ?v=数字 绕过缓存</li>
+      <li>💾 <strong>备份</strong>：顶栏 💾 → 导出 JSON</li>
+      <li>🎨 <strong>主题/配色</strong>：顶栏 ☀️ / 🎨</li>
+      <li>❄️ <strong>休息模式</strong>：顶栏 ❄️</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 压力测试 -->
+<section>
+  <h2>📊 压力测试报告</h2>
+  <table>
+    <tr><th>套件</th><th>项目</th><th>结果</th></tr>
+    <tr><td>空数据启动</td><td>2</td><td><span class="tag done">2/2</span></td></tr>
+    <tr><td>损坏数据容错</td><td>10</td><td><span class="tag done">10/10</span></td></tr>
+    <tr><td>大数据量（365天）</td><td>3</td><td><span class="tag done">3/3</span></td></tr>
+    <tr><td>快速连续操作</td><td>3</td><td><span class="tag done">3/3</span></td></tr>
+    <tr><td>XSS 防注入</td><td>3</td><td><span class="tag done">3/3</span></td></tr>
+    <tr><td>存储满溢</td><td>2</td><td><span class="tag done">2/2</span></td></tr>
+    <tr><td>并发保存</td><td>1</td><td><span class="tag done">1/1</span></td></tr>
+    <tr><td>超长输入</td><td>1</td><td><span class="tag done">1/1</span></td></tr>
+    <tr><td>PWA</td><td>2</td><td><span class="tag wip">1/2</span></td></tr>
+    <tr><td>日期边界</td><td>5</td><td><span class="tag done">5/5</span></td></tr>
+  </table>
+  <p><strong>总计 31/32 通过</strong>（唯一未过：Service Worker 在 file:// 协议下不工作，线上 HTTPS 正常）</p>
+</section>
+
+<footer>
+  <p>人生工作台 · 鹿7铭 的 Life OS</p>
+  <p>2026年7月30日 · 单文件 HTML PWA · GitHub Pages</p>
+</footer>
+
+</div>
+</body>
+</html>
