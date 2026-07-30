@@ -186,6 +186,12 @@ html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Pin
   background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
 html{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
 body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
+/* ================== 自定义背景图层 ================== */
+.bg-layer{position:fixed;top:-3%;left:-3%;width:106%;height:106%;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;transform:scale(1.08);transition:background-image .25s ease,filter .25s ease;display:none;will-change:filter;}
+.bg-overlay{position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background .25s ease;display:none;}
+body.bg-photo .bg-layer{display:block;}
+body.bg-photo .bg-overlay{display:block;}
+body.bg-photo{background:#15131a!important;background-image:none!important;}
 button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
 
@@ -810,6 +816,27 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .palette-swatch{width:32px;height:32px;border-radius:8px;flex-shrink:0;}
 .palette-opt-name{font-size:13px;font-weight:600;color:var(--ink);}
 .palette-opt-desc{font-size:11px;color:var(--muted);}
+
+/* ---- 背景图片分区 ---- */
+.sec-h{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin:18px 2px 8px;}
+.bg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.bg-opt{position:relative;border-radius:12px;overflow:hidden;cursor:pointer;border:2px solid var(--line);aspect-ratio:4/3;background:var(--card-soft);transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.bg-opt.active{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm-soft);}
+.bg-opt:active{transform:scale(.97);}
+.bg-opt .bg-thumb{width:100%;height:100%;object-fit:cover;display:block;}
+.bg-opt .bg-grad{width:100%;height:100%;}
+.bg-opt .bg-check{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:var(--warm);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.bg-opt .bg-del{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;border:none;}
+.bg-opt .bg-label{position:absolute;bottom:0;left:0;right:0;font-size:10px;color:#fff;background:rgba(0,0,0,.5);text-align:center;padding:2px 0;}
+.bg-opt.bg-none{align-items:center;justify-content:center;color:var(--muted);font-size:12px;font-weight:600;}
+.bg-upload{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:12px;border:2px dashed var(--line);border-radius:12px;cursor:pointer;color:var(--warm);font-size:13px;font-weight:600;transition:all .2s;}
+.bg-upload:active{transform:scale(.98);background:var(--warm-soft);}
+.bg-sliders{margin-top:12px;background:var(--card-soft);border-radius:12px;padding:12px 14px;}
+.bg-slider-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12px;color:var(--ink);}
+.bg-slider-row span{width:34px;flex-shrink:0;color:var(--muted);}
+.bg-slider-row input[type=range]{flex:1;accent-color:var(--warm);}
+.bg-slider-row b{width:34px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);}
+.bg-tip{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px;}
 
 /* ---- 语音录入 ---- */
 .top-icon.recording{background:#E0584A!important;color:#fff!important;animation:pulse-red 1s infinite;}
@@ -1482,6 +1509,8 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 </style>
 </head>
 <body data-theme="light">
+<div id="bgLayer" class="bg-layer"></div>
+<div id="bgOverlay" class="bg-overlay"></div>
 <div class="app">
 
   <!-- ============ Sidebar ============ -->
@@ -1548,9 +1577,21 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 <!-- Palette modal -->
 <div class="overlay hidden" id="paletteOverlay">
   <div class="panel">
-    <div class="panel-head"><h3>🎨 配色主题</h3><button class="btn" id="paletteClose">关闭</button></div>
+    <div class="panel-head"><h3>🎨 配色与背景</h3><button class="btn" id="paletteClose">关闭</button></div>
     <div class="panel-body">
+      <div class="sec-h">配色主题</div>
       <div class="palette-grid" id="paletteGrid"></div>
+      <div class="sec-h">🌅 背景图片</div>
+      <div class="bg-grid" id="bgGrid"></div>
+      <label class="bg-upload" id="bgUpload">
+        <input type="file" id="bgFile" accept="image/*" hidden multiple>
+        <span>＋ 上传照片当背景</span>
+      </label>
+      <div class="bg-sliders" id="bgSliders" style="display:none">
+        <div class="bg-slider-row"><span>模糊</span><input type="range" id="bgBlur" min="0" max="22" step="1" value="6"><b id="bgBlurV">6</b></div>
+        <div class="bg-slider-row"><span>暗化</span><input type="range" id="bgDim" min="0" max="0.7" step="0.05" value="0.3"><b id="bgDimV">0.30</b></div>
+      </div>
+      <div class="bg-tip">照片会自动压缩存储，可上传多张并随时切换。开启照片背景后，上方配色仅影响卡片与文字颜色。</div>
     </div>
   </div>
 </div>
@@ -1696,7 +1737,7 @@ let state={
   memos:[],             // 备忘录（自动归类）
   unlockedAch:[]        // 已解锁成就
 };
-let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false};
+let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3}};
 /* 模块动作注册表：各模块用 data-mod-action 触发，互不干扰主 data-action 系统 */
 const MODULE_ACTIONS={};
 let currentDate=fmtDate(new Date());
@@ -1836,10 +1877,24 @@ function load(){
   }catch(e){}
   try{
     const s=localStorage.getItem(SET_KEY);
-    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false},JSON.parse(s));
+    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3}},JSON.parse(s));
   }catch(e){}
 }
-function saveSettings(){localStorage.setItem(SET_KEY,JSON.stringify(settings));}
+function saveSettings(){
+  try{localStorage.setItem(SET_KEY,JSON.stringify(settings));return;}
+  catch(e){
+    /* 配额超限：丢弃最旧背景图后重试 */
+    try{
+      while(settings.bgGallery&&settings.bgGallery.length){
+        settings.bgGallery.shift();
+        if(settings.bg.mode==="photo"&&settings.bg.sel>=settings.bgGallery.length)settings.bg.sel=settings.bgGallery.length-1;
+        if(settings.bg.sel<0){settings.bg.mode="gradient";settings.bg.sel=-1;}
+        try{localStorage.setItem(SET_KEY,JSON.stringify(settings));return;}catch(e2){}
+      }
+    }catch(e3){}
+    try{localStorage.setItem(SET_KEY,JSON.stringify({theme:settings.theme,palette:settings.palette}));}catch(e4){}
+  }
+}
 /* 如果 localStorage 丢失但 IndexedDB 有备份，尝试恢复 */
 async function tryRestoreFromIDB(){
   if(!idbDB)return false;
@@ -2688,6 +2743,46 @@ function applyTheme(){
   document.documentElement.style.background=bg;
   var m=document.getElementById("meta-theme-color");
   if(m)m.setAttribute("content",bg);
+  applyBackground();
+}
+/* 应用自定义背景（照片图层） */
+function applyBackground(){
+  var b=settings.bg||{mode:"gradient",sel:-1,blur:6,dim:0.3};
+  var layer=document.getElementById("bgLayer");
+  var ov=document.getElementById("bgOverlay");
+  if(!layer||!ov)return;
+  var photo=(b.mode==="photo"&&b.sel>=0&&settings.bgGallery&&settings.bgGallery[b.sel])?settings.bgGallery[b.sel].data:null;
+  if(photo){
+    layer.style.backgroundImage='url("'+photo+'")';
+    layer.style.filter='blur('+(b.blur||0)+'px)';
+    ov.style.background='rgba(0,0,0,'+(b.dim!=null?b.dim:0.3)+')';
+    document.body.classList.add("bg-photo");
+  }else{
+    layer.style.backgroundImage="";
+    layer.style.filter="";
+    ov.style.background="";
+    document.body.classList.remove("bg-photo");
+  }
+}
+/* 上传图片压缩为 dataURL（限制尺寸，避免 localStorage 超限） */
+function compressImage(file,maxW,quality){
+  maxW=maxW||1600;quality=quality==null?0.82:quality;
+  return new Promise(function(res,rej){
+    try{
+      var url=URL.createObjectURL(file);
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        var c=document.createElement("canvas");c.width=w;c.height=h;
+        c.getContext("2d").drawImage(img,0,0,w,h);
+        URL.revokeObjectURL(url);
+        try{res(c.toDataURL("image/jpeg",quality));}catch(e){res(c.toDataURL());}
+      };
+      img.onerror=function(){URL.revokeObjectURL(url);rej(e);};
+      img.src=url;
+    }catch(e){rej(e);}
+  });
 }
 function toggleTheme(){settings.theme=settings.theme==="dark"?"light":"dark";applyTheme();saveSettings();renderTop();}
 
@@ -6784,6 +6879,83 @@ function openPalette(){
     openPalette();
     toast("已切换为 "+(PALETTES.find(p=>p.id===settings.palette)||{}).name);
   });
+  renderBgGrid();
+}
+/* 渲染背景图片网格 + 绑定上传/滑块 */
+function renderBgGrid(){
+  const grid=document.getElementById("bgGrid");
+  if(!grid)return;
+  const b=settings.bg||{mode:"gradient",sel:-1};
+  let html='<div class="bg-opt bg-none '+(b.mode!=="photo"?"active":"")+'" data-bg-none="1">渐变背景</div>';
+  (settings.bgGallery||[]).forEach((g,i)=>{
+    const active=(b.mode==="photo"&&b.sel===i)?"active":"";
+    html+='<div class="bg-opt '+(active?'active':'')+'" data-bg-i="'+i+'">'
+      +'<img class="bg-thumb" src="'+g.data+'" alt="">'
+      +'<button class="bg-del" data-bg-del="'+i+'" title="删除">✕</button>'
+      +(active?'<div class="bg-check">✓</div>':'')
+      +'<div class="bg-label">'+(g.name||("图"+(i+1)))+'</div>'
+      +'</div>';
+  });
+  grid.innerHTML=html;
+  // 选择渐变
+  grid.querySelectorAll("[data-bg-none]").forEach(el=>el.onclick=()=>{
+    settings.bg.mode="gradient";settings.bg.sel=-1;applyBackground();saveSettings();renderBgGrid();
+    document.getElementById("bgSliders").style.display="none";
+  });
+  // 选择照片
+  grid.querySelectorAll("[data-bg-i]").forEach(el=>el.onclick=(e)=>{
+    if(e.target.dataset.bgDel!=null)return;
+    const i=parseInt(el.dataset.bgI,10);
+    settings.bg.mode="photo";settings.bg.sel=i;applyBackground();saveSettings();renderBgGrid();
+    document.getElementById("bgSliders").style.display="block";
+  });
+  // 删除照片
+  grid.querySelectorAll("[data-bg-del]").forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const i=parseInt(el.dataset.bgDel,10);
+    settings.bgGallery.splice(i,1);
+    if(settings.bg.mode==="photo"&&settings.bg.sel>=settings.bgGallery.length){
+      settings.bg.sel=settings.bgGallery.length-1;
+      if(settings.bg.sel<0){settings.bg.mode="gradient";settings.bg.sel=-1;}
+    }
+    applyBackground();saveSettings();renderBgGrid();syncBgSliders();
+  });
+  syncBgSliders();
+}
+function syncBgSliders(){
+  const sl=document.getElementById("bgSliders");
+  if(!sl)return;
+  const on=(settings.bg&&settings.bg.mode==="photo");
+  sl.style.display=on?"block":"none";
+  if(on){
+    document.getElementById("bgBlur").value=settings.bg.blur||0;
+    document.getElementById("bgBlurV").textContent=(settings.bg.blur||0);
+    document.getElementById("bgDim").value=settings.bg.dim!=null?settings.bg.dim:0.3;
+    document.getElementById("bgDimV").textContent=((settings.bg.dim!=null?settings.bg.dim:0.3)).toFixed(2);
+  }
+}
+function bindBgControls(){
+  const file=document.getElementById("bgFile");
+  if(file&&!file._bound){
+    file._bound=true;
+    file.onchange=async()=>{
+      const files=Array.from(file.files||[]);
+      if(!files.length)return;
+      for(const f of files){
+        try{
+          const data=await compressImage(f,1600,0.82);
+          settings.bgGallery.push({name:f.name?f.name.replace(/\.[^.]+$/,""):("图"+(settings.bgGallery.length+1)),data:data});
+        }catch(e){toast("这张图片读取失败，换一张试试");}
+      }
+      settings.bg.mode="photo";settings.bg.sel=settings.bgGallery.length-1;
+      applyBackground();saveSettings();renderBgGrid();
+      toast("已添加 "+(file.files.length>1?file.files.length+" 张":"背景"));
+      file.value="";
+    };
+  }
+  const blur=document.getElementById("bgBlur"),dim=document.getElementById("bgDim");
+  if(blur&&!blur._bound){blur._bound=true;blur.oninput=()=>{settings.bg.blur=parseInt(blur.value,10)||0;document.getElementById("bgBlurV").textContent=blur.value;applyBackground();saveSettings();};}
+  if(dim&&!dim._bound){dim._bound=true;dim.oninput=()=>{settings.bg.dim=parseFloat(dim.value)||0;document.getElementById("bgDimV").textContent=parseFloat(dim.value).toFixed(2);applyBackground();saveSettings();};}
 }
 
 /* ============== 语音录入 ============== */
@@ -9408,6 +9580,7 @@ async function init(){
   applyTheme();
   render();
   bind();
+  bindBgControls();
   // 初始化生命之树
   updateTreeData();
   // 初始化闹钟检查
