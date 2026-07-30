@@ -1557,6 +1557,37 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   .graph-node circle,.graph-edge,.graph-edge-dyn{transition:none;}
 }
 
+/* === MODULE CSS: 工具箱 / 备工作台 === */
+.tb-search{position:relative;margin:8px 0 4px;}
+.tb-search .tb-s-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6;pointer-events:none;}
+.tb-search input{width:100%;padding:12px 16px 12px 38px;border-radius:999px;border:1px solid var(--line-2);
+  background:var(--card-soft);font-size:15px;color:var(--ink);outline:none;box-shadow:var(--shadow-sm);}
+.tb-search input:focus{border-color:var(--warm);box-shadow:0 0 0 3px var(--warm-soft);}
+.tb-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(min-width:560px){.tb-grid{grid-template-columns:repeat(3,1fr);}}
+.tb-item{position:relative;}
+.tb-card{display:block;background:var(--card);border:1px solid var(--line-2);border-radius:14px;padding:12px 14px;
+  text-decoration:none;color:var(--ink);transition:.15s;box-shadow:var(--shadow-sm);}
+.tb-card:hover{transform:translateY(-2px);border-color:var(--warm);box-shadow:0 6px 18px rgba(150,110,70,.18);}
+.tb-card .tb-n{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;padding-right:22px;}
+.tb-card .tb-u{font-size:11px;color:var(--muted);margin-top:3px;word-break:break-all;}
+.tb-card .tb-d{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45;}
+.tb-tag{font-size:10px;background:var(--warm-soft);color:var(--warm);border-radius:6px;padding:1px 6px;font-weight:600;white-space:nowrap;}
+.tb-fav{position:absolute;top:8px;right:8px;width:26px;height:26px;border:none;border-radius:50%;
+  background:var(--card-soft);color:var(--faint);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;z-index:2;}
+.tb-fav:hover{background:var(--warm-soft);color:var(--warm);}
+.tb-fav.on{color:#F5A623;background:var(--warm-soft);}
+.tb-fav-empty{font-size:13px;color:var(--muted);background:var(--card-soft);border-radius:12px;padding:14px 16px;line-height:1.6;}
+/* 主页快捷条 */
+.tb-quick .tb-q-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center;}
+.tb-q{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;
+  background:var(--card-soft);border:1px solid var(--line-2);text-decoration:none;color:var(--ink);
+  font-size:13.5px;font-weight:600;transition:.15s;box-shadow:var(--shadow-sm);}
+.tb-q:hover{transform:translateY(-2px);border-color:var(--warm);color:var(--warm);}
+.tb-q-more{margin-left:auto;padding:9px 14px;border-radius:999px;border:1px dashed var(--warm);
+  background:transparent;color:var(--warm);font-size:13px;font-weight:600;cursor:pointer;}
+.tb-q-more:hover{background:var(--warm-soft);}
+
 </style>
 </head>
 <body data-theme="light">
@@ -1799,7 +1830,7 @@ let state={
   inbox:[],             // 灵感速记收集箱：[{id,text,kind:"idea"|"link",cat:"",catered:false,createdAt}]
   unlockedAch:[]        // 已解锁成就
 };
-let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3}};
+let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[]};
 /* 模块动作注册表：各模块用 data-mod-action 触发，互不干扰主 data-action 系统 */
 const MODULE_ACTIONS={};
 let currentDate=fmtDate(new Date());
@@ -1942,7 +1973,7 @@ function load(){
   }catch(e){}
   try{
     const s=localStorage.getItem(SET_KEY);
-    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3}},JSON.parse(s));
+    if(s)settings=Object.assign({theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[]},JSON.parse(s));
   }catch(e){}
 }
 function saveSettings(){
@@ -2689,6 +2720,7 @@ const NAV_ITEMS=[
  {id:"memo",l:"备忘录",ico:"📌"},
  {id:"mood",l:"心情",ico:"🌈"},
  {id:"inbox",l:"速记",ico:"💡"},
+ {id:"toolbox",l:"工具箱",ico:"🧰"},
  {id:"tree",l:"生命树",ico:"🌳"},
  {id:"data",l:"数据",ico:"📊"},
  {id:"ai",l:"AI 助手",ico:"🤖"}
@@ -3098,6 +3130,7 @@ function viewHome(){
    ${captureHtml}
    ${focusHtml}
    ${tplHtml}
+   ${toolboxBar()}
 
    ${viewTodaySchedule()}
 
@@ -6054,6 +6087,138 @@ function viewInbox(){
   </div>`;
 }
 
+/* ============== 工具箱（常用网站 / 备工作台） ============== */
+/* 数据同源 useful-sites.html；外部站点无法内嵌 iframe（X-Frame-Options），统一在新标签打开 */
+const TOOLBOX_SITES=[
+ {c:"🤖 AI 助手",ico:"🤖",items:[
+   {n:"DeepSeek",u:"https://chat.deepseek.com/",d:"你工作台接入的同款，推理强、免费、可联网",t:"在用"},
+   {n:"豆包",u:"https://www.doubao.com/chat/",d:"字节出品，多模态、语音通话、画图写作一体"},
+   {n:"Kimi",u:"https://kimi.moonshot.ai/",d:"长文本解析，读论文/报告/合同利器"},
+   {n:"通义千问",u:"https://tongyi.aliyun.com/",d:"阿里多模态，读文档、做PPT"},
+   {n:"ChatGPT",u:"https://chatgpt.com/",d:"综合能力最均衡（需海外网络）"},
+   {n:"秘塔 AI 搜索",u:"https://metaso.cn/",d:"无广告中文 AI 搜索，带溯源"},
+   {n:"智谱清言",u:"https://chatglm.cn/",d:"清华团队，编程/解题/学术"},
+   {n:"讯飞星火",u:"https://xinghuo.xfyun.cn/",d:"科大讯飞，中文创作+语音"}
+ ]},
+ {c:"📚 学习 / 知识",ico:"📚",items:[
+   {n:"哔哩哔哩",u:"https://www.bilibili.com/",d:"学习区极强，教程/公开课/科普",t:"常用"},
+   {n:"中国大学 MOOC",u:"https://www.icourse163.org/",d:"国内高校正规课程"},
+   {n:"可汗学院",u:"https://www.khanacademy.org/",d:"系统化基础学科，免费"},
+   {n:"Coursera",u:"https://www.coursera.org/",d:"全球名校课程，可拿证书"},
+   {n:"网易公开课",u:"https://open.163.com/",d:"TED/名校公开课汇总"},
+   {n:"维基百科",u:"https://zh.wikipedia.org/",d:"查概念首选"},
+   {n:"知乎",u:"https://www.zhihu.com/",d:"深度问答与专业讨论"},
+   {n:"得到",u:"https://www.dedao.cn/",d:"通识/商业/听书"}
+ ]},
+ {c:"📖 阅读 / 书本",ico:"📖",items:[
+   {n:"微信读书",u:"https://weread.qq.com/",d:"资源全、笔记同步（你工作台在用书）",t:"在用"},
+   {n:"豆瓣读书",u:"https://book.douban.com/",d:"评分/书评/书单参考"},
+   {n:"鸠摩搜书",u:"https://www.jiumo.com/",d:"电子书聚合搜索"},
+   {n:"Project Gutenberg",u:"https://www.gutenberg.org/",d:"公版英文电子书免费库"},
+   {n:"中国国家图书馆",u:"https://www.nlc.cn/",d:"权威数字资源"}
+ ]},
+ {c:"💰 资产 / 理财",ico:"💰",items:[
+   {n:"且慢",u:"https://www.qieman.com/",d:"基金投顾，适合普通人的懒人理财"},
+   {n:"雪球",u:"https://xueqiu.com/",d:"投资社区与组合跟踪"},
+   {n:"东方财富",u:"https://www.eastmoney.com/",d:"行情/资讯/开户一体"},
+   {n:"天天基金",u:"https://fund.eastmoney.com/",d:"基金数据最全"},
+   {n:"理杏仁",u:"https://www.lixinger.com/",d:"财务与估值数据分析"}
+ ]},
+ {c:"💪 健康 / 运动",ico:"💪",items:[
+   {n:"Keep",u:"https://www.keep.com/",d:"居家训练计划与跟练"},
+   {n:"薄荷健康",u:"https://www.boohee.com/",d:"热量/体重/饮食记录"},
+   {n:"丁香医生",u:"https://dxy.com/",d:"靠谱医学科普与问诊"},
+   {n:"华为运动健康",u:"https://www.huaweicloud.com/",d:"步数/睡眠/心率汇总"}
+ ]},
+ {c:"🛠 效率 / 工具",ico:"🛠",items:[
+   {n:"Notion",u:"https://www.notion.so/",d:"笔记+数据库+项目管理全能",t:"常用"},
+   {n:"语雀",u:"https://www.yuque.com/",d:"阿里出品，结构化知识库"},
+   {n:"飞书",u:"https://www.feishu.cn/",d:"文档/表格/协作一体"},
+   {n:"滴答清单",u:"https://www.dida365.com/",d:"GTD 任务管理"},
+   {n:"幕布",u:"https://mubu.com/",d:"大纲笔记一键变思维导图"},
+   {n:"腾讯文档",u:"https://docs.qq.com/",d:"轻量多人协作"},
+   {n:"iLovePDF",u:"https://www.ilovepdf.com/",d:"PDF 合并/压缩/转换"}
+ ]},
+ {c:"🎨 设计 / 创作",ico:"🎨",items:[
+   {n:"Canva",u:"https://www.canva.cn/",d:"海报/封面/简历模板（小白友好）"},
+   {n:"稿定设计",u:"https://www.gaoding.com/",d:"电商/社交配图快速出图"},
+   {n:"即梦 AI",u:"https://jimeng.jianying.com/",d:"字节 AI 绘画与视频"},
+   {n:"剪映",u:"https://www.capcut.cn/",d:"智能剪辑与字幕"},
+   {n:"Figma",u:"https://www.figma.com/",d:"专业界面/原型设计"}
+ ]},
+ {c:"💻 开发者 / 技术",ico:"💻",items:[
+   {n:"GitHub",u:"https://github.com/",d:"代码托管（你工作台就部署在这）",t:"在用"},
+   {n:"MDN",u:"https://developer.mozilla.org/zh-CN/",d:"Web 技术权威文档"},
+   {n:"Stack Overflow",u:"https://stackoverflow.com/",d:"编程问答"},
+   {n:"阮一峰的网络日志",u:"https://www.ruanyifeng.com/blog/",d:"高质量中文技术科普"}
+ ]},
+ {c:"📰 优质信息源",ico:"📰",items:[
+   {n:"少数派",u:"https://sspai.com/",d:"效率/数字生活深度好文"},
+   {n:"36氪",u:"https://36kr.com/",d:"创投与商业前沿"},
+   {n:"虎嗅",u:"https://www.huxiu.com/",d:"商业洞察"},
+   {n:"果壳",u:"https://www.guokr.com/",d:"靠谱科技科普"}
+ ]}
+];
+let tbSearchTerm="";
+function tbFlatten(){const out=[];TOOLBOX_SITES.forEach(seg=>seg.items.forEach(it=>out.push(Object.assign({},it,{cat:seg.c,ico:seg.ico}))));return out;}
+function tbIsFav(u){return (settings.favTools||[]).indexOf(u)>=0;}
+function tbCard(s){
+  const isFav=tbIsFav(s.u);
+  return `<div class="tb-item">
+    <a class="tb-card" href="${s.u}" target="_blank" rel="noopener">
+      <div class="tb-n">${esc(s.n)}${s.t?`<span class="tb-tag">${s.t}</span>`:""}</div>
+      <div class="tb-u">${esc(s.u.replace(/^https?:\/\//,""))}</div>
+      <div class="tb-d">${esc(s.d)}</div>
+    </a>
+    <button class="tb-fav ${isFav?"on":""}" data-mod-action="tb-fav" data-tb-url="${esc(s.u)}" title="收藏/取消收藏">${isFav?"★":"☆"}</button>
+  </div>`;
+}
+function tbListHtml(){
+  const q=(tbSearchTerm||"").trim().toLowerCase();
+  const all=tbFlatten();
+  if(q){
+    const res=all.filter(s=>(s.n+s.d+s.cat).toLowerCase().includes(q));
+    return res.length?`<div class="tb-grid">${res.map(s=>tbCard(s)).join("")}</div>`:`<div class="empty">没有匹配的网站，换个关键词试试～</div>`;
+  }
+  return TOOLBOX_SITES.map(seg=>`<div class="section-eyebrow" style="margin-top:14px">${seg.ico} ${seg.c}</div><div class="tb-grid">${seg.items.map(s=>tbCard(s)).join("")}</div>`).join("");
+}
+function viewToolbox(){
+  const all=tbFlatten();
+  const favs=all.filter(s=>tbIsFav(s.u));
+  const favHtml=favs.length?`<div class="tb-grid">${favs.map(s=>tbCard(s)).join("")}</div>`:`<div class="tb-fav-empty">还没收藏。点任意网站右上角的 ☆ 即可固定到这里，主页快捷条也会同步显示。</div>`;
+  return `<div class="card">
+    <div class="section-eyebrow">TOOLBOX · 备工作台</div>
+    <div class="section-title">🧰 工具箱</div>
+    <p class="section-desc">工作台同源整理的常用网站。点开在浏览器新标签打开（外部站点无法内嵌）。点 ☆ 收藏，会固定到主页快捷条。</p>
+    <div class="tb-search"><span class="tb-s-ico">🔍</span><input id="tbSearch" data-tb-search placeholder="搜索网站 / 用途，如：AI、理财、PDF…" value="${esc(tbSearchTerm)}" autocomplete="off"/></div>
+    <div class="section-eyebrow" style="margin-top:14px">⭐ 我的收藏（${favs.length}）</div>
+    ${favHtml}
+    <div class="section-eyebrow" style="margin-top:16px">🌐 全部资源</div>
+    <div id="tbBody">${tbListHtml()}</div>
+  </div>`;
+}
+/* 主页快捷条：学习时随手打开 */
+function toolboxBar(){
+  const all=tbFlatten();
+  let list=(settings.favTools||[]).map(u=>all.find(s=>s.u===u)).filter(Boolean);
+  if(!list.length)list=all.filter(s=>s.t==="在用");
+  if(!list.length)list=all.slice(0,6);
+  const chips=list.map(s=>`<a class="tb-q" href="${s.u}" target="_blank" rel="noopener" title="${esc(s.d)}"><span>${esc(s.n)}</span></a>`).join("");
+  return `<div class="card pano-full tb-quick">
+    <div class="section-eyebrow">🧰 常用资源 · 学习时随手打开</div>
+    <div class="tb-q-row">${chips}${`<button class="tb-q-more" data-nav="toolbox">全部 ${all.length} 个 →</button>`}</div>
+  </div>`;
+}
+MODULE_ACTIONS["tb-fav"]=function(t){
+  const u=t.dataset.tbUrl;
+  const arr=settings.favTools||[];
+  const i=arr.indexOf(u);
+  if(i>=0)arr.splice(i,1);else arr.push(u);
+  settings.favTools=arr;
+  saveSettings();
+  render();
+};
+
 /* ============== 主渲染 ============== */
 function render(){
   renderTop();
@@ -6078,6 +6243,7 @@ function render(){
    case"memo":html=viewMemo();break;
    case"mood":html=viewMood();break;
    case"inbox":html=viewInbox();break;
+   case"toolbox":html=viewToolbox();break;
    case"board":html=viewBoard();break;
    case"tree":html=viewTree();break;
    case"sound":html=viewSound();break;
@@ -6933,6 +7099,12 @@ function onInput(e){
     arr[+t.dataset.focusEdit]=t.value;
     setFocusThree(arr);
     markSaved();return;
+  }
+  if(t.dataset.tbSearch!=null){
+    tbSearchTerm=t.value;
+    const body=document.getElementById("tbBody");
+    if(body)body.innerHTML=tbListHtml();
+    return;
   }
 }
 function onChange(e){
