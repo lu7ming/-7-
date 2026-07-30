@@ -1644,7 +1644,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
       <div style="display:flex;gap:8px">
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
-        <button class="top-icon" data-nav="sound" title="声音 · 白噪音/闹钟">🎵</button>
+        <button class="top-icon" data-top="sound" title="声音 · 白噪音/闹钟">🎵</button>
         <button class="top-icon" id="aiBtn" title="AI 助手 · 问答/总结/建议" style="font-size:15px">🤖</button>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
@@ -8648,6 +8648,7 @@ function bind(){
   else if(a==="rest")toggleRest();
   else if(a==="palette")openPalette();
   else if(a==="voice")toggleVoice();
+  else if(a==="sound"){activeNav="sound";activeTool=null;render();}
   else if(a==="refresh"){
     // 按钮转圈反馈
     el.style.transition="transform .6s";
