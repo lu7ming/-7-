@@ -2536,7 +2536,8 @@ const NAV_ITEMS=[
  {id:"project",l:"项目",ico:"🎯"},
  {id:"memo",l:"备忘录",ico:"📌"},
  {id:"tree",l:"生命树",ico:"🌳"},
- {id:"data",l:"数据",ico:"📊"}
+ {id:"data",l:"数据",ico:"📊"},
+ {id:"ai",l:"AI 助手",ico:"🤖"}
 ];
 // 子模块并入母模块：
 //   身体 → 健康（健康页底部嵌入）
@@ -5837,7 +5838,10 @@ function onClick(e){
   }
   // nav 切换
   if(t.closest("[data-nav]")){
-    activeNav=t.closest("[data-nav]").dataset.nav;
+    const navId=t.closest("[data-nav]").dataset.nav;
+    // AI 入口：不切换视图，打开 AI 抽屉
+    if(navId==="ai"){openAIPanel();return;}
+    activeNav=navId;
     activeTool=null;
     render();
     // 移动端收起侧栏
@@ -5845,7 +5849,10 @@ function onClick(e){
     document.getElementById("sbOverlay").classList.remove("show");
     return;
   }
-  if(t.dataset.nav){activeNav=t.dataset.nav;activeTool=null;render();return;}
+  if(t.dataset.nav){
+    if(t.dataset.nav==="ai"){openAIPanel();return;}
+    activeNav=t.dataset.nav;activeTool=null;render();return;
+  }
   // 日历：点日期切换到那一天
   if(t.dataset.calDate){
     currentDate=t.dataset.calDate;
@@ -7982,6 +7989,7 @@ function bind(){
  });
  document.getElementById("sbNav").addEventListener("click",e=>{
   const t=e.target.closest("[data-nav]");if(!t)return;
+  if(t.dataset.nav==="ai"){openAIPanel();return;}
   activeNav=t.dataset.nav;activeTool=null;render();
   document.getElementById("sidebar").classList.remove("open");
   document.getElementById("sbOverlay").classList.remove("show");
@@ -9603,6 +9611,22 @@ window.__aiSend=function(){
   if(input)aiSend(input.value);
 };
 
+// 打开 AI 面板（顶栏按钮 + 侧栏入口共用）
+function openAIPanel(){
+  const panel=document.getElementById("aiPanel");
+  if(!panel)return;
+  panel.classList.add("open");
+  if(aiMsgs.length===0){
+    if(!DEEPSEEK_KEY){
+      aiAddMsg("bot","👋 首次使用，需要先配置你的 DeepSeek API key（在设置里填，存本地不外传）");
+    }else{
+      aiAddMsg("bot","你好鹿7铭 👋\n\n我能看到你工作台的所有数据：今天的任务、打卡、番茄、账目、学习、身体数据，以及本周/本月的历史记录。\n\n你可以问我任何事，比如：\n• 总结我今天的情况\n• 根据数据给我建议\n• 记一笔午餐 25 块\n• 我这周过得怎么样");
+    }
+  }
+  const input=document.getElementById("aiInput");
+  setTimeout(()=>{if(input)input.focus();},350);
+}
+
 // 绑定 AI 面板事件
 (function bindAI(){
   function ready(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);}
@@ -9611,19 +9635,7 @@ window.__aiSend=function(){
     const btn=document.getElementById("aiBtn");
     const close=document.getElementById("aiClose");
     const sendBtn=document.getElementById("aiSendBtn");
-    const input=document.getElementById("aiInput");
-    if(btn)btn.onclick=()=>{
-      if(!panel)return;
-      panel.classList.add("open");
-      if(aiMsgs.length===0){
-        if(!DEEPSEEK_KEY){
-          aiAddMsg("bot","👋 首次使用，需要先配置你的 DeepSeek API key（在设置里填，存本地不外传）");
-        }else{
-          aiAddMsg("bot","你好鹿7铭 👋\n\n我能看到你工作台的所有数据：今天的任务、打卡、番茄、账目、学习、身体数据，以及本周/本月的历史记录。\n\n你可以问我任何事，比如：\n• 总结我今天的情况\n• 根据数据给我建议\n• 记一笔午餐 25 块\n• 我这周过得怎么样");
-        }
-      }
-      setTimeout(()=>{if(input)input.focus();},350);
-    };
+    if(btn)btn.onclick=openAIPanel;
     if(close)close.onclick=()=>{if(panel)panel.classList.remove("open");};
     if(sendBtn)sendBtn.onclick=window.__aiSend;
     // 自动高度
