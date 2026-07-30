@@ -2067,7 +2067,7 @@ function viewMonthHighlight(){
   const dayOfMonth=todayY?parseDate(today).getDate():last;
   const weekNum=Math.ceil(dayOfMonth/7);
   const remain=last-dayOfMonth;
-  const goalIn=summary.inSum-summary.outSum; // 净额
+  const goalIn=round2(summary.inSum-summary.outSum); // 净额
 
   return `<div class="card month-card">
     <div>
@@ -2133,7 +2133,7 @@ function monthSummary(year,month){
     }
     if(e.tasks){tasksDone+=e.tasks.filter(t=>t.done).length;tasksTotal+=e.tasks.length;}
   });
-  return {vocal,english,inSum,outSum,checkinDays,tasksDone,tasksTotal,prefix};
+  return {vocal,english,inSum:round2(inSum),outSum:round2(outSum),checkinDays,tasksDone,tasksTotal,prefix};
 }
 /* 联系人关系健康度评分（0-100） */
 function contactHealthScore(c){
@@ -3258,6 +3258,7 @@ function viewHealthModule(){
 }
 
 /* ---- 资产 ---- */
+function round2(n){return Math.round((n+Number.EPSILON)*100)/100;}
 function recalcFinanceBalance(){
   let totalIn=0,totalOut=0;
   Object.values(state.entries).forEach(e=>{
@@ -3265,14 +3266,14 @@ function recalcFinanceBalance(){
     (e.finance.in||[]).forEach(x=>totalIn+=(+x.amount||0));
     (e.finance.out||[]).forEach(x=>totalOut+=(+x.amount||0));
   });
-  state.financeCurrentBalance=(state.financeInitialBalance||0)+totalIn-totalOut;
+  state.financeCurrentBalance=round2((state.financeInitialBalance||0)+totalIn-totalOut);
 }
 function updateFinanceKpi(){
   const r=getDay(currentDate);
-  const sumIn=(r.finance.in||[]).reduce((a,b)=>a+(+b.amount||0),0);
-  const sumOut=(r.finance.out||[]).reduce((a,b)=>a+(+b.amount||0),0);
-  const todayNet=sumIn-sumOut;
-  const curBal=state.financeCurrentBalance||0;
+  const sumIn=round2((r.finance.in||[]).reduce((a,b)=>a+(+b.amount||0),0));
+  const sumOut=round2((r.finance.out||[]).reduce((a,b)=>a+(+b.amount||0),0));
+  const todayNet=round2(sumIn-sumOut);
+  const curBal=round2(state.financeCurrentBalance||0);
   const balColor=curBal<0?"var(--warn)":(curBal>0?"var(--good)":"var(--ink)");
   const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=`${v}<span class="unit">¥</span>`;};
   setVal("kpi-in",sumIn);
@@ -3331,18 +3332,18 @@ function getMonthBalanceHistory(months){
         (e.finance.out||[]).forEach(x=>monthOut+=(+x.amount||0));
       }
     });
-    runningBalance+=monthIn-monthOut;
-    result.push({label:(actualM+1)+"月",value:Math.round(runningBalance)});
+    runningBalance=round2(runningBalance+monthIn-monthOut);
+    result.push({label:(actualM+1)+"月",value:runningBalance});
   }
   return result;
 }
 function viewFinance(){
   recalcFinanceBalance();
   const r=getDay(currentDate);
-  const sumIn=(r.finance.in||[]).reduce((a,b)=>a+(+b.amount||0),0);
-  const sumOut=(r.finance.out||[]).reduce((a,b)=>a+(+b.amount||0),0);
-  const todayNet=sumIn-sumOut;
-  const curBal=state.financeCurrentBalance||0;
+  const sumIn=round2((r.finance.in||[]).reduce((a,b)=>a+(+b.amount||0),0));
+  const sumOut=round2((r.finance.out||[]).reduce((a,b)=>a+(+b.amount||0),0));
+  const todayNet=round2(sumIn-sumOut);
+  const curBal=round2(state.financeCurrentBalance||0);
   const balColor=curBal<0?"var(--warn)":(curBal>0?"var(--good)":"var(--ink)");
   return `
    <div class="card">
@@ -3642,7 +3643,7 @@ function summarizeRange(start,end){
     const q=state.entries[k].questions||{};
     Object.keys(q).forEach(i=>{if(q[i]){qCount++;qAnswers.push({date:k,idx:i,text:q[i]});}});
   });
-  return {start,end,checkinDays,vocalMinutes:vocal,englishWords:english.words,englishRead:english.read,englishListen:english.listen,inSum,outSum,tasksDone,tasksTotal,reviews:allReview,keywords,contactsCount,questionCount:qCount,questionAnswers:qAnswers};
+  return {start,end,checkinDays,vocalMinutes:vocal,englishWords:english.words,englishRead:english.read,englishListen:english.listen,inSum:round2(inSum),outSum:round2(outSum),tasksDone,tasksTotal,reviews:allReview,keywords,contactsCount,questionCount:qCount,questionAnswers:qAnswers};
 }
 function viewReview(){
   const scope=reviewScope;
@@ -3674,7 +3675,7 @@ function viewReview(){
       <div class="rg-row"><span>听力时长</span><span class="v">${gen.englishListen} 分钟</span></div>
       <div class="rg-row"><span>收入</span><span class="v">¥ ${gen.inSum}</span></div>
       <div class="rg-row"><span>支出</span><span class="v">¥ ${gen.outSum}</span></div>
-      <div class="rg-row"><span>结余</span><span class="v">¥ ${gen.inSum-gen.outSum}</span></div>
+      <div class="rg-row"><span>结余</span><span class="v">¥ ${round2(gen.inSum-gen.outSum)}</span></div>
       <div class="rg-row"><span>任务完成</span><span class="v">${gen.tasksDone} / ${gen.tasksTotal}</span></div>
       <div class="rg-row"><span>联系互动</span><span class="v">${gen.contactsCount} 位</span></div>
       <div class="rg-row"><span>八问记录</span><span class="v">${gen.questionCount} 条</span></div>
@@ -3775,7 +3776,7 @@ function exportReviewImage(key){
     ["英语单词",gen.englishWords+" 个"],
     ["阅读时长",gen.englishRead+" 分钟"],
     ["听力时长",gen.englishListen+" 分钟"],
-    ["收入","¥"+gen.inSum],["支出","¥"+gen.outSum],["结余","¥"+(gen.inSum-gen.outSum)],
+    ["收入","¥"+gen.inSum],["支出","¥"+gen.outSum],["结余","¥"+round2(gen.inSum-gen.outSum)],
     ["任务完成",gen.tasksDone+" / "+gen.tasksTotal],
     ["联系互动",gen.contactsCount+" 位"]
   ];
@@ -5133,7 +5134,7 @@ function viewTrends(){
       <div class="rg-row"><span>听力时长</span><span class="v">${ms.english.listen} 分钟</span></div>
       <div class="rg-row"><span>本月收入</span><span class="v">¥ ${ms.inSum}</span></div>
       <div class="rg-row"><span>本月支出</span><span class="v">¥ ${ms.outSum}</span></div>
-      <div class="rg-row"><span>结余</span><span class="v">¥ ${ms.inSum-ms.outSum}</span></div>
+      <div class="rg-row"><span>结余</span><span class="v">¥ ${round2(ms.inSum-ms.outSum)}</span></div>
       <div class="rg-row"><span>任务完成</span><span class="v">${ms.tasksDone} / ${ms.tasksTotal}</span></div>
     </div>
 
