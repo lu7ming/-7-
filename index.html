@@ -9615,6 +9615,8 @@ function aiHandleRecord(parsed){
     const note=d.note||"";
     r.finance[dir].push({cat,amount,note});
     save();
+    recalcFinanceBalance();
+    updateFinanceKpi();
     msg=`✅ 已记一笔${dir==="in"?"收入":""}：${cat} ${amount}元${dir==="in"?"（收入）":""}`;
   }else if(t==="shopping"){
     state.shopping=state.shopping||{lists:{default:[]},active:"default"};
