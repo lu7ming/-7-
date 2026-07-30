@@ -213,7 +213,7 @@ body::after{
   z-index:-1;
   pointer-events:none;
 }
-.main{flex:1;display:flex;flex-direction:column;min-width:0;background:transparent;overflow:hidden;min-height:100dvh;}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:transparent;min-height:100dvh;}
 
 /* ---- Sidebar ---- */
 .sidebar{
@@ -226,7 +226,6 @@ body::after{
   padding:14px 0 10px;overflow-y:auto;scrollbar-width:none;
   box-shadow:var(--glass-inset);
   min-height:100dvh;
-}
 }
 .sidebar::-webkit-scrollbar{display:none;}
 .sb-top{padding:8px 14px 14px;border-bottom:1px solid var(--line-2);}
@@ -282,9 +281,6 @@ body::after{
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90;}
 
 /* ---- Main content ---- */
-.main{
-  flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;
-}
 .main-top{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 22px;
@@ -1272,7 +1268,6 @@ body.rest-mode #restAmbient{display:block;}
 }
 body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 /* === MODULE CSS: heatmap === */
-/* === MODULE CSS: heatmap === */
 .hm-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
 .hm-year{font-size:18px;font-weight:700;color:var(--ink);}
 .hm-nav{display:flex;align-items:center;gap:8px;}
@@ -1302,7 +1297,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   .hm-cell{transition:none;}
   .hm-cell.in:hover{transform:none;}
 }
-/* === MODULE CSS: tomgarden === */
 /* === MODULE CSS: tomgarden === */
 .tg-stats{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 16px}
 .tg-stat{flex:1 1 130px;background:var(--card-soft,var(--card));border:1px solid var(--line);border-radius:14px;padding:14px 16px}
@@ -1335,7 +1329,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 @media (prefers-reduced-motion:reduce){.tg-plant{animation:none}}
 
 .tg-note{font-size:12px;color:var(--muted);align-self:center;margin-left:4px}
-/* === MODULE CSS: spaced === */
 /* === MODULE CSS: spaced === */
 .spaced-wrap{display:block;}
 .view-pad{padding:2px 0;}
@@ -1411,7 +1404,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   *{scroll-behavior:auto;}
 }
 /* === MODULE CSS: remind === */
-/* === MODULE CSS: remind === */
 /* 提醒中心模块样式：全部使用主题变量，尊重 prefers-reduced-motion */
 .rm-hint{line-height:1.45;}
 .rm-toggle{cursor:pointer;}
@@ -1430,7 +1422,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   }
 }
 /* === MODULE CSS: graph === */
-/* === MODULE CSS: graph === */
 .graph-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:6px 0 14px;}
 .graph-legend{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
 .graph-legend .lg-line{display:inline-block;width:22px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;}
@@ -1438,7 +1429,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .graph-svg{display:block;width:100%;height:auto;max-height:78vh;touch-action:manipulation;}
 .graph-node{cursor:default;}
 
-/* === MODULE CSS: shopping === */
 /* === MODULE CSS: shopping === */
 .shop-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .shop-tab{padding:6px 14px;border-radius:999px;font-size:13px;background:var(--card-soft);color:var(--ink-2);cursor:pointer;border:1px solid var(--line);}
@@ -1456,7 +1446,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .shop-add input{flex:1;}
 .shop-empty{text-align:center;color:var(--muted);padding:30px 0;font-size:13px;}
 
-/* === MODULE CSS: body === */
 /* === MODULE CSS: body === */
 .body-metric-input{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .body-chart-box{background:var(--card-soft);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
@@ -1757,7 +1746,18 @@ function idbGet(key){
     }catch(e){resolve(null);}
   });
 }
-function save(){
+let _saveTimer=null;
+function save(immediate){
+  // 非立即保存时使用防抖：合并 200ms 内的多次调用
+  if(!immediate){
+    if(_saveTimer)return;
+    _saveTimer=setTimeout(()=>{_saveTimer=null;_doSave();},200);
+    return;
+  }
+  clearTimeout(_saveTimer);_saveTimer=null;
+  _doSave();
+}
+function _doSave(){
   try{
     const json=JSON.stringify(state);
     localStorage.setItem(STORE_KEY,json);
@@ -1766,6 +1766,7 @@ function save(){
     // localStorage 满了，尝试只用 IndexedDB
     try{idbSet("state",JSON.stringify(state));toast("存储空间告急，已备份到 IndexedDB");}catch(e2){toast("保存失败：空间已满");}
   }
+  bumpDataVersion();
 }
 function load(){
   try{
@@ -5915,7 +5916,10 @@ function onClick(e){
   // 打卡签到
   if(t.id==="checkinBtn"){
     getDay(currentDate).checkIn=true;
-    save();render();
+    save();
+    // 局部更新侧栏 streak 数字
+    const sn=document.getElementById("streakNum");
+    if(sn)sn.textContent=streakDays();
     toast("已签到 ✓ 连续 +1 天");
     return;
   }
@@ -5936,7 +5940,12 @@ function onClick(e){
   }
   if(t.dataset.checkDel!=null){
     delete getDay(currentDate).checks[t.dataset.checkDel];
-    save();render();return;
+    save();
+    // 局部更新：移除该行 + 更新进度
+    const row=t.closest(".check-row");
+    if(row)row.remove();
+    updateCheckProgress();
+    return;
   }
   if(t.dataset.water!=null){
     const r=getDay(currentDate);
@@ -9441,6 +9450,7 @@ const DEEPSEEK_URL="https://api.deepseek.com/v1/chat/completions";
 let DEEPSEEK_KEY=localStorage.getItem("ai_deepseek_key")||"";
 
 // 收集工作台数据给 AI
+let _aiCache={key:"",prompt:"",timestamp:0};
 function collectContextData(){
   const today=currentDate;
   const r=getDay(today);
@@ -9488,10 +9498,15 @@ function collectContextData(){
   };
 }
 
-// 构造系统提示
+// 构造系统提示（带缓存：只在数据版本变化或超过 30s 时重新计算）
+let _dataVersion=0;
+function bumpDataVersion(){_dataVersion++;_aiCache.timestamp=0;}
 function buildSystemPrompt(){
+  const now=Date.now();
+  const key=currentDate+"|"+_dataVersion;
+  if(_aiCache.key===key&&_aiCache.prompt&&(now-_aiCache.timestamp)<30000)return _aiCache.prompt;
   const ctx=collectContextData();
-  return `你是"人生工作台"的 AI 助手，服务于用户鹿7铭。你能读取用户的实时工作台数据来帮他分析、总结、建议。
+  const prompt=`你是"人生工作台"的 AI 助手，服务于用户鹿7铭。你能读取用户的实时工作台数据来帮他分析、总结、建议。
 
 当前工作台数据（JSON）：
 ${JSON.stringify(ctx,null,2)}
@@ -9516,6 +9531,8 @@ ${JSON.stringify(ctx,null,2)}
    - goal: data={title:"目标",level:"annual|quarter|month"}
    - body: data={weight:数字,bodyFat:数字,hr:数字,steps:数字}(只填用户提到的字段)
 5. 保持温暖但务实的语气，像一个懂你的朋友`;
+  _aiCache={key,prompt,timestamp:now};
+  return prompt;
 }
 
 let aiMsgs=[];
@@ -9614,22 +9631,22 @@ function aiHandleRecord(parsed){
     const amount=+d.amount||0;
     const note=d.note||"";
     r.finance[dir].push({cat,amount,note});
-    save();
+    save(true);
     recalcFinanceBalance();
     updateFinanceKpi();
     msg=`✅ 已记一笔${dir==="in"?"收入":""}：${cat} ${amount}元${dir==="in"?"（收入）":""}`;
   }else if(t==="shopping"){
     state.shopping=state.shopping||{lists:{default:[]},active:"default"};
     state.shopping.lists[state.shopping.active||"default"].push({name:d.name||"",qty:d.qty||"",done:false});
-    save();msg="✅ 已加入购物清单："+d.name;
+    save(true);msg="✅ 已加入购物清单："+d.name;
   }else if(t==="reminder"){
     state.reminders=state.reminders||[];
     state.reminders.push({id:uid(),title:d.title||"",type:d.type||"once",date:d.date||"",time:d.time||"",intervalMin:+d.intervalMin||60,enabled:true});
-    save();msg="✅ 已添加提醒："+d.title;
+    save(true);msg="✅ 已添加提醒："+d.title;
   }else if(t==="goal"){
     state.goals=state.goals||[];
     state.goals.push({id:uid(),title:d.title||"",level:d.level||"annual",progress:0,status:"active",createdAt:Date.now()});
-    save();msg="✅ 已添加目标："+d.title;
+    save(true);msg="✅ 已添加目标："+d.title;
   }else if(t==="body"){
     state.bodyData=state.bodyData||{};
     if(!state.bodyData[currentDate])state.bodyData[currentDate]={};
@@ -9637,7 +9654,7 @@ function aiHandleRecord(parsed){
     if(d.bodyFat)state.bodyData[currentDate].bodyFat=+d.bodyFat;
     if(d.hr)state.bodyData[currentDate].hr=+d.hr;
     if(d.steps)state.bodyData[currentDate].steps=+d.steps;
-    save();msg="✅ 已记录身体数据";
+    save(true);msg="✅ 已记录身体数据";
   }
   aiUpdateLast(msg);
   render();
