@@ -9635,6 +9635,7 @@ function openAIPanel(){
     const btn=document.getElementById("aiBtn");
     const close=document.getElementById("aiClose");
     const sendBtn=document.getElementById("aiSendBtn");
+    const input=document.getElementById("aiInput");
     if(btn)btn.onclick=openAIPanel;
     if(close)close.onclick=()=>{if(panel)panel.classList.remove("open");};
     if(sendBtn)sendBtn.onclick=window.__aiSend;
