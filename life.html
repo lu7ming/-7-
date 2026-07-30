@@ -7244,8 +7244,10 @@ function calcTreeNutrients(){
 /* 更新树数据（每次 render 时调用，确保养分实时） */
 function updateTreeData(){
   const today=fmtDate(new Date());
+  if(!state.treeData)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
   const td=state.treeData;
-  if(!td)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+  if(!td.history)td.history={};
+  if(!td.lastCalcDate)td.lastCalcDate="";
   // 如果今天还没计算过，累加今日养分
   if(td.lastCalcDate!==today){
     const n=calcTreeNutrients();
