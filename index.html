@@ -10741,7 +10741,7 @@ function deerReminders(){
 }
 function bindDeer(){
   const el=deerEl();if(!el)return;
-  let pressTimer=null, pressFired=false, startX=0, startY=0;
+  let pressTimer=null, pressFired=false, pressStart=0, startX=0, startY=0;
   const LONG_MS=600, MOVE_TH=10;
   function doClick(){
     deerSet("jump",500);
@@ -10752,42 +10752,37 @@ function bindDeer(){
     deerSet("glow",0);
     _deerVoiceSend();
   }
+  function clearPress(){
+    if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+    pressFired=false;pressStart=0;
+  }
   el.addEventListener("touchstart",(e)=>{
-    pressFired=false;
+    clearPress();
     const t=e.touches[0];
-    startX=t.clientX; startY=t.clientY;
+    startX=t.clientX; startY=t.clientY; pressStart=Date.now();
     pressTimer=setTimeout(doVoice, LONG_MS);
   },{passive:true});
   el.addEventListener("touchmove",(e)=>{
     if(!pressTimer||pressFired)return;
     const t=e.touches[0];
     if(Math.abs(t.clientX-startX)>MOVE_TH||Math.abs(t.clientY-startY)>MOVE_TH){
-      clearTimeout(pressTimer); pressTimer=null;
+      clearTimeout(pressTimer);pressTimer=null;pressStart=0;
     }
   },{passive:true});
   el.addEventListener("touchend",(e)=>{
-    if(pressFired){clearTimeout(pressTimer);pressTimer=null;pressFired=false;return;}
-    clearTimeout(pressTimer);pressTimer=null;
-    if(Date.now()-e.timeStamp<LONG_MS+200) doClick();
+    e.preventDefault();
+    if(pressFired){clearPress();return;}
+    clearPress();
+    // 短按：<600ms 且 timer 还没触发 → 点击
+    if(pressStart&&Date.now()-pressStart<LONG_MS) doClick();
   });
-  el.addEventListener("touchcancel",()=>{clearTimeout(pressTimer);pressTimer=null;pressFired=false;});
-  // 桌面端 mousedown 点击（不阻止默认行为，避免影响后续事件）
-  el.addEventListener("mousedown",(e)=>{
-    if(e.button!==0)return;
-    pressFired=false; startX=e.clientX; startY=e.clientY;
-    pressTimer=setTimeout(doVoice, LONG_MS);
-  });
-  document.addEventListener("mousemove",(e)=>{
-    if(!pressTimer||pressFired)return;
-    if(Math.abs(e.clientX-startX)>MOVE_TH||Math.abs(e.clientY-startY)>MOVE_TH){
-      clearTimeout(pressTimer);pressTimer=null;
+  el.addEventListener("touchcancel",()=>{clearPress();});
+  el.addEventListener("click",(e)=>{
+    // 兜底：如果 touch 事件链没处理到（桌面端或某些浏览器），用 click 兜底
+    if(!('ontouchstart' in window)||!pressStart||Date.now()-pressStart>LONG_MS+300){
+      e.stopPropagation();
+      doClick();
     }
-  });
-  document.addEventListener("mouseup",(e)=>{
-    if(pressFired){clearTimeout(pressTimer);pressTimer=null;pressFired=false;return;}
-    clearTimeout(pressTimer);pressTimer=null;
-    // 只响应鹿附近的 mouseup
-    if(e.target===el||el.contains(e.target)) doClick();
   });
   // 暴露给外部调用
   window.__deerJump=()=>deerSet("jump",500);
