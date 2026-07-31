@@ -2306,8 +2306,8 @@ function viewMonthHighlight(){
     if(d>last)return `<div style="visibility:hidden"></div>`;
     const ds=days[i];
     const isT=todayY&&ds.date===today;
-    const cls=ds.checkIn?"check":ds.hasData?"has":"";
-    return `<div class="${cls} ${isT?'today':''}" title="${ds.date}${ds.checkIn?' · 已打卡':ds.hasData?' · 有数据':''}"></div>`;
+    const cls=ds.checkIn?"check":"";
+    return `<div class="${cls} ${isT?'today':''}" title="${ds.date}${ds.checkIn?' · 已打卡':''}"></div>`;
   }).join("");
   // 当月最新摘抄（最多1条）
   const monthQuotes=(state.quotes||[]).filter(q=>{
@@ -3960,7 +3960,7 @@ function viewReview(){
   const totalDays={week:7,month:Math.round((parseDate(rg.end)-parseDate(rg.start))/86400000)+1,quarter:Math.round((parseDate(rg.end)-parseDate(rg.start))/86400000)+1,year:365}[scope];
   const weekDaysHtml=[0,1,2,3,4,5,6].map(i=>{
     const ds=addDays(rg.start,i);const e=state.entries[ds];
-    return `<div class="heat-cell ${e&&e.checkIn?"checked":(e?"has":"")}" title="${ds}">${ds.slice(8)}</div>`;
+    return `<div class="heat-cell ${e&&e.checkIn?"checked":""}" title="${ds}">${ds.slice(8)}</div>`;
   }).join("");
   const scopes=[{k:"week",l:"周"},{k:"month",l:"月"},{k:"quarter",l:"季"},{k:"year",l:"年"}];
   return `<div class="card">
@@ -4213,7 +4213,7 @@ function habitWeekCard(){
   const days2=ws.days.map((d,i)=>{
     const isToday=d.date===todayFmt;
     const wd=["一","二","三","四","五","六","日"][i];
-    return `<div class="hw-day ${d.checkIn?'done':(d.hasData?'has':'')} ${isToday?'today':''}">
+    return `<div class="hw-day ${d.checkIn?'done':''} ${isToday?'today':''}">
       <div class="hw-dot"></div>
       <div class="hw-label">${wd}</div>
     </div>`;
@@ -5517,7 +5517,7 @@ function viewTrends(){
     const ref=new Date(now);ref.setDate(now.getDate()-w*7);
     const ws=weekStats(fmtDate(ref));
     const wd=["一","二","三","四","五","六","日"];
-    const row=ws.days.map(d=>`<div class="heat-cell ${d.checkIn?"checked":(d.hasData?"has":"")}" title="${d.date}"></div>`).join("");
+    const row=ws.days.map(d=>`<div class="heat-cell ${d.checkIn?"checked":""}" title="${d.date}"></div>`).join("");
     weeksHtml.push(row);
   }
   // 本月热力图
@@ -5527,7 +5527,7 @@ function viewTrends(){
   for(let i=0;i<firstWd;i++)heatCells.push('<div></div>');
   heat.forEach(d=>{
     const isToday=d.date===fmtDate(new Date());
-    heatCells.push(`<div class="heat-cell ${d.checkIn?"checked":(d.hasData?"has":"")}${isToday?" today":""}">${d.day}</div>`);
+    heatCells.push(`<div class="heat-cell ${d.checkIn?"checked":""}${isToday?" today":""}">${d.day}</div>`);
   });
   // 月度汇总
   const ms=monthSummary(y,m);
