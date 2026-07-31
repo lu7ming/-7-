@@ -506,7 +506,7 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .greet-eyebrow{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.55);font-weight:600;}
 .greet-h{font-size:28px;font-weight:700;margin:6px 0 10px;letter-spacing:-.5px;}
 .greet-meta{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.6;}
-.greet-deer{position:absolute;right:30px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .2s;z-index:10;}
+.greet-deer{position:absolute;right:30px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s;z-index:10;}
 .greet-deer:active{transform:scale(.9);}
 .greet-deer svg{width:100%;height:100%;transition:transform .15s,opacity .15s;}
 .greet-deer.jump{animation:deerJump .5s ease;}
@@ -10741,33 +10741,42 @@ function deerReminders(){
 }
 function bindDeer(){
   const el=deerEl();if(!el)return;
-  // 点击鹿 → 打开 AI 面板
-  el.addEventListener("click",(e)=>{
-    e.stopPropagation();
-    deerSet("jump",500);
-    openAIPanel();
-  });
-  // 长按鹿 → 语音操控 AI（800ms 触发）
-  let _deerPressTimer=null,_deerMoved=false;
-  el.addEventListener("touchstart",(e)=>{
-    _deerMoved=false;
-    _deerPressTimer=setTimeout(()=>{
-      if(!_deerMoved){deerSet("glow",0);openAIPanel();_deerVoiceSend();}
-    },800);
-  },{passive:true});
-  el.addEventListener("touchend",()=>{clearTimeout(_deerPressTimer);_deerPressTimer=null;});
-  el.addEventListener("touchmove",()=>{_deerMoved=true;clearTimeout(_deerPressTimer);_deerPressTimer=null;});
-  el.addEventListener("touchcancel",()=>{clearTimeout(_deerPressTimer);_deerPressTimer=null;});
-  // 桌面端长按（mousedown/mouseup）
-  el.addEventListener("mousedown",(e)=>{
+  let pressTimer=null,pressFired=false,startX=0,startY=0,pressAt=0;
+  const LONG_MS=600;
+  const MOVE_THRESHOLD=10;
+  const clear=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}pressFired=false;};
+  // Pointer 统一处理：兼容鼠标和触摸，避免 touch/mouse 事件重复触发
+  el.addEventListener("pointerdown",(e)=>{
     if(e.button!==0)return;
-    _deerMoved=false;
-    _deerPressTimer=setTimeout(()=>{
-      if(!_deerMoved){deerSet("glow",0);openAIPanel();_deerVoiceSend();}
-    },800);
+    e.preventDefault();
+    pressFired=false;startX=e.clientX;startY=e.clientY;pressAt=Date.now();
+    if(pressTimer)clearTimeout(pressTimer);
+    pressTimer=setTimeout(()=>{
+      pressFired=true;
+      deerSet("glow",0);
+      deerBubble("🎤 说吧，我在听…",0);
+      _deerVoiceSend();
+    },LONG_MS);
   });
-  el.addEventListener("mouseup",()=>{clearTimeout(_deerPressTimer);_deerPressTimer=null;});
-  el.addEventListener("mouseleave",()=>{clearTimeout(_deerPressTimer);_deerPressTimer=null;});
+  el.addEventListener("pointermove",(e)=>{
+    if(!pressTimer||pressFired)return;
+    if(Math.abs(e.clientX-startX)>MOVE_THRESHOLD||Math.abs(e.clientY-startY)>MOVE_THRESHOLD){
+      clear();
+      el.classList.remove("glow");
+    }
+  });
+  el.addEventListener("pointerup",(e)=>{
+    if(pressFired){clear();return;} // 长按已触发，不要触发 click
+    clear();
+    const dur=Date.now()-pressAt;
+    if(dur<LONG_MS){
+      deerSet("jump",500);
+      openAIPanel();
+    }
+  });
+  el.addEventListener("pointercancel",()=>{clear();el.classList.remove("glow");});
+  el.addEventListener("pointerleave",()=>{clear();el.classList.remove("glow");});
+  el.addEventListener("contextmenu",(e)=>e.preventDefault()); // 阻止右键/长按菜单
   // 暴露给外部调用
   window.__deerJump=()=>deerSet("jump",500);
   window.__deerFlower=()=>deerSet("flower",1200);
@@ -10784,7 +10793,7 @@ function _deerVoiceSend(){
   const rec=new SR();
   rec.lang="zh-CN";rec.continuous=false;rec.interimResults=false;
   rec.onstart=()=>{deerSet("glow",0);};
-  rec.onend=()=>{deerSet("glow",0);el=>el&&el.classList.remove("glow");};
+  rec.onend=()=>{const el=deerEl();if(el)el.classList.remove("glow");};
   rec.onerror=(e)=>{
     const el=deerEl();if(el)el.classList.remove("glow");
     if(e.error==="not-allowed")deerBubble("请允许麦克风权限",3000);
@@ -10796,6 +10805,7 @@ function _deerVoiceSend(){
     deerBubble("已识别：\""+txt.slice(0,15)+(txt.length>15?"…":"")+"\"",2000);
     const input=document.getElementById("aiInput");
     if(input){input.value=txt;}
+    openAIPanel();
     setTimeout(()=>{if(window.__aiSend)window.__aiSend();else aiSend(txt);},400);
   };
   try{rec.start();}catch(e){deerBubble("无法启动语音识别",3000);}
