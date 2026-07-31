@@ -8659,9 +8659,11 @@ function openData(){
      settings.cloud.autoSync=false;saveSettings();openData();toast("已关闭自动同步");
    }else{
      let token=settings.githubToken||"";
-     if(!token){token=await appPrompt("粘贴你的 GitHub Token（需 repo 权限；仅存本地，用于私有云同步）");if(!token){openData();return;}settings.githubToken=token;saveSettings();}
+     token=await appPrompt("粘贴你的 GitHub Token（需 repo 权限；仅存本地，用于私有云同步）",token);
+     if(!token){openData();return;}
+     settings.githubToken=token;saveSettings();
      settings.cloud.autoSync=true;saveSettings();openData();toast("已开启自动同步，保存后将自动上传");
-     cloudAutoPull(); // 开启后立即拉取一次，建立同步基线
+     cloudAutoPull();
    }
  };
  document.getElementById("notifToggle").onclick=()=>{
