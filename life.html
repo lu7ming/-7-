@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!--  [0] HTML 头部：meta / title / 防白边脚本                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <html lang="zh-CN" style="background:#E8C8A8;">
 <head>
 <meta charset="UTF-8" />
@@ -42,6 +45,7 @@ html{background:#E8C8A8 no-repeat fixed;background-size:cover;}
 html[data-theme="dark"]{background:#1A1825 no-repeat fixed;background-size:cover;}
 </style>
 <style>
+/* ═══════════ [CSS 1.1] 主题变量 + 多主题配色 ═══════════ */
 /* ================== Theme variables ================== */
 :root{
   --bg:#EFEAE3;           /* 暖灰底 */
@@ -195,6 +199,7 @@ body.bg-photo{background:#15131a!important;background-image:none!important;}
 button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
 
+/* ═══════════ [CSS 1.2] Layout + 组件样式 ═══════════ */
 /* ================== Layout ================== */
 .app{
   display:flex;
@@ -716,6 +721,7 @@ body[data-theme="dark"] .data-row input[type=month]{color-scheme:dark;}
   z-index:120;font-size:14px;}
 .hidden{display:none!important;}
 
+/* ═══════════ [CSS 1.3] 弹窗 / 保险柜 / 日历 ═══════════ */
 /* ===== 应用内弹窗（iPad 主屏安全，替代原生 confirm/prompt） ===== */
 #appModalRoot{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
 #appModalRoot.am-show{display:flex;}
@@ -1115,6 +1121,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
   padding:8px 16px;border-radius:10px;font-weight:600;margin-top:10px;
 }
 
+/* ═══════════ [CSS 1.4] Responsive ═══════════ */
 /* ================== Responsive ================== */
 /* ---- 周计划 ---- */
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px;}
@@ -1169,6 +1176,7 @@ body[data-theme="dark"] .onboard-card{background:linear-gradient(135deg,#3A3020,
   .mob-bar{display:none;}
   .main{margin-left:220px;}
 }
+/* ═══════════ [CSS 1.5] 模块样式：思考流 / 课程 / 休息模式 ═══════════ */
 /* ===== 思考流 / 认知账本 / 时光胶囊 ===== */
 .mood-row{display:flex;gap:8px;margin:8px 0;}
 .mood{font-size:20px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:50%;cursor:pointer;background:var(--card-soft);transition:.15s;}
@@ -1377,6 +1385,7 @@ body.rest-mode .card{background:rgba(18,28,46,.55)!important;backdrop-filter:blu
 body.rest-mode .top-icon{color:#E8DCC8;}
 body.rest-mode #restAmbient{display:block;}
 
+/* ═══════════ [CSS 1.6] MODULE CSS ═══════════ */
 /* === MODULE CSS: yearreview === */
 /* === 年度回顾 yearreview 模块样式 === */
 .yr-pad{padding:2px;}
@@ -1631,6 +1640,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   .graph-node circle,.graph-edge,.graph-edge-dyn{transition:none;}
 }
 
+/* ═══════════ [CSS 1.7] 工具箱 / 备工作台 ═══════════ */
 /* === MODULE CSS: 工具箱 / 备工作台 === */
 .tb-search{position:relative;margin:8px 0 4px;}
 .tb-search .tb-s-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6;pointer-events:none;}
@@ -1664,6 +1674,9 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 
 </style>
 </head>
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!--  [2] HTML 固定内容：toast / 侧栏 / AI 面板 / 番茄钟等 body 内常量                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <body data-theme="light">
 <div id="bgLayer" class="bg-layer"></div>
 <div id="bgOverlay" class="bg-overlay"></div>
@@ -1830,6 +1843,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 "use strict";
 const STORE_KEY="life_data_v1", SET_KEY="life_settings_v1", SCHEMA_VERSION=3;
 
+/* ═══════════ [JS 3.1] 常量定义 + 全局状态 + 工具函数 ═══════════ */
 /* ============== 固定内容 ============== */
 const GREETINGS={
   dawn:"凌晨好", morning:"早上好", noon:"中午好", afternoon:"下午好", evening:"晚上好", night:"夜深了"
@@ -1950,6 +1964,7 @@ function debounce(fn,ms){let t;return function(){clearTimeout(t);const a=argumen
 function setPath(o,path,v){const p=path.split(".");let x=o;for(let i=0;i<p.length-1;i++){if(x[p[i]]==null)x[p[i]]={};x=x[p[i]];}x[p[p.length-1]]=v;}
 function diffDays(a,b){const ms=parseDate(b)-parseDate(a);return Math.round(ms/86400000);}
 
+/* ═══════════ [JS 3.2] 持久化：save / load / IDB / 备份 / 迁移 ═══════════ */
 /* ============== 持久化 ============== */
 /* IndexedDB 作为备份副本：localStorage 是主存储（同步快），IndexedDB 容量大（几十MB）做安全网 */
 let idbDB=null;
@@ -2166,6 +2181,7 @@ function migrate(){
   if(!state.treeData)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
 }
 
+/* ═══════════ [JS 3.3] 记录引擎：getDay / 连续打卡 / 周统计 ═══════════ */
 /* ============== 记录 ============== */
 function defaultEntry(){
   return {
@@ -2422,6 +2438,7 @@ function coldContacts(threshold){
     return Object.assign({},c,{daysSince:days});
   }).filter(c=>c.daysSince>=threshold).sort((a,b)=>b.daysSince-a.daysSince);
 }
+/* ═══════════ [JS 3.4] 提醒引擎 + 快速录入 + 模板 + 三件事 ═══════════ */
 /* ============== 今日提醒引擎：扫描所有模块，主动推送待处理项 ============== */
 function dailyAlerts(){
   const alerts=[];
@@ -2803,6 +2820,7 @@ function setFocusThree(arr){
   save();
 }
 
+/* ═══════════ [JS 3.5] 顶栏 / 侧栏 / 通用渲染组件 ═══════════ */
 /* ============== 顶栏 + 侧栏 ============== */
 const NAV_ITEMS=[
  {id:"home",l:"工作台",ico:"▦"},
@@ -2987,6 +3005,7 @@ function compressImage(file,maxW,quality){
 }
 function toggleTheme(){settings.theme=settings.theme==="dark"?"light":"dark";applyTheme();saveSettings();renderTop();}
 
+/* ═══════════ [JS 4.1] 首页：viewHome / 今日课程 / 今日流 ═══════════ */
 /* ============== 各板块 ============== */
 function checkRowHtml(k,label){
   const r=getDay(currentDate);
@@ -3321,6 +3340,7 @@ function recHtml(prefix,recs,key){
       <textarea class="big-text" rows="2" data-study="${prefix}-${key}-${f.k}" placeholder="写下你的记录…">${esc(r[f.k]||"")}</textarea></div>`;
   }).join("");
 }
+/* ═══════════ [JS 4.2] 视图模块：学习 / 健康 / 资产 / 关系 / 书架 ═══════════ */
 function viewLearn(){
   const r=getDay(currentDate);
   const m=r.study.mood||"";
@@ -3961,6 +3981,7 @@ function summarizeRange(start,end){
   });
   return {start,end,checkinDays,vocalMinutes:vocal,englishWords:english.words,englishRead:english.read,englishListen:english.listen,inSum:round2(inSum),outSum:round2(outSum),tasksDone,tasksTotal,reviews:allReview,keywords,contactsCount,questionCount:qCount,questionAnswers:qAnswers};
 }
+/* ═══════════ [JS 4.3] 周复盘 / 习惯周卡 / 笔记 / 备忘录 / 看板 ═══════════ */
 function viewReview(){
   const scope=reviewScope;
   const rg=reviewRangeOf(scope);
@@ -4794,6 +4815,7 @@ function viewBoard(){
   `;
 }
 
+/* ═══════════ [JS 4.4] 金句 / 成就 / 白噪音 / 闹钟 / 储备库 ═══════════ */
 /* ============== 每日金句 ============== */
 const DAILY_QUOTES=[
   {t:"种一棵树最好的时间是十年前，其次是现在。",a:"中国谚语"},
@@ -5518,6 +5540,7 @@ function viewLibrary(){
   </div>`;
 }
 
+/* ═══════════ [JS 4.5] 趋势 / 热力图 / 情绪 / 工具箱 ═══════════ */
 /* ---- 趋势 / 数据回看 ---- */
 function viewTrends(){
   const now=new Date();
@@ -5848,6 +5871,7 @@ function viewTools(){
   `;
 }
 
+/* ═══════════ [JS 4.6] 思考流 / 胶囊 / 摘抄 / 课程 / 项目 / 目标 / 心情 / 速记 ═══════════ */
 /* ============== 思考流 / 认知账本 ============== */
 function fmtTime(ts){if(!ts)return"";const d=new Date(ts);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addReflection(date,obj){
@@ -6332,6 +6356,7 @@ function viewInbox(){
   </div>`;
 }
 
+/* ═══════════ [JS 4.7] 工具箱视图 ═══════════ */
 /* ============== 工具箱（常用网站 / 备工作台） ============== */
 /* 数据同源 useful-sites.html；外部站点无法内嵌 iframe（X-Frame-Options），统一在新标签打开 */
 const TOOLBOX_SITES=[
@@ -6464,6 +6489,7 @@ MODULE_ACTIONS["tb-fav"]=function(t){
   render();
 };
 
+/* ═══════════ [JS 5.1] render() 主渲染 + onClick 交互委托 + bind() ═══════════ */
 /* ============== 主渲染 ============== */
 function render(){
   renderTop();
@@ -7409,6 +7435,7 @@ function showQcResult(r){
   setTimeout(()=>t.remove(),2500);
 }
 
+/* ═══════════ [JS 5.2] 搜索 / 配色 / 灵感 / 语音 / 推送 / 概览 / AI 小结 / 建议 ═══════════ */
 /* ============== 搜索 ============== */
 function openSearch(preset){
  document.getElementById("searchOverlay").classList.remove("hidden");
@@ -7859,6 +7886,7 @@ function smartSuggestions(){
   return sugs;
 }
 
+/* ═══════════ [JS 5.3] 天气 / 年报 / 生命之树 ═══════════ */
 /* ============== 天气（联网缓存） ============== */
 let weatherCache=null;
 async function fetchWeather(){
@@ -8623,6 +8651,7 @@ function treePreview(){
   </div>`;
 }
 
+/* ═══════════ [JS 5.4] 数据工具 / 保险柜 ═══════════ */
 /* ============== 数据工具 ============== */
 function openData(){
  const b=document.getElementById("dataBody");
@@ -8948,6 +8977,7 @@ async function vaultPersist(items){
 function download(name,content){const b=new Blob([content],{type:"application/json;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const d=JSON.parse(rd.result);if(!(await appConfirm("导入将覆盖当前全部数据，确定？",{danger:true,okText:"导入覆盖"})))return;state=Object.assign(stateDefaults(),d);state.entries=state.entries||{};state.contacts=state.contacts||[];state.books=state.books||[];state.countdowns=state.countdowns||[];state.customTags=state.customTags||[];save();render();toast("导入成功");}catch(err){toast("导入失败：格式不正确");}};rd.readAsText(f);}
 
+/* ═══════════ [JS 5.5] 番茄钟 / 冥想 / Toast / 弹窗 ═══════════ */
 /* ============== 番茄钟 ============== */
 function fmtPomoTime(sec){
   sec=Math.max(0,Math.floor(sec));
@@ -9284,6 +9314,7 @@ document.getElementById("restPanel").addEventListener("click",onClick);
  });
 }
 
+/* ═══════════ [JS 5.6] 休息模式 · 魁北克冬夜 ═══════════ */
 /* ============== 休息模式 · 魁北克冬夜 ============== */
 const REST_LINES=["雪落得很慢，像时间舍不得走。","窗里有光，外面再冷也不慌。","这一刻，只属于你和自己。","城市睡了，灯还醒着。","慢慢呼吸，世界会等你。","远处的暖光，是也有人正过冬。","把今天轻轻放下，明天再说。","安静，是一种很贵的从容。"];
 function restLineToday(){
@@ -9355,6 +9386,7 @@ function restToggleXmas(){
   toast(settings.restXmas?"✨ 圣诞灯亮了":"圣诞灯已关");
 }
 
+/* ═══════════ [JS 6.1] MODULE JS：yearreview / heatmap / tomgarden / spaced / remind / graph / shopping / body ═══════════ */
 /* === MODULE JS: yearreview === */
 /* ==================== 模块：年度回顾 yearreview ==================== */
 /* data-mod-action 前缀 yr；视图函数 viewYearReview()；动作 yr-prev / yr-next / yr-year / yr-export */
@@ -10609,6 +10641,7 @@ function viewBody(){
     <div class="list">${histHtml}</div>`:""}
   </div>`;
 }
+/* ═══════════ [JS 6.2] 启动 init() ═══════════ */
 /* ============== 启动 ============== */
 async function init(){
  try{
@@ -10694,6 +10727,7 @@ async function init(){
   console.error("[init] failed:",err);
  }
 }
+/* ═══════════ [JS 6.3] 小鹿 AI 伙伴系统（点击/长按/语音/气泡/提醒） ═══════════ */
 /* ============== 小鹿 AI 伙伴系统 ============== */
 function deerEl(){return document.getElementById("deerEl");}
 function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
@@ -10805,6 +10839,7 @@ window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
 });
 
+/* ═══════════ [JS 6.4] AI 助手 DeepSeek（上下文/消息/发送/记录/报告/面板） ═══════════ */
 /* ============== AI 助手（DeepSeek） ============== */
 // DeepSeek API key 由用户在首次使用时填入，存到 localStorage（不在代码中写死，避免泄露）
 const DEEPSEEK_URL="https://api.deepseek.com/v1/chat/completions";
