@@ -506,6 +506,48 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .greet-eyebrow{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.55);font-weight:600;}
 .greet-h{font-size:28px;font-weight:700;margin:6px 0 10px;letter-spacing:-.5px;}
 .greet-meta{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.6;}
+.greet-deer{position:absolute;right:10px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .2s;}
+.greet-deer:active{transform:scale(.9);}
+.greet-deer svg{width:100%;height:100%;}
+.greet-deer .deer-eye{transition:transform .08s;}
+.greet-deer.blink .deer-eye{transform:scaleY(.1);}
+.greet-deer.wag .deer-tail{animation:wagTail .4s ease-in-out 3;}
+.greet-deer.jump{animation:deerJump .5s ease;}
+.greet-deer.spin{animation:deerSpin .6s ease;}
+.greet-deer.tilt .deer-head{transform:rotate(-8deg);}
+.greet-deer.nod .deer-head{animation:deerNod .6s ease 2;}
+.greet-deer.sleeping .deer-body{opacity:.7;}
+.greet-deer.sleeping .deer-eye{transform:scaleY(.05);}
+.greet-deer.sleeping .deer-head{transform:rotate(5deg) translateY(3px);}
+.greet-deer.stretch .deer-body{animation:deerStretch 1s ease;}
+.greet-deer.yawn .deer-mouth{animation:deerYawn .5s ease;}
+.greet-deer.alert .deer-ear-l{transform:rotate(-25deg);}
+.greet-deer.alert .deer-ear-r{transform:rotate(25deg);}
+.greet-deer.sad .deer-head{transform:rotate(3deg) translateY(4px);}
+.greet-deer.sad .deer-eye{transform:scaleY(.3);}
+.greet-deer.shock .deer-eye{transform:scale(1.5);}
+.greet-deer.flower::after{content:"🌸";position:absolute;top:-8px;right:-4px;font-size:14px;animation:deerFlower 1s ease forwards;}
+.greet-deer.crown::after{content:"👑";position:absolute;top:-14px;right:12px;font-size:16px;}
+.greet-deer.glow{filter:drop-shadow(0 0 8px rgba(255,215,0,.7));}
+.greet-deer.balloon::before{content:"🎈";position:absolute;top:-18px;right:-6px;font-size:16px;}
+.greet-deer.scarf::before{content:"";position:absolute;top:12px;left:18px;width:28px;height:6px;background:#c0392b;border-radius:3px;transform:rotate(-5deg);}
+.greet-deer.hat::before{content:"";position:absolute;top:-6px;left:12px;width:22px;height:14px;background:#c0392b;border-radius:4px 4px 0 0;}
+.greet-deer.hat::after{content:"";position:absolute;top:6px;left:8px;width:30px;height:4px;background:white;border-radius:2px;}
+.greet-deer.cake::after{content:"🎂";position:absolute;top:-16px;right:-2px;font-size:18px;}
+.greet-deer.umbrella::before{content:"☔";position:absolute;top:-20px;left:10px;font-size:20px;}
+.greet-deer.snowman::before{content:"⛄";position:absolute;top:-12px;right:-8px;font-size:14px;}
+.greet-deer.dumbbell::after{content:"🏋️";position:absolute;top:-8px;right:-6px;font-size:12px;}
+.greet-deer.thumbsup::after{content:"👍";position:absolute;top:-12px;right:-2px;font-size:14px;animation:deerFlower .6s ease forwards;}
+.greet-deer.heart::after{content:"❤️";position:absolute;top:-10px;right:8px;font-size:14px;animation:deerFlower .8s ease forwards;}
+.greet-deer.dizzy{animation:deerDizzy .3s ease 3;}
+@keyframes wagTail{0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}
+@keyframes deerJump{0%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+@keyframes deerSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes deerNod{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
+@keyframes deerStretch{0%{transform:scaleY(.9) translateY(4px)}50%{transform:scaleY(1.1) translateY(-6px)}100%{transform:scaleY(1) translateY(0)}}
+@keyframes deerYawn{0%{transform:scaleY(1)}50%{transform:scaleY(2.5)}100%{transform:scaleY(1)}}
+@keyframes deerDizzy{0%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}100%{transform:translateX(0)}}
+@keyframes deerFlower{0%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:1;transform:translateY(-12px) scale(1.2)}100%{opacity:0;transform:translateY(-20px) scale(.8)}}
 
 /* ---- KPIs ---- */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
@@ -3197,6 +3239,35 @@ function viewHome(){
      <div class="greet-eyebrow">WORKSPACE / HOME</div>
 <div class="greet-h">${greetOf(new Date())}，鹿7铭。</div>
     <div class="greet-meta">${(()=>{const d=parseDate(currentDate);return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${["日","一","二","三","四","五","六"][d.getDay()]} · ${tasksDone}/${tasksTotal} 任务 · 连续 ${streak} 天 · 最长 ${longest} 天`})()}</div>
+    <div class="greet-deer" id="deerEl" title="鹿7铭的伙伴">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g class="deer-body">
+          <ellipse cx="50" cy="72" rx="18" ry="14" fill="#c8956c"/>
+          <g class="deer-head" transform="translate(64,38)">
+            <ellipse cx="0" cy="0" rx="14" ry="11" fill="#d4a574"/>
+            <g class="deer-ear-l" transform="translate(-8,-9)"><ellipse cx="0" cy="-6" rx="5" ry="9" fill="#c8956c" transform="rotate(-15)"/></g>
+            <g class="deer-ear-r" transform="translate(8,-9)"><ellipse cx="0" cy="-6" rx="5" ry="9" fill="#c8956c" transform="rotate(15)"/></g>
+            <ellipse class="deer-eye" cx="-5" cy="-1" rx="2.5" ry="3.5" fill="#2c1810"/>
+            <ellipse class="deer-eye" cx="5" cy="-1" rx="2.5" ry="3.5" fill="#2c1810"/>
+            <ellipse cx="0" cy="3" rx="3" ry="2" fill="#8b5e3c"/>
+            <g class="deer-mouth"><ellipse cx="0" cy="6" rx="2" ry="1" fill="#6b3a2a"/></g>
+            <line x1="-14" y1="7" x2="14" y2="7" stroke="#8b5e3c" stroke-width="1"/>
+            <circle cx="-4" cy="-1" r="1" fill="white" opacity=".6"/>
+            <circle cx="6" cy="-1" r="1" fill="white" opacity=".6"/>
+          </g>
+          <g class="deer-legs">
+            <rect x="36" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
+            <rect x="46" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
+            <rect x="56" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
+            <rect x="64" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
+          </g>
+          <g class="deer-tail" transform="translate(30,66)"><ellipse cx="0" cy="0" rx="5" ry="4" fill="#f5e6d3"/></g>
+          <circle cx="48" cy="82" r="1.5" fill="#8b5e3c"/><circle cx="54" cy="82" r="1.5" fill="#8b5e3c"/><circle cx="60" cy="82" r="1.5" fill="#8b5e3c"/>
+          <circle cx="50" cy="65" r="2" fill="#e8c8a8"/>
+          <ellipse cx="34" cy="60" rx="8" ry="5" fill="#c8956c"/>
+        </g>
+      </svg>
+    </div>
    </div>
 
    ${weatherHtml()}
@@ -9171,6 +9242,15 @@ function bind(){
  document.getElementById("checkinBtn").addEventListener("click",()=>{
    getDay(currentDate).checkIn=true;save();render();
    toast("已签到 ✓ 连续 +1 天");
+   // 小鹿互动：打卡跳起撒花
+   try{if(window.__deerJump)window.__deerJump();if(window.__deerFlower)setTimeout(()=>window.__deerFlower(),300);}catch(e){}
+   // 连续打卡奖励
+   try{
+     const s=streakDays();
+     if(s===7){if(window.__deerCrown)window.__deerCrown(true);toast("🦌 连续7天！小鹿戴上了花环");}
+     else if(s===30){if(window.__deerGlow)window.__deerGlow(true);toast("✨ 连续30天！小鹿在发光");}
+     else if(s===100){if(window.__deerGlow)window.__deerGlow(true);if(window.__deerCrown)window.__deerCrown(true);toast("🌟 连续100天！你是小鹿的骄傲");}
+   }catch(e){}
  });
  document.getElementById("sbNav").addEventListener("click",e=>{
   const t=e.target.closest("[data-nav]");if(!t)return;
@@ -10587,6 +10667,7 @@ async function init(){
   render();
   bind();
   bindBgControls();
+  bindDeer();
   // 初始化生命之树
   updateTreeData();
   // 初始化闹钟检查
@@ -10647,6 +10728,69 @@ async function init(){
   if(sa)sa.innerHTML=`<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 启动失败</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">${esc(msg||"未知错误")}\n\nUA：${esc(navigator.userAgent.slice(0,90))}</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>`;
   console.error("[init] failed:",err);
  }
+}
+/* ============== 小鹿行为系统 ============== */
+function deerEl(){return document.getElementById("deerEl");}
+function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
+function bindDeer(){
+  const el=deerEl();if(!el)return;
+  // 定时眨眼
+  setInterval(()=>{deerSet("blink",150);},4000+Math.random()*3000);
+  // 偶尔摇尾巴
+  setInterval(()=>{if(Math.random()<.3)deerSet("wag",1200);},8000);
+  // 按时间段切换状态
+  function updateDeerByTime(){
+    const h=new Date().getHours(),el=deerEl();if(!el)return;
+    el.className="greet-deer"; // reset all classes
+    if(h>=23||h<6)el.classList.add("sleeping");
+    else if(h<8)el.classList.add("stretch");
+    else if(h>=12&&h<14)el.classList.add("sleeping");
+    else if(h>=20&&h<23)el.classList.add("tilt");
+    else el.classList.add("alert");
+    // 周末气球
+    if(new Date().getDay()===0||new Date().getDay()===6)el.classList.add("balloon");
+    // 深夜
+    if(h>=1&&h<5)el.classList.add("sleeping");
+  }
+  updateDeerByTime();setInterval(updateDeerByTime,600000); // 每10分钟刷新
+  // 点击互动
+  let clickTimer=null;
+  el.addEventListener("click",()=>{
+    deerSet("jump",500);
+    if(clickTimer){clearTimeout(clickTimer);clickTimer=null;deerSet("heart",800);return;} // 双击
+    clickTimer=setTimeout(()=>clickTimer=null,350);
+  });
+  // 长按装死
+  let longPress=null;
+  el.addEventListener("pointerdown",()=>{longPress=setTimeout(()=>{deerSet("sleeping",3000);longPress=null;},800);});
+  el.addEventListener("pointerup",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
+  el.addEventListener("pointerleave",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
+  // 陀螺仪摇晃
+  if(window.DeviceMotionEvent){
+    let lastShake=0;
+    window.addEventListener("devicemotion",e=>{
+      const acc=e.accelerationIncludingGravity;if(!acc)return;
+      const mag=Math.sqrt((acc.x||0)**2+(acc.y||0)**2+(acc.z||0)**2);
+      if(mag>15&&Date.now()-lastShake>2000){lastShake=Date.now();deerSet("dizzy",900);}
+    });
+  }
+  // 暴露给外部调用
+  window.__deerJump=()=>deerSet("jump",500);
+  window.__deerSpin=()=>deerSet("spin",600);
+  window.__deerFlower=()=>deerSet("flower",1200);
+  window.__deerCrown=(on)=>{const el=deerEl();if(el)el.classList.toggle("crown",on);};
+  window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
+  window.__deerSad=()=>deerSet("sad",3000);
+  window.__deerShock=()=>deerSet("shock",1200);
+  window.__deerNod=()=>deerSet("nod",1200);
+  window.__deerDumbbell=()=>deerSet("dumbbell",2000);
+  window.__deerThumbsup=()=>deerSet("thumbsup",1500);
+  window.__deerUmbrella=(on)=>{const el=deerEl();if(el)el.classList.toggle("umbrella",on);};
+  window.__deerSnowman=(on)=>{const el=deerEl();if(el)el.classList.toggle("snowman",on);};
+  window.__deerScarf=(on)=>{const el=deerEl();if(el)el.classList.toggle("scarf",on);};
+  window.__deerHat=(on)=>{const el=deerEl();if(el)el.classList.toggle("hat",on);};
+  window.__deerCake=()=>deerSet("cake",3000);
+  window.__deerSleeping=(on)=>{const el=deerEl();if(el)el.classList.toggle("sleeping",on);};
 }
 window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
