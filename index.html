@@ -482,9 +482,8 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .month-card .mc-stat .mc-val{font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .month-card .mc-stat .mc-val small{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px}
 .month-card .mc-mini{display:grid;grid-template-columns:repeat(31,1fr);gap:2px;margin-top:4px}
-.month-card .mc-mini div{aspect-ratio:1;border-radius:2px;background:var(--line);transition:transform .1s}
+.month-card .mc-mini div{aspect-ratio:1;border-radius:2px;background:transparent;transition:transform .1s}
 .month-card .mc-mini div:hover{transform:scale(1.4)}
-.month-card .mc-mini div.has{background:var(--accent);opacity:.5}
 .month-card .mc-mini div.check{background:var(--good);opacity:.9}
 .month-card .mc-mini div.today{outline:1.5px solid var(--accent-ink);outline-offset:-1px}
 .month-card .mc-quote{font-size:12px;color:var(--ink-2);font-style:italic;padding:8px 10px;border-left:2px solid var(--accent);background:var(--card-soft);border-radius:4px;line-height:1.5}
@@ -760,10 +759,8 @@ body[data-theme="dark"] .am-backdrop{background:rgba(0,0,0,.66);}
 .cal-grid .cal-day{border:1px solid var(--glass-border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-2);cursor:pointer;background:var(--glass-bg-soft);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:all .12s;position:relative;aspect-ratio:1;max-height:48px;box-shadow:var(--glass-inset)}
 .cal-grid .cal-day:hover{border-color:var(--accent);transform:translateY(-1px)}
 .cal-grid .cal-day.other{color:var(--muted);opacity:.4}
-.cal-grid .cal-day.has-data{color:var(--ink);font-weight:600}
-.cal-grid .cal-day.has-data::after{content:"";position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:var(--good)}
 .cal-grid .cal-day.checkin{background:rgba(127,176,105,.15);border-color:rgba(127,176,105,.4)}
-.cal-grid .cal-day.checkin::after{background:var(--good)}
+.cal-grid .cal-day.checkin::after{content:"";position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:var(--good)}
 .cal-grid .cal-day.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,184,99,.3) inset}
 .cal-grid .cal-day.selected{background:var(--accent);color:var(--accent-ink);font-weight:700;border-color:var(--accent)}
 .cal-grid .cal-day.selected::after{background:var(--accent-ink)}
@@ -782,11 +779,10 @@ body[data-theme="dark"] .am-backdrop{background:rgba(0,0,0,.66);}
 /* ---- Heatmap ---- */
 .heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;}
 .heat-cell{
-  aspect-ratio:1;border-radius:4px;background:var(--card-soft);
+  aspect-ratio:1;border-radius:4px;background:transparent;
   display:grid;place-items:center;font-size:10px;color:var(--muted);
-  border:1px solid var(--line-2);
+  border:1px solid transparent;
 }
-.heat-cell.has{background:#D8E0C8;color:var(--ink);}
 .heat-cell.checked{background:var(--ink);color:var(--accent-ink);border-color:var(--ink);}
 .heat-cell.today{outline:2px solid var(--warm);outline-offset:1px;}
 .heat-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:var(--muted);}
@@ -1068,9 +1064,8 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .hw-stats b{color:var(--ink);font-size:15px;}
 .hw-week{display:flex;gap:8px;justify-content:space-between;}
 .hw-day{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
-.hw-dot{width:28px;height:28px;border-radius:50%;background:var(--card-soft);border:2px solid var(--line);}
+.hw-dot{width:28px;height:28px;border-radius:50%;background:transparent;border:2px solid transparent;}
 .hw-day.done .hw-dot{background:var(--ink);border-color:var(--ink);}
-.hw-day.has .hw-dot{background:#D8E0C8;border-color:#B8C8A8;}
 .hw-day.today .hw-dot{box-shadow:0 0 0 3px var(--warm-soft);}
 .hw-label{font-size:11px;color:var(--muted);font-weight:500;}
 .hw-day.done .hw-label{color:var(--ink);font-weight:600;}
@@ -1081,8 +1076,8 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .hhm-months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:4px;}
 .hhm-month{font-size:10px;color:var(--muted);}
 .hhm-cells{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;}
-.hhm-cell{aspect-ratio:1;border-radius:3px;background:var(--card-soft);}
-.hhm-cell.lvl-0{background:var(--card-soft);}
+.hhm-cell{aspect-ratio:1;border-radius:3px;background:transparent;}
+.hhm-cell.lvl-0{background:transparent;}
 .hhm-cell.lvl-1{background:#D8E0C8;}
 .hhm-cell.lvl-2{background:#A8C088;}
 .hhm-cell.lvl-3{background:#6B9858;}
@@ -2256,7 +2251,6 @@ function viewCalendar(){
   const monthName=`${year}年${month+1}月`;
   // 计算打卡天数 / 有数据天数
   const checkinCount=days.filter(d=>d.checkIn).length;
-  const dataCount=days.filter(d=>d.hasData).length;
   let cells="";
   // 前置空格
   for(let i=0;i<startWeek;i++) cells+=`<div class="cal-empty"></div>`;
@@ -2266,7 +2260,6 @@ function viewCalendar(){
     const isSelected=d.date===currentDate;
     const cls=["cal-day"];
     if(d.checkin)cls.push("checkin");
-    else if(d.hasData)cls.push("has-data");
     if(isToday)cls.push("today");
     if(isSelected)cls.push("selected");
     cells+=`<div class="${cls.join(" ")}" data-cal-date="${d.date}">${d.day}</div>`;
@@ -2285,7 +2278,6 @@ function viewCalendar(){
       ${cells}
     </div>
     <div style="margin-top:8px;font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap">
-      <span>● 有数据 ${dataCount} 天</span>
       <span style="color:var(--good)">● 已打卡 ${checkinCount} 天</span>
       <span style="color:var(--accent)">● 今天 / 选中日</span>
     </div>
