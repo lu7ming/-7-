@@ -2993,6 +2993,16 @@ function applyTheme(){
   if(m)m.setAttribute("content",bg);
   applyBackground();
 }
+/* 自动暗色模式：根据时间自动切换 */
+function autoThemeByTime(){
+  if(settings.themeAuto===false)return; // 用户手动关掉
+  const h=new Date().getHours();
+  const shouldDark=(h>=18||h<6);
+  if(settings.theme==="dark"?!shouldDark:shouldDark){
+    settings.theme=shouldDark?"dark":"light";
+    applyTheme();saveSettings();renderTop();
+  }
+}
 /* 应用自定义背景（照片图层） */
 function applyBackground(){
   var b=settings.bg||{mode:"gradient",sel:-1,blur:6,dim:0.3};
@@ -3032,7 +3042,7 @@ function compressImage(file,maxW,quality){
     }catch(e){rej(e);}
   });
 }
-function toggleTheme(){settings.theme=settings.theme==="dark"?"light":"dark";applyTheme();saveSettings();renderTop();}
+function toggleTheme(){settings.theme=settings.theme==="dark"?"light":"dark";settings.themeAuto=false;applyTheme();saveSettings();renderTop();}
 
 /* ═══════════ [JS 4.1] 首页：viewHome / 今日课程 / 今日流 ═══════════ */
 /* ============== 各板块 ============== */
@@ -9209,7 +9219,12 @@ function setMedDuration(sec){
 }
 
 /* ============== Toast ============== */
-let toastT;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.remove("hidden");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add("hidden"),2200);}
+let toastT;function toast(m,level){const t=document.getElementById("toast");t.textContent=m;t.className="toast";if(level==="warn")t.classList.add("toast-warn");if(level==="good")t.classList.add("toast-good");t.classList.remove("hidden");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add("hidden"),level==="warn"?4000:2200);}
+/* 通知分级：夜间免打扰 */
+function shouldNotify(){const h=new Date().getHours();return h>=7&&h<23;}
+function notifyImportant(m){if(!shouldNotify())return;toast(m,"warn");}
+function notifyNormal(m){if(!shouldNotify())return;toast(m);}
+function notifyLight(m){if(!shouldNotify())return;if(typeof deerBubble==="function")deerBubble(m,3000);}
 
 /* ===== 应用内弹窗：替代被 iOS 主屏吞掉的原生 confirm/prompt ===== */
 function showAppModal(o){
@@ -10715,6 +10730,10 @@ async function init(){
   setTimeout(()=>{try{fetchWeather().then(w=>{if(w)render();});}catch(e){}},1500);
   // 每分钟刷新一次问候/连续打卡
   setInterval(()=>{renderTop();},60000);
+  // 自动暗色模式：每小时检查一次
+  settings.themeAuto=settings.themeAuto!==false;
+  setTimeout(()=>{try{autoThemeByTime();}catch(e){}},3000);
+  setInterval(()=>{try{autoThemeByTime();}catch(e){}},3600000);
   // 启动时检查是否需要自动备份
   setTimeout(()=>{try{autoBackupCheck();}catch(e){}},3000);
   // 自动云同步：启动后拉取云端（若已开启自动同步）
@@ -11480,6 +11499,109 @@ MODULE_ACTIONS["refresh-daily-push"]=function(){
   };
 })();
 
+/* ═══════════ [JS 6.6] AI 周报 + 趋势洞察 ═══════════ */
+/* ============== AI 周报（取代旧 aiReport，直接展示不经过聊天） ============== */
+async function aiGenerateWeekReport(){
+  if(!DEEPSEEK_KEY){toast("请先配置 DeepSeek API key");return null;}
+  const ctx=collectContextData();
+  const weekSummary=ctx.week.map(e=>
+    `${e.date}: 任务${e.tasksDone}/${e.tasksTotal} 番茄${e.pomodoros} 打卡${e.checkIn?"✓":"✗"} 学习${e.studyMin}min`
+  ).join("\n");
+  const prompt=`根据以下本周数据生成周报。返回纯 JSON：
+{
+  "highlights": ["本周亮点1", "亮点2", "亮点3"],
+  "lowlights": ["待改进1", "待改进2"],
+  "suggestions": ["下周建议1", "建议2", "建议3"],
+  "summary": "一句话总结本周（30字内）"
+}
+数据：
+连续打卡${ctx.streak}天 | 本周番茄总计${ctx.totalPomo}个 | 今日任务${ctx.today.tasksDone}/${ctx.today.tasksTotal}
+本周每日：${weekSummary}
+目标：${JSON.stringify(ctx.goals.slice(0,5))}
+读书：已读${ctx.books.read} 在读${ctx.books.reading}`;
+
+  try{
+    const resp=await fetch(DEEPSEEK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+      body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:"你是人生工作台周报助手。只返回JSON。"},{role:"user",content:prompt}],max_tokens:600,temperature:0.7})
+    });
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    const content=data.choices[0].message.content;
+    let json=content.trim().replace(/^```(?:json)?\s*/,"").replace(/\s*```$/,"");
+    const result=JSON.parse(json);
+    result.generatedAt=Date.now();
+    // 存入 state.reviews
+    const wk=weekKey(currentDate);
+    state.reviews[wk]={...state.reviews[wk],aiWeekReport:result};
+    save(true);
+    toast("AI 周报已生成 ✅");
+    return result;
+  }catch(e){console.error(e);toast("周报生成失败");return null;}
+}
+
+/* AI 趋势洞察（嵌入首页 AI 小结） */
+async function aiGenerateInsights(){
+  if(!DEEPSEEK_KEY)return null;
+  const ctx=collectContextData();
+  const prompt=`分析以下7天数据，给出3条可执行洞察。返回纯JSON：
+{"insights":[{"icon":"📊","text":"洞察1（20字内）"},{"icon":"💡","text":"洞察2"},{"icon":"⚠️","text":"洞察3"}]}
+数据：${JSON.stringify(ctx.week.slice(-7))} | 连续打卡${ctx.streak}天 | 番茄总计${ctx.totalPomo}`;
+  try{
+    const resp=await fetch(DEEPSEEK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+      body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:"只返回JSON。"},{role:"user",content:prompt}],max_tokens:400,temperature:0.6})
+    });
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    let json=data.choices[0].message.content.trim().replace(/^```(?:json)?\s*/,"").replace(/\s*```$/,"");
+    const result=JSON.parse(json);
+    const cacheKey="ai_insights_"+fmtDate(new Date());
+    try{localStorage.setItem(cacheKey,JSON.stringify(result));}catch(e){}
+    return result;
+  }catch(e){return null;}
+}
+
+/* 重写 aiReport：直接生成周报而非填入输入框 */
+const _origAiReport=aiReport;
+aiReport=async function(type){
+  if(!DEEPSEEK_KEY){_origAiReport(type);return;}
+  if(type==="week"){
+    toast("正在生成 AI 周报…");
+    const r=await aiGenerateWeekReport();
+    if(r){render();return;}
+  }
+  if(type==="insight"){
+    toast("正在分析趋势…");
+    const r=await aiGenerateInsights();
+    if(r){render();return;}
+  }
+  _origAiReport(type);
+};
+
+/* 增强 aiDailySummary：有 AI 洞察时优先展示 */
+const _origAiDailySummary=aiDailySummary;
+aiDailySummary=function(){
+  const cacheKey="ai_insights_"+fmtDate(new Date());
+  let insights=null;
+  try{const c=localStorage.getItem(cacheKey);if(c)insights=JSON.parse(c);}catch(e){}
+  // 异步刷新洞察
+  if(!insights&&DEEPSEEK_KEY){
+    aiGenerateInsights().then(r=>{if(r){const card=document.querySelector(".ai-card");if(card)card.outerHTML=aiDailySummary();}}).catch(()=>{});
+  }
+  if(!insights)return _origAiDailySummary();
+  const r=getDay(currentDate);
+  const dn=CHECK_TPL.reduce((a,c)=>a+c.items.filter(it=>r.checks[c.cat+"-"+it]).length,0);
+  const total=CHECK_TPL.reduce((a,c)=>a+c.items.length,0);
+  const pct=total?Math.round(dn*100/total):0;
+  return `<div class="card ai-card pano-full">
+    <div class="ai-head"><span style="font-size:16px;font-weight:700;color:var(--ink)">🤖 AI 洞察</span><span class="ai-badge">DeepSeek</span></div>
+    <div class="ai-summary"><p>📊 今日打卡 ${dn}/${total}（${pct}%）</p></div>
+    ${insights.insights?insights.insights.map(s=>`<div class="ai-suggestion"><span class="as-icon">${esc(s.icon)}</span><span class="as-text">${esc(s.text)}</span></div>`).join(""):""}
+  </div>`;
+};
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
