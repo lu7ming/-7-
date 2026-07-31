@@ -10741,42 +10741,54 @@ function deerReminders(){
 }
 function bindDeer(){
   const el=deerEl();if(!el)return;
-  let pressTimer=null,pressFired=false,startX=0,startY=0,pressAt=0;
-  const LONG_MS=600;
-  const MOVE_THRESHOLD=10;
-  const clear=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}pressFired=false;};
-  // Pointer 统一处理：兼容鼠标和触摸，避免 touch/mouse 事件重复触发
-  el.addEventListener("pointerdown",(e)=>{
-    if(e.button!==0)return;
-    e.preventDefault();
-    pressFired=false;startX=e.clientX;startY=e.clientY;pressAt=Date.now();
-    if(pressTimer)clearTimeout(pressTimer);
-    pressTimer=setTimeout(()=>{
-      pressFired=true;
-      deerSet("glow",0);
-      deerBubble("🎤 说吧，我在听…",0);
-      _deerVoiceSend();
-    },LONG_MS);
-  });
-  el.addEventListener("pointermove",(e)=>{
+  let pressTimer=null, pressFired=false, startX=0, startY=0;
+  const LONG_MS=600, MOVE_TH=10;
+  function doClick(){
+    deerSet("jump",500);
+    openAIPanel();
+  }
+  function doVoice(){
+    pressFired=true;
+    deerSet("glow",0);
+    _deerVoiceSend();
+  }
+  el.addEventListener("touchstart",(e)=>{
+    pressFired=false;
+    const t=e.touches[0];
+    startX=t.clientX; startY=t.clientY;
+    pressTimer=setTimeout(doVoice, LONG_MS);
+  },{passive:true});
+  el.addEventListener("touchmove",(e)=>{
     if(!pressTimer||pressFired)return;
-    if(Math.abs(e.clientX-startX)>MOVE_THRESHOLD||Math.abs(e.clientY-startY)>MOVE_THRESHOLD){
-      clear();
-      el.classList.remove("glow");
+    const t=e.touches[0];
+    if(Math.abs(t.clientX-startX)>MOVE_TH||Math.abs(t.clientY-startY)>MOVE_TH){
+      clearTimeout(pressTimer); pressTimer=null;
+    }
+  },{passive:true});
+  el.addEventListener("touchend",(e)=>{
+    if(pressFired){clearTimeout(pressTimer);pressTimer=null;pressFired=false;return;}
+    clearTimeout(pressTimer);pressTimer=null;
+    if(Date.now()-e.timeStamp<LONG_MS+200) doClick();
+  });
+  el.addEventListener("touchcancel",()=>{clearTimeout(pressTimer);pressTimer=null;pressFired=false;});
+  // 桌面端 mousedown 点击（不阻止默认行为，避免影响后续事件）
+  el.addEventListener("mousedown",(e)=>{
+    if(e.button!==0)return;
+    pressFired=false; startX=e.clientX; startY=e.clientY;
+    pressTimer=setTimeout(doVoice, LONG_MS);
+  });
+  document.addEventListener("mousemove",(e)=>{
+    if(!pressTimer||pressFired)return;
+    if(Math.abs(e.clientX-startX)>MOVE_TH||Math.abs(e.clientY-startY)>MOVE_TH){
+      clearTimeout(pressTimer);pressTimer=null;
     }
   });
-  el.addEventListener("pointerup",(e)=>{
-    if(pressFired){clear();return;} // 长按已触发，不要触发 click
-    clear();
-    const dur=Date.now()-pressAt;
-    if(dur<LONG_MS){
-      deerSet("jump",500);
-      openAIPanel();
-    }
+  document.addEventListener("mouseup",(e)=>{
+    if(pressFired){clearTimeout(pressTimer);pressTimer=null;pressFired=false;return;}
+    clearTimeout(pressTimer);pressTimer=null;
+    // 只响应鹿附近的 mouseup
+    if(e.target===el||el.contains(e.target)) doClick();
   });
-  el.addEventListener("pointercancel",()=>{clear();el.classList.remove("glow");});
-  el.addEventListener("pointerleave",()=>{clear();el.classList.remove("glow");});
-  el.addEventListener("contextmenu",(e)=>e.preventDefault()); // 阻止右键/长按菜单
   // 暴露给外部调用
   window.__deerJump=()=>deerSet("jump",500);
   window.__deerFlower=()=>deerSet("flower",1200);
@@ -10790,6 +10802,7 @@ function _deerVoiceSend(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){deerBubble("当前浏览器不支持语音识别",3000);return;}
   deerBubble("🎤 说吧，我在听…",0);
+  openAIPanel();
   const rec=new SR();
   rec.lang="zh-CN";rec.continuous=false;rec.interimResults=false;
   rec.onstart=()=>{deerSet("glow",0);};
@@ -10804,9 +10817,8 @@ function _deerVoiceSend(){
     const el=deerEl();if(el)el.classList.remove("glow");
     deerBubble("已识别：\""+txt.slice(0,15)+(txt.length>15?"…":"")+"\"",2000);
     const input=document.getElementById("aiInput");
-    if(input){input.value=txt;}
-    openAIPanel();
-    setTimeout(()=>{if(window.__aiSend)window.__aiSend();else aiSend(txt);},400);
+    if(input){input.value=txt;input.dispatchEvent(new Event("input",{bubbles:true}));}
+    setTimeout(()=>{if(window.__aiSend)window.__aiSend();else aiSend(txt);},300);
   };
   try{rec.start();}catch(e){deerBubble("无法启动语音识别",3000);}
 }
