@@ -508,39 +508,19 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .greet-meta{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.6;}
 .greet-deer{position:absolute;right:10px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .2s;}
 .greet-deer:active{transform:scale(.9);}
-.greet-deer svg{width:100%;height:100%;transition:transform .15s,opacity .15s,filter .2s;}
-.greet-deer.blink svg{transform:scaleY(.85);}
-.greet-deer.wag{animation:wagTail .4s ease-in-out 3;}
+.greet-deer svg{width:100%;height:100%;transition:transform .15s,opacity .15s;}
 .greet-deer.jump{animation:deerJump .5s ease;}
-.greet-deer.spin{animation:deerSpin .6s ease;}
-.greet-deer.tilt svg{transform:rotate(-8deg);}
-.greet-deer.nod{animation:deerNod .6s ease 2;}
-.greet-deer.sleeping svg{opacity:.6;transform:scale(.95);}
-.greet-deer.stretch{animation:deerStretch 1s ease;}
-.greet-deer.alert svg{filter:brightness(1.2);}
-.greet-deer.sad svg{transform:scaleY(.9);opacity:.7;}
-.greet-deer.shock svg{transform:scale(1.3);}
 .greet-deer.flower::after{content:"🌸";position:absolute;top:-8px;right:-4px;font-size:14px;animation:deerFlower 1s ease forwards;}
 .greet-deer.crown::after{content:"👑";position:absolute;top:-14px;right:12px;font-size:16px;}
 .greet-deer.glow{filter:drop-shadow(0 0 8px rgba(255,215,0,.7));}
-.greet-deer.balloon::before{content:"🎈";position:absolute;top:-18px;right:-6px;font-size:16px;}
-.greet-deer.scarf::before{content:"";position:absolute;top:12px;left:18px;width:28px;height:6px;background:#c0392b;border-radius:3px;transform:rotate(-5deg);}
-.greet-deer.hat::before{content:"";position:absolute;top:-6px;left:12px;width:22px;height:14px;background:#c0392b;border-radius:4px 4px 0 0;}
-.greet-deer.hat::after{content:"";position:absolute;top:6px;left:8px;width:30px;height:4px;background:white;border-radius:2px;}
-.greet-deer.cake::after{content:"🎂";position:absolute;top:-16px;right:-2px;font-size:18px;}
-.greet-deer.umbrella::before{content:"☔";position:absolute;top:-20px;left:10px;font-size:20px;}
-.greet-deer.snowman::before{content:"⛄";position:absolute;top:-12px;right:-8px;font-size:14px;}
-.greet-deer.dumbbell::after{content:"🏋️";position:absolute;top:-8px;right:-6px;font-size:12px;}
-.greet-deer.thumbsup::after{content:"👍";position:absolute;top:-12px;right:-2px;font-size:14px;animation:deerFlower .6s ease forwards;}
-.greet-deer.heart::after{content:"❤️";position:absolute;top:-10px;right:8px;font-size:14px;animation:deerFlower .8s ease forwards;}
-.greet-deer.dizzy{animation:deerDizzy .3s ease 3;}
+/* 聊天气泡 */
+.deer-bubble{position:absolute;top:-38px;left:50%;transform:translateX(-50%);background:#fff;color:var(--ink);font-size:11px;line-height:1.4;padding:5px 10px;border-radius:12px;white-space:nowrap;max-width:140px;box-shadow:0 2px 10px rgba(0,0,0,.12);opacity:0;pointer-events:none;transition:opacity .3s;z-index:5;}
+.deer-bubble::after{content:"";position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #fff;}
+.deer-bubble.show{opacity:1;}
+/* 顶栏提示 */
+.top-hint{font-size:11px;color:var(--muted);align-self:center;cursor:pointer;padding:2px 6px;border-radius:6px;background:var(--card-soft);transition:opacity .5s;}
 @keyframes wagTail{0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}
 @keyframes deerJump{0%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-@keyframes deerSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-@keyframes deerNod{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
-@keyframes deerStretch{0%{transform:scaleY(.9) translateY(4px)}50%{transform:scaleY(1.1) translateY(-6px)}100%{transform:scaleY(1) translateY(0)}}
-@keyframes deerYawn{0%{transform:scaleY(1)}50%{transform:scaleY(2.5)}100%{transform:scaleY(1)}}
-@keyframes deerDizzy{0%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}100%{transform:translateX(0)}}
 @keyframes deerFlower{0%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:1;transform:translateY(-12px) scale(1.2)}100%{opacity:0;transform:translateY(-20px) scale(.8)}}
 
 /* ---- KPIs ---- */
@@ -1734,7 +1714,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <button class="top-icon" data-top="sound" title="声音 · 白噪音/闹钟">🎵</button>
-        <button class="top-icon" id="aiBtn" title="AI 助手 · 问答/总结/建议" style="font-size:15px">🤖</button>
+        <span class="top-hint" id="aiHint" title="点右下角小鹿召唤 AI">点🦌问AI</span>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
@@ -10713,68 +10693,76 @@ async function init(){
   console.error("[init] failed:",err);
  }
 }
-/* ============== 小鹿行为系统 ============== */
+/* ============== 小鹿 AI 伙伴系统 ============== */
 function deerEl(){return document.getElementById("deerEl");}
 function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
+/* 聊天气泡 */
+function deerBubble(msg,ms){
+  const el=deerEl();if(!el)return;
+  let b=el.querySelector(".deer-bubble");
+  if(!b){b=document.createElement("div");b.className="deer-bubble";el.appendChild(b);}
+  b.textContent=msg;b.classList.add("show");
+  if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
+}
+/* 定时主动提醒 */
+function deerReminders(){
+  const h=new Date().getHours();
+  const today=getToday();
+  const e=state.entries[today]||{};
+  const tasks=e.tasks||[];
+  const undone=tasks.filter(t=>t&&!t.done).length;
+  const vocal=e.study&&e.study.vocal&&e.study.vocal.vocal_time?e.study.vocal.vocal_time:0;
+  // 深夜提醒睡觉
+  if((h>=23||h<1)&&!localStorage.getItem("deer_said_goodnight_"+today)){
+    deerBubble("🌙 夜深了，该休息啦~",8000);
+    localStorage.setItem("deer_said_goodnight_"+today,"1");
+  }
+  // 早上问候
+  else if(h>=7&&h<9&&!localStorage.getItem("deer_said_morning_"+today)){
+    deerBubble("☀️ 早上好鹿7铭！今天有"+undone+"件事要做~",6000);
+    localStorage.setItem("deer_said_morning_"+today,"1");
+  }
+  // 中午没练声提醒
+  else if(h>=11&&h<13&&vocal===0&&!localStorage.getItem("deer_said_vocal_"+today)){
+    deerBubble("🎤 今天还没练声哦，中午来一段？",6000);
+    localStorage.setItem("deer_said_vocal_"+today,"1");
+  }
+  // 下午任务提醒
+  else if(h>=14&&h<16&&undone>0&&!localStorage.getItem("deer_said_tasks_"+today)){
+    deerBubble("📋 还有"+undone+"个任务没完成，加油！",6000);
+    localStorage.setItem("deer_said_tasks_"+today,"1");
+  }
+  // 傍晚总结
+  else if(h>=19&&h<21&&!localStorage.getItem("deer_said_evening_"+today)){
+    const done=tasks.filter(t=>t&&t.done).length;
+    if(done>0)deerBubble("🌟 今天完成了"+done+"个任务，不错！",6000);
+    else deerBubble("💭 今天过得怎么样？点我聊聊~",6000);
+    localStorage.setItem("deer_said_evening_"+today,"1");
+  }
+}
 function bindDeer(){
   const el=deerEl();if(!el)return;
-  // 定时眨眼
-  setInterval(()=>{deerSet("blink",150);},4000+Math.random()*3000);
-  // 偶尔摇尾巴
-  setInterval(()=>{if(Math.random()<.3)deerSet("wag",1200);},8000);
-  // 按时间段切换状态
-  function updateDeerByTime(){
-    const h=new Date().getHours(),el=deerEl();if(!el)return;
-    el.className="greet-deer"; // reset all classes
-    if(h>=23||h<6)el.classList.add("sleeping");
-    else if(h<8)el.classList.add("stretch");
-    else if(h>=12&&h<14)el.classList.add("sleeping");
-    else if(h>=20&&h<23)el.classList.add("tilt");
-    else el.classList.add("alert");
-    // 周末气球
-    if(new Date().getDay()===0||new Date().getDay()===6)el.classList.add("balloon");
-    // 深夜
-    if(h>=1&&h<5)el.classList.add("sleeping");
-  }
-  updateDeerByTime();setInterval(updateDeerByTime,600000); // 每10分钟刷新
-  // 点击互动
-  let clickTimer=null;
+  // 点击鹿 → 打开 AI 面板
   el.addEventListener("click",()=>{
     deerSet("jump",500);
-    if(clickTimer){clearTimeout(clickTimer);clickTimer=null;deerSet("heart",800);return;} // 双击
-    clickTimer=setTimeout(()=>clickTimer=null,350);
+    setTimeout(()=>openAIPanel(),200);
   });
-  // 长按装死
-  let longPress=null;
-  el.addEventListener("pointerdown",()=>{longPress=setTimeout(()=>{deerSet("sleeping",3000);longPress=null;},800);});
-  el.addEventListener("pointerup",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
-  el.addEventListener("pointerleave",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
-  // 陀螺仪摇晃
-  if(window.DeviceMotionEvent){
-    let lastShake=0;
-    window.addEventListener("devicemotion",e=>{
-      const acc=e.accelerationIncludingGravity;if(!acc)return;
-      const mag=Math.sqrt((acc.x||0)**2+(acc.y||0)**2+(acc.z||0)**2);
-      if(mag>15&&Date.now()-lastShake>2000){lastShake=Date.now();deerSet("dizzy",900);}
-    });
-  }
   // 暴露给外部调用
   window.__deerJump=()=>deerSet("jump",500);
-  window.__deerSpin=()=>deerSet("spin",600);
   window.__deerFlower=()=>deerSet("flower",1200);
   window.__deerCrown=(on)=>{const el=deerEl();if(el)el.classList.toggle("crown",on);};
   window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
-  window.__deerSad=()=>deerSet("sad",3000);
-  window.__deerShock=()=>deerSet("shock",1200);
-  window.__deerNod=()=>deerSet("nod",1200);
-  window.__deerDumbbell=()=>deerSet("dumbbell",2000);
-  window.__deerThumbsup=()=>deerSet("thumbsup",1500);
-  window.__deerUmbrella=(on)=>{const el=deerEl();if(el)el.classList.toggle("umbrella",on);};
-  window.__deerSnowman=(on)=>{const el=deerEl();if(el)el.classList.toggle("snowman",on);};
-  window.__deerScarf=(on)=>{const el=deerEl();if(el)el.classList.toggle("scarf",on);};
-  window.__deerHat=(on)=>{const el=deerEl();if(el)el.classList.toggle("hat",on);};
-  window.__deerCake=()=>deerSet("cake",3000);
-  window.__deerSleeping=(on)=>{const el=deerEl();if(el)el.classList.toggle("sleeping",on);};
+  // 定时检查提醒（每5分钟）
+  deerReminders();setInterval(deerReminders,300000);
+  // AI 回复后给鹿加气泡
+  const origAiAddMsg=aiAddMsg;
+  aiAddMsg=function(role,text){
+    origAiAddMsg(role,text);
+    if(role==="bot"){
+      const short=text.replace(/\n/g," ").slice(0,40)+(text.length>40?"…":"");
+      deerBubble(short,4000);
+    }
+  };
 }
 window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
@@ -11062,12 +11050,10 @@ function openAIPanel(){
   function ready(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);}
   ready(()=>{
     const panel=document.getElementById("aiPanel");
-    const btn=document.getElementById("aiBtn");
     const close=document.getElementById("aiClose");
     const sendBtn=document.getElementById("aiSendBtn");
     const micBtn=document.getElementById("aiMicBtn");
     const input=document.getElementById("aiInput");
-    if(btn)btn.onclick=openAIPanel;
     if(close)close.onclick=()=>{
       if(panel)panel.classList.remove("open");
       const fab=document.getElementById("quickCaptureBtn");
