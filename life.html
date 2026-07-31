@@ -12182,12 +12182,26 @@ window.addEventListener("beforeunload", tmUnregisterAll);
 function deerEl(){return document.getElementById("deerEl");}
 function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
 /* 聊天气泡 */
+let _bubbleTypeTimer=null;/* 打字机效果进行中的定时器，新气泡会取消它 */
 function deerBubble(msg,ms){
   const el=deerEl();if(!el)return;
   let b=el.querySelector(".deer-bubble");
   if(!b){b=document.createElement("div");b.className="deer-bubble";el.appendChild(b);}
-  b.textContent=msg;b.classList.add("show");
-  if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
+  if(_bubbleTypeTimer){clearTimeout(_bubbleTypeTimer);_bubbleTypeTimer=null;}
+  /* 纯前端"流式"打字机：较长文本逐字显现，短提示保持即时 */
+  if(msg&&msg.length>=10){
+    b.textContent="";b.classList.add("show");
+    let _i=0;const _sp=28;
+    const _step=()=>{
+      b.textContent=msg.slice(0,_i);_i++;
+      if(_i<=msg.length){_bubbleTypeTimer=setTimeout(_step,_sp);}
+      else{_bubbleTypeTimer=null;if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);}
+    };
+    _step();
+  }else{
+    b.textContent=msg;b.classList.add("show");
+    if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
+  }
 }
 /* 鹿事件状态（闭包变量，不受 DOM 重建影响） */
 let _dpTimer=null,_dpFired=false,_dpStart=0,_dpX=0,_dpY=0;
