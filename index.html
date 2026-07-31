@@ -506,47 +506,21 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .greet-eyebrow{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.55);font-weight:600;}
 .greet-h{font-size:28px;font-weight:700;margin:6px 0 10px;letter-spacing:-.5px;}
 .greet-meta{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.6;}
-.greet-deer{position:absolute;right:10px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .2s;}
+.greet-deer{position:absolute;right:30px;bottom:2px;width:70px;height:70px;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .2s;z-index:10;}
 .greet-deer:active{transform:scale(.9);}
-.greet-deer svg{width:100%;height:100%;}
-.greet-deer .deer-eye{transition:transform .08s;}
-.greet-deer.blink .deer-eye{transform:scaleY(.1);}
-.greet-deer.wag .deer-tail{animation:wagTail .4s ease-in-out 3;}
+.greet-deer svg{width:100%;height:100%;transition:transform .15s,opacity .15s;}
 .greet-deer.jump{animation:deerJump .5s ease;}
-.greet-deer.spin{animation:deerSpin .6s ease;}
-.greet-deer.tilt .deer-head{transform:rotate(-8deg);}
-.greet-deer.nod .deer-head{animation:deerNod .6s ease 2;}
-.greet-deer.sleeping .deer-body{opacity:.7;}
-.greet-deer.sleeping .deer-eye{transform:scaleY(.05);}
-.greet-deer.sleeping .deer-head{transform:rotate(5deg) translateY(3px);}
-.greet-deer.stretch .deer-body{animation:deerStretch 1s ease;}
-.greet-deer.yawn .deer-mouth{animation:deerYawn .5s ease;}
-.greet-deer.alert .deer-ear-l{transform:rotate(-25deg);}
-.greet-deer.alert .deer-ear-r{transform:rotate(25deg);}
-.greet-deer.sad .deer-head{transform:rotate(3deg) translateY(4px);}
-.greet-deer.sad .deer-eye{transform:scaleY(.3);}
-.greet-deer.shock .deer-eye{transform:scale(1.5);}
 .greet-deer.flower::after{content:"🌸";position:absolute;top:-8px;right:-4px;font-size:14px;animation:deerFlower 1s ease forwards;}
 .greet-deer.crown::after{content:"👑";position:absolute;top:-14px;right:12px;font-size:16px;}
 .greet-deer.glow{filter:drop-shadow(0 0 8px rgba(255,215,0,.7));}
-.greet-deer.balloon::before{content:"🎈";position:absolute;top:-18px;right:-6px;font-size:16px;}
-.greet-deer.scarf::before{content:"";position:absolute;top:12px;left:18px;width:28px;height:6px;background:#c0392b;border-radius:3px;transform:rotate(-5deg);}
-.greet-deer.hat::before{content:"";position:absolute;top:-6px;left:12px;width:22px;height:14px;background:#c0392b;border-radius:4px 4px 0 0;}
-.greet-deer.hat::after{content:"";position:absolute;top:6px;left:8px;width:30px;height:4px;background:white;border-radius:2px;}
-.greet-deer.cake::after{content:"🎂";position:absolute;top:-16px;right:-2px;font-size:18px;}
-.greet-deer.umbrella::before{content:"☔";position:absolute;top:-20px;left:10px;font-size:20px;}
-.greet-deer.snowman::before{content:"⛄";position:absolute;top:-12px;right:-8px;font-size:14px;}
-.greet-deer.dumbbell::after{content:"🏋️";position:absolute;top:-8px;right:-6px;font-size:12px;}
-.greet-deer.thumbsup::after{content:"👍";position:absolute;top:-12px;right:-2px;font-size:14px;animation:deerFlower .6s ease forwards;}
-.greet-deer.heart::after{content:"❤️";position:absolute;top:-10px;right:8px;font-size:14px;animation:deerFlower .8s ease forwards;}
-.greet-deer.dizzy{animation:deerDizzy .3s ease 3;}
+/* 聊天气泡 */
+.deer-bubble{position:absolute;top:-38px;right:0;background:#fff;color:var(--ink);font-size:11px;line-height:1.4;padding:5px 10px;border-radius:12px;white-space:nowrap;max-width:160px;box-shadow:0 2px 10px rgba(0,0,0,.12);opacity:0;pointer-events:none;transition:opacity .3s;z-index:5;}
+.deer-bubble::after{content:"";position:absolute;bottom:-5px;right:18px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #fff;}
+.deer-bubble.show{opacity:1;}
+/* 顶栏提示 */
+.top-hint{font-size:11px;color:var(--muted);align-self:center;cursor:pointer;padding:2px 6px;border-radius:6px;background:var(--card-soft);transition:opacity .5s;}
 @keyframes wagTail{0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}
 @keyframes deerJump{0%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-@keyframes deerSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-@keyframes deerNod{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
-@keyframes deerStretch{0%{transform:scaleY(.9) translateY(4px)}50%{transform:scaleY(1.1) translateY(-6px)}100%{transform:scaleY(1) translateY(0)}}
-@keyframes deerYawn{0%{transform:scaleY(1)}50%{transform:scaleY(2.5)}100%{transform:scaleY(1)}}
-@keyframes deerDizzy{0%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}100%{transform:translateX(0)}}
 @keyframes deerFlower{0%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:1;transform:translateY(-12px) scale(1.2)}100%{opacity:0;transform:translateY(-20px) scale(.8)}}
 
 /* ---- KPIs ---- */
@@ -1740,7 +1714,6 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <button class="top-icon" data-top="sound" title="声音 · 白噪音/闹钟">🎵</button>
-        <button class="top-icon" id="aiBtn" title="AI 助手 · 问答/总结/建议" style="font-size:15px">🤖</button>
         <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
@@ -3240,59 +3213,22 @@ function viewHome(){
 <div class="greet-h">${greetOf(new Date())}，鹿7铭。</div>
     <div class="greet-meta">${(()=>{const d=parseDate(currentDate);return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${["日","一","二","三","四","五","六"][d.getDay()]} · ${tasksDone}/${tasksTotal} 任务 · 连续 ${streak} 天 · 最长 ${longest} 天`})()}</div>
     <div class="greet-deer" id="deerEl" title="鹿7铭的伙伴">
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <g class="deer-body" transform="translate(0,4)">
-          <!-- 左鹿角 -->
-          <path d="M38 24 Q34 14 30 18 Q26 22 30 28" fill="none" stroke="#8b5e3c" stroke-width="3" stroke-linecap="round"/>
-          <path d="M30 18 Q24 12 22 16 Q20 20 24 24" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- 右鹿角 -->
-          <path d="M62 24 Q66 14 70 18 Q74 22 70 28" fill="none" stroke="#8b5e3c" stroke-width="3" stroke-linecap="round"/>
-          <path d="M70 18 Q76 12 78 16 Q80 20 76 24" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- 耳朵 -->
-          <ellipse cx="26" cy="42" rx="7" ry="10" fill="#c8956c" transform="rotate(-25 26 42)"/>
-          <ellipse cx="26" cy="42" rx="4.5" ry="7" fill="#f5d0c5" transform="rotate(-25 26 42)"/>
-          <ellipse cx="74" cy="42" rx="7" ry="10" fill="#c8956c" transform="rotate(25 74 42)"/>
-          <ellipse cx="74" cy="42" rx="4.5" ry="7" fill="#f5d0c5" transform="rotate(25 74 42)"/>
-          <!-- 头 -->
-          <ellipse cx="50" cy="46" rx="22" ry="20" fill="#d4a574"/>
-          <!-- 白色脸颊/嘴部 -->
-          <ellipse cx="50" cy="54" rx="16" ry="12" fill="#fff8f0"/>
-          <!-- 额头斑点 -->
-          <circle cx="44" cy="36" r="2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="50" cy="33" r="2.2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="56" cy="36" r="2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="50" cy="40" r="1.5" fill="#fff8f0" opacity=".85"/>
-          <!-- 眼睛 -->
-          <ellipse class="deer-eye" cx="41" cy="49" rx="3.2" ry="4" fill="#2c1810"/>
-          <circle cx="42.5" cy="47.5" r="1.2" fill="white"/>
-          <ellipse class="deer-eye" cx="59" cy="49" rx="3.2" ry="4" fill="#2c1810"/>
-          <circle cx="60.5" cy="47.5" r="1.2" fill="white"/>
-          <!-- 腮红 -->
-          <ellipse cx="34" cy="55" rx="4" ry="2.5" fill="#f5b0a0" opacity=".6"/>
-          <ellipse cx="66" cy="55" rx="4" ry="2.5" fill="#f5b0a0" opacity=".6"/>
-          <!-- 鼻子嘴 -->
-          <ellipse cx="50" cy="59" rx="2.8" ry="2" fill="#4a2e20"/>
-          <path d="M50 61 Q47 64 44 63" fill="none" stroke="#4a2e20" stroke-width="1.2" stroke-linecap="round"/>
-          <path d="M50 61 Q53 64 56 63" fill="none" stroke="#4a2e20" stroke-width="1.2" stroke-linecap="round"/>
-          <!-- 身体 -->
-          <ellipse cx="50" cy="78" rx="18" ry="15" fill="#d4a574"/>
-          <!-- 白色肚皮 -->
-          <ellipse cx="50" cy="80" rx="10" ry="11" fill="#fff8f0"/>
-          <!-- 身体斑点 -->
-          <circle cx="34" cy="72" r="2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="38" cy="78" r="2.2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="34" cy="84" r="2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="66" cy="72" r="2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="62" cy="78" r="2.2" fill="#fff8f0" opacity=".85"/>
-          <circle cx="66" cy="84" r="2" fill="#fff8f0" opacity=".85"/>
-          <!-- 腿 -->
-          <rect x="38" y="88" width="5" height="12" rx="2.5" fill="#c8956c"/>
-          <rect x="46" y="90" width="5" height="12" rx="2.5" fill="#c8956c"/>
-          <rect x="49" y="90" width="5" height="12" rx="2.5" fill="#c8956c"/>
-          <rect x="57" y="88" width="5" height="12" rx="2.5" fill="#c8956c"/>
-          <!-- 尾巴 -->
-          <ellipse cx="30" cy="74" rx="5" ry="4" fill="#fff8f0"/>
-        </g>
+      <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" stroke="none" d="M55.0252,31.0855l1.2292,9.9167c0,0-1,6.75,4.6667,3.8333l-1.6667-3.1667l1.0833-4.5833l-0.9167-4.1667 L55.0252,31.0855z"/>
+        <path fill="#A57939" stroke="none" d="M17.7127,20.398l-10.375,5.625l0.625,2.1875c0,0,6.625,0.3125,7.25,1.6875s-2.375,13.8125,10.875,18.4375 l3.375,15.25c0,0-1.75,4.5625-1.5625,4.4375s2.875-0.0625,2.875-0.0625l1.875-5.5625l-0.25-7.8125l-0.5-5l4.3125,0.3125 l7.25-1.0625l4.3125-0.1875l2.75,4.375l-2.9375,10.8125l-2.6875,4.125h3.875l5.5-10.0625l1.25-3.75l-1.75-7.1875l3.3125-9.8125 c0,0,0.3125-3.5625-2.0625-6.0625s-13.25,0.5-13.25,0.5L30.2127,30.148l-4.3125,0.3125l-1.4375-2.5l-0.6875-2.8125 c0,0,3-0.125,3.1875-3.1875c0,0-3.375-2.75-6.5-0.1875C20.4627,21.773,17.9627,19.7105,17.7127,20.398z"/>
+        <polygon fill="#6A462F" stroke="none" points="20.921,45.5855 22.0877,51.3355 23.8377,62.4188 21.921,67.8355 24.8377,67.8355 27.421,62.1688 27.3377,53.5021 26.0877,48.3355"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M28.1685,67.0208l1.1788-3.4527L25.9181,48.107c-12.3235-3.8578-10.3927-17.6861-10.3927-17.6861 c-0.1921-1.7655-3.3238-1.8171-3.3238-1.8171l-2.6499,0.2126c-0.8005,0.0642-1.544-0.4182-1.8116-1.1753l-0.2103-0.595 c-0.2696-0.7629,0.0713-1.6072,0.795-1.969l9.0205-4.5102c0,0,2.2172-0.8563,3.168,1.5187c0,0,1.1184-2.6975,6.4764-0.5542 c0,0-0.4286,4.0721-5.1437,4.0721"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M33.0263,39.7485l0.5358,5.6795c0,0-3.0005,3.0188-2.1432,9.0642"/>
+        <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="23.0964,51.1838 24.0608,62.6628 22.2391,66.8421"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M23.7837,28.6554c0,0,0.671,3.2268,4.8768,1.8649c0.9554-0.3094,1.9838-0.2964,2.9608-0.064 c2.4541,0.5839,10.0605,1.4413,13.8729,0.783c0.5614-0.0969,1.1066-0.2553,1.637-0.4631c1.5592-0.6108,6.7173-2.1085,11.707,2.3083 c2.0034,1.7733,1.7879,4.751,1.0301,7.2283C59.8581,40.3464,59,43.023,60.4121,44.0855"/>
+        <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="47.6356,37.391 46.7784,46.5842 50.8505,53.2505 47.4678,63.8914 45.1174,67.0208"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M56.125,37.391c0,0,0.9716,4.995-2.0778,9.7294c0,0,0.1072,3.88,1.3931,6.2375l-2.036,4.1551"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M18.2026,20.2453c0,0,0.8573-4.1257,7.5548-2.4647c0,0,6.001,0.4822,7.9835-5.1437s-2.1788-7.698-2.1788-7.698"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M37.8498,8.1547c0,0,2.8621,1.9342,0.2904,4.8651c-2.5013,2.8506-4.8487,2.0226-4.8487,2.0226"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M14.5055,11.0295c0,0-1.2151,4.9964,1.2859,6.9654s2.4111,2.5629,2.4111,2.5629"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M27.847,10.6544c0,0-1.3159,1.711,0.1307,4.1802c0,0,0.6376,1.6171-0.6575,2.8709"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M20.5065,17.7055c0,0-1.9289-2.3896,0.6965-5.015"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M36.24,48.9236c4.753,0.5107,8.8861,0.5288,11.6242-0.5618"/>
       </svg>
     </div>
    </div>
@@ -10756,68 +10692,68 @@ async function init(){
   console.error("[init] failed:",err);
  }
 }
-/* ============== 小鹿行为系统 ============== */
+/* ============== 小鹿 AI 伙伴系统 ============== */
 function deerEl(){return document.getElementById("deerEl");}
 function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
+/* 聊天气泡 */
+function deerBubble(msg,ms){
+  const el=deerEl();if(!el)return;
+  let b=el.querySelector(".deer-bubble");
+  if(!b){b=document.createElement("div");b.className="deer-bubble";el.appendChild(b);}
+  b.textContent=msg;b.classList.add("show");
+  if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
+}
+/* 定时主动提醒 */
+function deerReminders(){
+  const h=new Date().getHours();
+  const today=currentDate;
+  const e=state.entries[today]||{};
+  const tasks=e.tasks||[];
+  const undone=tasks.filter(t=>t&&!t.done).length;
+  const vocal=e.study&&e.study.vocal&&e.study.vocal.vocal_time?e.study.vocal.vocal_time:0;
+  // 深夜提醒睡觉
+  if((h>=23||h<1)&&!localStorage.getItem("deer_said_goodnight_"+today)){
+    deerBubble("🌙 夜深了，该休息啦~",8000);
+    localStorage.setItem("deer_said_goodnight_"+today,"1");
+  }
+  // 早上问候
+  else if(h>=7&&h<9&&!localStorage.getItem("deer_said_morning_"+today)){
+    deerBubble("☀️ 早上好鹿7铭！今天有"+undone+"件事要做~",6000);
+    localStorage.setItem("deer_said_morning_"+today,"1");
+  }
+  // 中午没练声提醒
+  else if(h>=11&&h<13&&vocal===0&&!localStorage.getItem("deer_said_vocal_"+today)){
+    deerBubble("🎤 今天还没练声哦，中午来一段？",6000);
+    localStorage.setItem("deer_said_vocal_"+today,"1");
+  }
+  // 下午任务提醒
+  else if(h>=14&&h<16&&undone>0&&!localStorage.getItem("deer_said_tasks_"+today)){
+    deerBubble("📋 还有"+undone+"个任务没完成，加油！",6000);
+    localStorage.setItem("deer_said_tasks_"+today,"1");
+  }
+  // 傍晚总结
+  else if(h>=19&&h<21&&!localStorage.getItem("deer_said_evening_"+today)){
+    const done=tasks.filter(t=>t&&t.done).length;
+    if(done>0)deerBubble("🌟 今天完成了"+done+"个任务，不错！",6000);
+    else deerBubble("💭 今天过得怎么样？点我聊聊~",6000);
+    localStorage.setItem("deer_said_evening_"+today,"1");
+  }
+}
 function bindDeer(){
   const el=deerEl();if(!el)return;
-  // 定时眨眼
-  setInterval(()=>{deerSet("blink",150);},4000+Math.random()*3000);
-  // 偶尔摇尾巴
-  setInterval(()=>{if(Math.random()<.3)deerSet("wag",1200);},8000);
-  // 按时间段切换状态
-  function updateDeerByTime(){
-    const h=new Date().getHours(),el=deerEl();if(!el)return;
-    el.className="greet-deer"; // reset all classes
-    if(h>=23||h<6)el.classList.add("sleeping");
-    else if(h<8)el.classList.add("stretch");
-    else if(h>=12&&h<14)el.classList.add("sleeping");
-    else if(h>=20&&h<23)el.classList.add("tilt");
-    else el.classList.add("alert");
-    // 周末气球
-    if(new Date().getDay()===0||new Date().getDay()===6)el.classList.add("balloon");
-    // 深夜
-    if(h>=1&&h<5)el.classList.add("sleeping");
-  }
-  updateDeerByTime();setInterval(updateDeerByTime,600000); // 每10分钟刷新
-  // 点击互动
-  let clickTimer=null;
-  el.addEventListener("click",()=>{
+  // 点击鹿 → 打开 AI 面板
+  el.addEventListener("click",(e)=>{
+    e.stopPropagation();
     deerSet("jump",500);
-    if(clickTimer){clearTimeout(clickTimer);clickTimer=null;deerSet("heart",800);return;} // 双击
-    clickTimer=setTimeout(()=>clickTimer=null,350);
+    openAIPanel();
   });
-  // 长按装死
-  let longPress=null;
-  el.addEventListener("pointerdown",()=>{longPress=setTimeout(()=>{deerSet("sleeping",3000);longPress=null;},800);});
-  el.addEventListener("pointerup",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
-  el.addEventListener("pointerleave",()=>{if(longPress){clearTimeout(longPress);longPress=null;}});
-  // 陀螺仪摇晃
-  if(window.DeviceMotionEvent){
-    let lastShake=0;
-    window.addEventListener("devicemotion",e=>{
-      const acc=e.accelerationIncludingGravity;if(!acc)return;
-      const mag=Math.sqrt((acc.x||0)**2+(acc.y||0)**2+(acc.z||0)**2);
-      if(mag>15&&Date.now()-lastShake>2000){lastShake=Date.now();deerSet("dizzy",900);}
-    });
-  }
   // 暴露给外部调用
   window.__deerJump=()=>deerSet("jump",500);
-  window.__deerSpin=()=>deerSet("spin",600);
   window.__deerFlower=()=>deerSet("flower",1200);
   window.__deerCrown=(on)=>{const el=deerEl();if(el)el.classList.toggle("crown",on);};
   window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
-  window.__deerSad=()=>deerSet("sad",3000);
-  window.__deerShock=()=>deerSet("shock",1200);
-  window.__deerNod=()=>deerSet("nod",1200);
-  window.__deerDumbbell=()=>deerSet("dumbbell",2000);
-  window.__deerThumbsup=()=>deerSet("thumbsup",1500);
-  window.__deerUmbrella=(on)=>{const el=deerEl();if(el)el.classList.toggle("umbrella",on);};
-  window.__deerSnowman=(on)=>{const el=deerEl();if(el)el.classList.toggle("snowman",on);};
-  window.__deerScarf=(on)=>{const el=deerEl();if(el)el.classList.toggle("scarf",on);};
-  window.__deerHat=(on)=>{const el=deerEl();if(el)el.classList.toggle("hat",on);};
-  window.__deerCake=()=>deerSet("cake",3000);
-  window.__deerSleeping=(on)=>{const el=deerEl();if(el)el.classList.toggle("sleeping",on);};
+  // 定时检查提醒（每5分钟）
+  deerReminders();setInterval(deerReminders,300000);
 }
 window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
@@ -10934,6 +10870,11 @@ function aiRenderMsgs(){
 function aiAddMsg(role,content,thinking){
   aiMsgs.push({role,content,thinking});
   aiRenderMsgs();
+  // 小鹿气泡：AI 回复时头顶弹气泡
+  if(role==="bot"){
+    const short=content.replace(/\n/g," ").slice(0,40)+(content.length>40?"…":"");
+    if(typeof deerBubble==="function")deerBubble(short,4000);
+  }
 }
 function aiUpdateLast(content){
   if(aiMsgs.length){aiMsgs[aiMsgs.length-1].content=content;aiMsgs[aiMsgs.length-1].thinking=false;aiRenderMsgs();}
@@ -11105,12 +11046,10 @@ function openAIPanel(){
   function ready(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);}
   ready(()=>{
     const panel=document.getElementById("aiPanel");
-    const btn=document.getElementById("aiBtn");
     const close=document.getElementById("aiClose");
     const sendBtn=document.getElementById("aiSendBtn");
     const micBtn=document.getElementById("aiMicBtn");
     const input=document.getElementById("aiInput");
-    if(btn)btn.onclick=openAIPanel;
     if(close)close.onclick=()=>{
       if(panel)panel.classList.remove("open");
       const fab=document.getElementById("quickCaptureBtn");
