@@ -1,7 +1,7 @@
 /* 鹿7铭 · 人生工作台 Service Worker
  * 策略：HTML 文档 network-first（保证更新生效），静态资源 cache-first（离线可用）
  */
-const CACHE = "life-workbench-v6"; // v6: 日历只显示打卡绿点，保险柜手势解锁
+const CACHE = "life-workbench-v7"; // v7: 首页小鹿图标重绘
 const SHELL = "./life.html";
 const ASSETS = [
   "./manifest.json",

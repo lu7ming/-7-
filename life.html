@@ -3241,30 +3241,57 @@ function viewHome(){
     <div class="greet-meta">${(()=>{const d=parseDate(currentDate);return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${["日","一","二","三","四","五","六"][d.getDay()]} · ${tasksDone}/${tasksTotal} 任务 · 连续 ${streak} 天 · 最长 ${longest} 天`})()}</div>
     <div class="greet-deer" id="deerEl" title="鹿7铭的伙伴">
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <g class="deer-body">
-          <ellipse cx="50" cy="72" rx="18" ry="14" fill="#c8956c"/>
-          <g class="deer-head" transform="translate(64,38)">
-            <ellipse cx="0" cy="0" rx="14" ry="11" fill="#d4a574"/>
-            <g class="deer-ear-l" transform="translate(-8,-9)"><ellipse cx="0" cy="-6" rx="5" ry="9" fill="#c8956c" transform="rotate(-15)"/></g>
-            <g class="deer-ear-r" transform="translate(8,-9)"><ellipse cx="0" cy="-6" rx="5" ry="9" fill="#c8956c" transform="rotate(15)"/></g>
-            <ellipse class="deer-eye" cx="-5" cy="-1" rx="2.5" ry="3.5" fill="#2c1810"/>
-            <ellipse class="deer-eye" cx="5" cy="-1" rx="2.5" ry="3.5" fill="#2c1810"/>
-            <ellipse cx="0" cy="3" rx="3" ry="2" fill="#8b5e3c"/>
-            <g class="deer-mouth"><ellipse cx="0" cy="6" rx="2" ry="1" fill="#6b3a2a"/></g>
-            <line x1="-14" y1="7" x2="14" y2="7" stroke="#8b5e3c" stroke-width="1"/>
-            <circle cx="-4" cy="-1" r="1" fill="white" opacity=".6"/>
-            <circle cx="6" cy="-1" r="1" fill="white" opacity=".6"/>
-          </g>
-          <g class="deer-legs">
-            <rect x="36" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
-            <rect x="46" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
-            <rect x="56" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
-            <rect x="64" y="82" width="4" height="14" rx="2" fill="#b8845c"/>
-          </g>
-          <g class="deer-tail" transform="translate(30,66)"><ellipse cx="0" cy="0" rx="5" ry="4" fill="#f5e6d3"/></g>
-          <circle cx="48" cy="82" r="1.5" fill="#8b5e3c"/><circle cx="54" cy="82" r="1.5" fill="#8b5e3c"/><circle cx="60" cy="82" r="1.5" fill="#8b5e3c"/>
-          <circle cx="50" cy="65" r="2" fill="#e8c8a8"/>
-          <ellipse cx="34" cy="60" rx="8" ry="5" fill="#c8956c"/>
+        <g class="deer-body" transform="translate(0,4)">
+          <!-- 左鹿角 -->
+          <path d="M38 24 Q34 14 30 18 Q26 22 30 28" fill="none" stroke="#8b5e3c" stroke-width="3" stroke-linecap="round"/>
+          <path d="M30 18 Q24 12 22 16 Q20 20 24 24" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- 右鹿角 -->
+          <path d="M62 24 Q66 14 70 18 Q74 22 70 28" fill="none" stroke="#8b5e3c" stroke-width="3" stroke-linecap="round"/>
+          <path d="M70 18 Q76 12 78 16 Q80 20 76 24" fill="none" stroke="#8b5e3c" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- 耳朵 -->
+          <ellipse cx="26" cy="42" rx="7" ry="10" fill="#c8956c" transform="rotate(-25 26 42)"/>
+          <ellipse cx="26" cy="42" rx="4.5" ry="7" fill="#f5d0c5" transform="rotate(-25 26 42)"/>
+          <ellipse cx="74" cy="42" rx="7" ry="10" fill="#c8956c" transform="rotate(25 74 42)"/>
+          <ellipse cx="74" cy="42" rx="4.5" ry="7" fill="#f5d0c5" transform="rotate(25 74 42)"/>
+          <!-- 头 -->
+          <ellipse cx="50" cy="46" rx="22" ry="20" fill="#d4a574"/>
+          <!-- 白色脸颊/嘴部 -->
+          <ellipse cx="50" cy="54" rx="16" ry="12" fill="#fff8f0"/>
+          <!-- 额头斑点 -->
+          <circle cx="44" cy="36" r="2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="50" cy="33" r="2.2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="56" cy="36" r="2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="50" cy="40" r="1.5" fill="#fff8f0" opacity=".85"/>
+          <!-- 眼睛 -->
+          <ellipse class="deer-eye" cx="41" cy="49" rx="3.2" ry="4" fill="#2c1810"/>
+          <circle cx="42.5" cy="47.5" r="1.2" fill="white"/>
+          <ellipse class="deer-eye" cx="59" cy="49" rx="3.2" ry="4" fill="#2c1810"/>
+          <circle cx="60.5" cy="47.5" r="1.2" fill="white"/>
+          <!-- 腮红 -->
+          <ellipse cx="34" cy="55" rx="4" ry="2.5" fill="#f5b0a0" opacity=".6"/>
+          <ellipse cx="66" cy="55" rx="4" ry="2.5" fill="#f5b0a0" opacity=".6"/>
+          <!-- 鼻子嘴 -->
+          <ellipse cx="50" cy="59" rx="2.8" ry="2" fill="#4a2e20"/>
+          <path d="M50 61 Q47 64 44 63" fill="none" stroke="#4a2e20" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M50 61 Q53 64 56 63" fill="none" stroke="#4a2e20" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- 身体 -->
+          <ellipse cx="50" cy="78" rx="18" ry="15" fill="#d4a574"/>
+          <!-- 白色肚皮 -->
+          <ellipse cx="50" cy="80" rx="10" ry="11" fill="#fff8f0"/>
+          <!-- 身体斑点 -->
+          <circle cx="34" cy="72" r="2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="38" cy="78" r="2.2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="34" cy="84" r="2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="66" cy="72" r="2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="62" cy="78" r="2.2" fill="#fff8f0" opacity=".85"/>
+          <circle cx="66" cy="84" r="2" fill="#fff8f0" opacity=".85"/>
+          <!-- 腿 -->
+          <rect x="38" y="88" width="5" height="12" rx="2.5" fill="#c8956c"/>
+          <rect x="46" y="90" width="5" height="12" rx="2.5" fill="#c8956c"/>
+          <rect x="49" y="90" width="5" height="12" rx="2.5" fill="#c8956c"/>
+          <rect x="57" y="88" width="5" height="12" rx="2.5" fill="#c8956c"/>
+          <!-- 尾巴 -->
+          <ellipse cx="30" cy="74" rx="5" ry="4" fill="#fff8f0"/>
         </g>
       </svg>
     </div>
