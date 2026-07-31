@@ -719,6 +719,23 @@ body[data-theme="dark"] .am-backdrop{background:rgba(0,0,0,.66);}
 .am-danger .am-msg{color:var(--warn);}
 .am-danger-btn{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important;}
 
+/* ===== 密码保险柜（九宫格手势解锁） ===== */
+.vault-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:240px;height:240px;margin:18px auto;user-select:none;touch-action:none;}
+.vault-dot{position:relative;width:56px;height:56px;margin:auto;border-radius:50%;background:var(--card-soft);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.vault-dot::after{content:"";width:14px;height:14px;border-radius:50%;background:var(--line);}
+.vault-dot.hit{border-color:var(--warm);background:rgba(220,160,80,.18);}
+.vault-dot.hit::after{background:var(--warm);transform:scale(1.15);}
+.vault-dot.error{border-color:var(--warn);background:rgba(220,60,60,.15);}
+.vault-dot.error::after{background:var(--warn);}
+.vault-canvas{position:absolute;inset:0;pointer-events:none;}
+.vault-hint{text-align:center;font-size:13px;color:var(--ink-2);min-height:20px;margin-bottom:6px;}
+.vault-item{display:flex;align-items:center;gap:10px;background:var(--card-soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.vault-item .vi-name{font-size:13px;font-weight:600;color:var(--ink);min-width:80px;}
+.vault-item .vi-val{flex:1;font-size:12px;color:var(--ink-2);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vault-item .vi-btn{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--ink);cursor:pointer;}
+.vault-item .vi-btn.del{color:var(--warn);}
+.vault-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;}
+
 /* Date nav */
 .date-nav{display:flex;gap:6px;align-items:center;margin-bottom:12px;background:var(--card-soft);border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px}
 .date-nav .dn-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--line);
@@ -1738,6 +1755,25 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   <div class="panel">
     <div class="panel-head"><h3>💾 数据 · 备份与整理</h3><button class="btn" id="dataClose">关闭</button></div>
     <div class="panel-body" id="dataBody"></div>
+  </div>
+</div>
+
+<!-- 密码保险柜 -->
+<div class="overlay hidden" id="vaultOverlay">
+  <div class="panel" style="max-width:440px">
+    <div class="panel-head"><h3>🔐 密码保险柜</h3><button class="btn" id="vaultClose">关闭</button></div>
+    <div class="panel-body" id="vaultBody"></div>
+  </div>
+</div>
+
+<!-- 保险柜手势画布（独立 overlay，覆盖在保险柜上方） -->
+<div class="overlay hidden" id="vaultGesture" style="z-index:400">
+  <div class="panel" style="max-width:440px">
+    <div class="panel-head"><h3 id="vgTitle">🔐 设置手势密码</h3><button class="btn-ghost" id="vgCancel" style="margin-left:auto">取消</button></div>
+    <div class="panel-body" style="text-align:center">
+      <div class="vault-hint" id="vgHint">请画出你的解锁手势（至少 4 个点）</div>
+      <div class="vault-grid" id="vgGrid"></div>
+    </div>
   </div>
 </div>
 
@@ -8597,7 +8633,9 @@ function openData(){
   <p class="data-note" style="margin-top:14px">☁️ 云端同步（GitHub 私有仓库，需 token，仅本地保存）：</p>
   <div class="data-row"><span style="font-size:13px;font-weight:600;color:var(--ink)">自动后台同步</span><button class="${(settings.cloud&&settings.cloud.autoSync)?"btn":"btn-ghost"}" id="ghAuto" style="margin-left:auto">${(settings.cloud&&settings.cloud.autoSync)?"已开启 ✅":"开启自动"}</button></div>
   <p class="data-note" id="ghStatus" style="margin-top:4px">${cloudStatusText()}</p>
-  <div class="data-row"><button class="btn" id="ghPush">⬆️ 上传备份</button><button class="btn-ghost" id="ghPull">⬇️ 下载恢复</button></div>`;
+  <div class="data-row"><button class="btn" id="ghPush">⬆️ 上传备份</button><button class="btn-ghost" id="ghPull">⬇️ 下载恢复</button></div>
+  <p class="data-note" style="margin-top:14px">🔐 密码保险柜（手势解锁 · AES-256 加密存储密钥）：</p>
+  <div class="data-row"><button class="btn" id="vaultOpen">🔐 打开保险柜</button></div>`;
  document.getElementById("expDay").onclick=()=>{const d=document.getElementById("expDayD").value;if(!state.entries[d]){toast("该日无数据");return;}download(`life_${d}.json`,JSON.stringify({date:d,entry:state.entries[d]},null,2));};
  document.getElementById("expAll").onclick=()=>download(`life_backup_${fmtDate(new Date())}.json`,JSON.stringify(state,null,2));
  document.getElementById("impBtn").onclick=()=>document.getElementById("impFile").click();
@@ -8615,6 +8653,7 @@ function openData(){
  document.getElementById("aiInsight").onclick=()=>aiReport("insight");
  document.getElementById("ghPush").onclick=()=>githubSyncPush();
  document.getElementById("ghPull").onclick=()=>githubSyncPull();
+ document.getElementById("vaultOpen").onclick=()=>{document.getElementById("dataOverlay").classList.add("hidden");vaultRender();};
  document.getElementById("ghAuto").onclick=async()=>{
    if(settings.cloud&&settings.cloud.autoSync){
      settings.cloud.autoSync=false;saveSettings();openData();toast("已关闭自动同步");
@@ -8733,6 +8772,164 @@ function cloudStatusText(){
   return "自动同步已开启"+(c.lastPush?(" · 上次上传 "+fmtAgo(c.lastPush)):" · 尚未上传")+(c.lastPull?(" · 上次拉取 "+fmtAgo(c.lastPull)):"");
 }
 function fmtAgo(ts){if(!ts)return"";const s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+"秒前";if(s<3600)return Math.floor(s/60)+"分钟前";if(s<86400)return Math.floor(s/3600)+"小时前";return Math.floor(s/86400)+"天前";}
+
+/* ============== 密码保险柜（九宫格手势解锁 + AES-GCM 加密密钥） ============== */
+/* 设计：
+   - 手势密码的 SHA-256 哈希存 localStorage（vault_hash），仅作门控
+   - 密钥列表用 AES-GCM 加密，密钥派生自手势 + 随机 salt（PBKDF2）
+   - 忘记手势只能重置（清空所有密钥），无后门
+*/
+const VAULT_HASH_KEY="vault_hash", VAULT_SALT_KEY="vault_salt", VAULT_DATA_KEY="vault_data";
+function vaultHasPassword(){try{return !!localStorage.getItem(VAULT_HASH_KEY);}catch(e){return false;}}
+async function sha256(s){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");}
+async function vaultDeriveKey(gestureStr,salt){
+  const keyMat=await crypto.subtle.importKey("raw",new TextEncoder().encode(gestureStr),{name:"PBKDF2"},false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:salt,iterations:100000,hash:"SHA-256"},keyMat,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function vaultEncrypt(items,key){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const data=new TextEncoder().encode(JSON.stringify(items));
+  const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,data);
+  const combined=new Uint8Array(iv.length+cipher.byteLength);
+  combined.set(iv,0);combined.set(new Uint8Array(cipher),iv.length);
+  return btoa(String.fromCharCode(...combined));
+}
+async function vaultDecrypt(b64,key){
+  try{
+    const combined=new Uint8Array(atob(b64).split("").map(c=>c.charCodeAt(0)));
+    const iv=combined.slice(0,12);const cipher=combined.slice(12);
+    const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:iv},key,cipher);
+    return JSON.parse(new TextDecoder().decode(plain));
+  }catch(e){return null;}
+}
+/* 九宫格手势交互：3×3 点位，pointerdown/move 连线采集，松开返回点序号数组（如 [0,1,2,5]） */
+function vaultShowGesture(title,hint,onDone,opts){
+  opts=opts||{};
+  const ov=document.getElementById("vaultGesture");
+  document.getElementById("vgTitle").textContent=title;
+  const hintEl=document.getElementById("vgHint");hintEl.textContent=hint;
+  const grid=document.getElementById("vgGrid");
+  grid.innerHTML="";
+  const dots=[];
+  for(let i=0;i<9;i++){const d=document.createElement("div");d.className="vault-dot";d.dataset.i=i;grid.appendChild(d);dots.push(d);}
+  // canvas 画连线
+  let canvas=grid.querySelector(".vault-canvas");
+  if(!canvas){canvas=document.createElement("canvas");canvas.className="vault-canvas";grid.appendChild(canvas);}
+  function fitCanvas(){const r=grid.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height;canvas.style.width=r.width+"px";canvas.style.height=r.height+"px";}
+  fitCanvas();
+  const ctx=canvas.getContext("2d");
+  let path=[],drawing=false,pts=[];
+  function dotCenter(i){const r=dots[i].getBoundingClientRect();const gr=grid.getBoundingClientRect();return {x:r.left-gr.left+r.width/2,y:r.top-gr.top+r.height/2};}
+  function redraw(){ctx.clearRect(0,0,canvas.width,canvas.height);if(pts.length<1)return;ctx.strokeStyle="#d99a4e";ctx.lineWidth=3;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();pts.forEach((p,idx)=>{if(idx===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.stroke();}
+  function hitTest(x,y){const gr=grid.getBoundingClientRect();for(let i=0;i<9;i++){if(path.includes(i))continue;const c=dotCenter(i);const dx=x-gr.left-c.x,dy=y-gr.top-c.y;if(dx*dx+dy*dy<28*28){return i;}}return -1;}
+  function onDown(e){e.preventDefault();drawing=true;path=[];pts=[];dots.forEach(d=>d.classList.remove("hit","error"));const p=pointerXY(e);const i=hitTest(p.x,p.y);if(i>=0){path.push(i);pts.push(dotCenter(i));dots[i].classList.add("hit");}redraw();}
+  function onMove(e){if(!drawing)return;e.preventDefault();const p=pointerXY(e);const i=hitTest(p.x,p.y);if(i>=0){path.push(i);pts.push(dotCenter(i));dots[i].classList.add("hit");}pts.push({x:p.x-grid.getBoundingClientRect().left,y:p.y-grid.getBoundingClientRect().top});redraw();}
+  function onUp(e){if(!drawing)return;drawing=false;redraw();if(path.length>=4){onDone(path.slice());}else{dots.forEach(d=>d.classList.add("error"));hintEl.textContent="至少连接 4 个点，请重画";setTimeout(()=>{dots.forEach(d=>d.classList.remove("error"));hintEl.textContent=hint;},800);}}
+  function pointerXY(e){if(e.touches&&e.touches[0])return {x:e.touches[0].clientX,y:e.touches[0].clientY};return {x:e.clientX,y:e.clientY};}
+  grid.onpointerdown=onDown;grid.onpointermove=onMove;grid.onpointerup=onUp;grid.onpointerleave=onUp;grid.onpointercancel=onUp;
+  ov.classList.remove("hidden");
+  // 取消按钮
+  document.getElementById("vgCancel").onclick=()=>{ov.classList.add("hidden");if(opts.onCancel)opts.onCancel();};
+}
+function vaultCloseGesture(){document.getElementById("vaultGesture").classList.add("hidden");}
+/* 首次设置手势：画两遍确认 */
+function vaultSetupGesture(){
+  let first=null;
+  vaultShowGesture("🔐 设置手势密码","请画出解锁手势（至少 4 个点）",async(path)=>{
+    if(!first){first=path;vaultShowGesture("🔐 确认手势密码","再画一遍确认",async(p2)=>{if(arrEq(first,p2)){await vaultSavePassword(first);vaultCloseGesture();vaultRender();toast("手势密码已设置");}else{vaultShowGesture("🔐 设置手势密码","两次不一致，请重新画第一遍",async(p3)=>{first=p3;vaultShowGesture("🔐 确认手势密码","再画一遍确认",async(p4)=>{if(arrEq(first,p4)){await vaultSavePassword(first);vaultCloseGesture();vaultRender();toast("手势密码已设置");}else{vaultCloseGesture();toast("两次不一致，请重试");}});});hintEl.textContent="两次不一致，请重新画";}});}else{vaultCloseGesture();}
+  });
+  function arrEq(a,b){return a&&b&&a.length===b.length&&a.every((x,i)=>x===b[i]);}
+}
+async function vaultSavePassword(gestureArr){
+  const gestureStr=gestureArr.join("-");
+  const hash=await sha256(gestureStr+"|life-vault-salt-v1");
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  localStorage.setItem(VAULT_HASH_KEY,hash);
+  localStorage.setItem(VAULT_SALT_KEY,btoa(String.fromCharCode(...salt)));
+  // 初始化空密钥列表（加密空数组）
+  const key=await vaultDeriveKey(gestureStr,salt);
+  const enc=await vaultEncrypt([],key);
+  localStorage.setItem(VAULT_DATA_KEY,enc);
+}
+/* 解锁：画手势 → 校验哈希 → 解密密钥列表 */
+function vaultUnlock(){
+  vaultShowGesture("🔐 解锁保险柜","请画出你的解锁手势",async(path)=>{
+    const gestureStr=path.join("-");
+    const hash=await sha256(gestureStr+"|life-vault-salt-v1");
+    const stored=localStorage.getItem(VAULT_HASH_KEY);
+    if(hash!==stored){
+      const hintEl=document.getElementById("vgHint");
+      document.querySelectorAll("#vgGrid .vault-dot").forEach(d=>d.classList.add("error"));
+      hintEl.textContent="手势错误，请重画";
+      setTimeout(()=>{document.querySelectorAll("#vgGrid .vault-dot").forEach(d=>d.classList.remove("error"));hintEl.textContent="请画出你的解锁手势";},900);
+      return;
+    }
+    // 解密密钥列表
+    const saltB64=localStorage.getItem(VAULT_SALT_KEY);
+    const salt=new Uint8Array(atob(saltB64).split("").map(c=>c.charCodeAt(0)));
+    const key=await vaultDeriveKey(gestureStr,salt);
+    window.__vaultKey=key; // 供 vaultPersist 重新加密用
+    const items=await vaultDecrypt(localStorage.getItem(VAULT_DATA_KEY),key);
+    vaultCloseGesture();
+    vaultRenderItems(items||[]);
+  });
+}
+/* 渲染保险柜主界面 */
+function vaultRender(){
+  const body=document.getElementById("vaultBody");
+  if(!vaultHasPassword()){
+    body.innerHTML=`<p class="vault-empty">尚未设置手势密码。设置后可安全存储 GitHub Token、API 密钥等敏感信息。<br/><br/>所有内容用 AES-256 加密存储，忘记手势将无法恢复（只能重置清空）。</p>
+      <div class="data-row"><button class="btn" id="vaultSetup">🔐 设置手势密码</button></div>`;
+    document.getElementById("vaultSetup").onclick=vaultSetupGesture;
+  }else{
+    body.innerHTML=`<p class="data-note" style="text-align:center">保险柜已锁定，请画手势解锁</p>
+      <div class="data-row" style="justify-content:center"><button class="btn" id="vaultUnlockBtn">🔓 画手势解锁</button></div>
+      <div class="data-row" style="justify-content:center;margin-top:8px"><button class="btn-ghost" id="vaultReset" style="color:var(--warn);font-size:12px">忘记手势？重置保险柜</button></div>`;
+    document.getElementById("vaultUnlockBtn").onclick=vaultUnlock;
+    document.getElementById("vaultReset").onclick=async()=>{
+      if(!(await appConfirm("重置保险柜将清空所有已存密钥且不可恢复，确定？",{danger:true,okText:"重置清空"})))return;
+      localStorage.removeItem(VAULT_HASH_KEY);localStorage.removeItem(VAULT_SALT_KEY);localStorage.removeItem(VAULT_DATA_KEY);
+      vaultRender();toast("保险柜已重置");
+    };
+  }
+  document.getElementById("vaultOverlay").classList.remove("hidden");
+}
+/* 解锁后：显示密钥列表，可添加/删除/复制 */
+function vaultRenderItems(items){
+  const body=document.getElementById("vaultBody");
+  // 保存当前 items 供增删后重渲染（不解密态下保留内存副本）
+  window.__vaultItems=items;
+  window.__vaultKeyPromise=window.__vaultKeyPromise||null; // 加密 key 由解锁时设置
+  function refresh(){vaultRenderItems(window.__vaultItems);}
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-size:13px;color:var(--ink-2)">已存 ${items.length} 条密钥</span>
+    <button class="btn-ghost" id="vaultLock" style="font-size:12px">🔒 锁定</button></div>`;
+  if(items.length===0){html+=`<p class="vault-empty">还没有存储任何密钥</p>`;}
+  else{
+    html+=items.map((it,i)=>`<div class="vault-item"><span class="vi-name">${esc(it.name)}</span><span class="vi-val">${esc(it.value)}</span><button class="vi-btn" data-copy="${i}">复制</button><button class="vi-btn del" data-del="${i}">删除</button></div>`).join("");
+  }
+  html+=`<div class="data-row" style="margin-top:14px"><input type="text" id="vaultNewName" placeholder="名称（如 GitHub Token）"/><input type="text" id="vaultNewVal" placeholder="密钥内容" style="flex:1"/><button class="btn" id="vaultAdd">添加</button></div>`;
+  body.innerHTML=html;
+  document.getElementById("vaultLock").onclick=()=>{window.__vaultItems=null;window.__vaultKey=null;vaultRender();};
+  body.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{const it=items[+b.dataset.copy];if(it){navigator.clipboard&&navigator.clipboard.writeText(it.value);toast("已复制 "+it.name);}});
+  body.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const i=+b.dataset.del;if(!(await appConfirm("删除「"+items[i].name+"」？",{danger:true,okText:"删除"})))return;items.splice(i,1);await vaultPersist(items);refresh();toast("已删除");});
+  document.getElementById("vaultAdd").onclick=async()=>{
+    const n=document.getElementById("vaultNewName").value.trim();
+    const v=document.getElementById("vaultNewVal").value.trim();
+    if(!n||!v){toast("请填写名称和密钥");return;}
+    items.push({name:n,value:v});
+    await vaultPersist(items);
+    refresh();toast("已添加");
+  };
+}
+/* 持久化：用当前解锁态的 key 重新加密 */
+async function vaultPersist(items){
+  if(!window.__vaultKey){toast("保险柜未解锁");return;}
+  const enc=await vaultEncrypt(items,window.__vaultKey);
+  localStorage.setItem(VAULT_DATA_KEY,enc);
+}
+/* 修改 vaultUnlock：解锁后把 key 存到 window.__vaultKey 供后续加密用 */
+
 function download(name,content){const b=new Blob([content],{type:"application/json;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const d=JSON.parse(rd.result);if(!(await appConfirm("导入将覆盖当前全部数据，确定？",{danger:true,okText:"导入覆盖"})))return;state=Object.assign(stateDefaults(),d);state.entries=state.entries||{};state.contacts=state.contacts||[];state.books=state.books||[];state.countdowns=state.countdowns||[];state.customTags=state.customTags||[];save();render();toast("导入成功");}catch(err){toast("导入失败：格式不正确");}};rd.readAsText(f);}
 
@@ -9055,6 +9252,8 @@ document.getElementById("restPanel").addEventListener("click",onClick);
  document.getElementById("paletteOverlay").onclick=e=>{if(e.target.id==="paletteOverlay")e.target.classList.add("hidden");};
  document.getElementById("dataClose").onclick=()=>document.getElementById("dataOverlay").classList.add("hidden");
  document.getElementById("dataOverlay").onclick=e=>{if(e.target.id==="dataOverlay")e.target.classList.add("hidden");};
+ document.getElementById("vaultClose").onclick=()=>document.getElementById("vaultOverlay").classList.add("hidden");
+ document.getElementById("vaultOverlay").onclick=e=>{if(e.target.id==="vaultOverlay")e.target.classList.add("hidden");};
  document.addEventListener("keydown",e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();openSearch("");}
   if(e.key==="Escape"){closeSearch();document.getElementById("dataOverlay").classList.add("hidden");document.getElementById("paletteOverlay").classList.add("hidden");document.getElementById("sidebar").classList.remove("open");document.getElementById("sbOverlay").classList.remove("show");}
