@@ -2025,6 +2025,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .scene-btn:hover{border-color:var(--accent);}
 .scene-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 .scene-btn .scene-desc{font-size:11px;opacity:.7;}
+.expense-cat-select{appearance:auto;-webkit-appearance:auto;padding:4px 8px;border-radius:8px;border:1px solid var(--glass-border);background:var(--card-soft);color:var(--ink);font-size:13px;}
 </style>
 </head>
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -2079,10 +2080,8 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
       <div style="display:flex;gap:8px">
         <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
         <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
-        <button class="top-icon" data-top="sound" title="声音 · 白噪音/闹钟">🎵</button>
-        <button class="top-icon" data-top="voice" title="语音录入" id="voiceBtn">🎤</button>
+        <button class="top-icon" data-top="tree" title="生命树 · 成长轨迹">🌳</button>
         <button class="top-icon" data-top="search" title="搜索">🔍</button>
-        <button class="top-icon" data-top="palette" title="配色" id="paletteBtn">🎨</button>
         <button class="top-icon" data-top="data" title="数据">💾</button>
         <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
         <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
@@ -2226,6 +2225,36 @@ const CATS=[
  {id:"D",n:"D 层 · 深层情感"}
 ];
 
+/* 支出预设分类 */
+const EXPENSE_CATEGORIES=[
+  {id:"food",name:"餐饮",icon:"🍜",keywords:["饭","餐","吃","食","早","午","晚","外卖","食堂","面","米粉","菜","咖啡","奶茶","饮料","零食","水果"]},
+  {id:"transport",name:"交通",icon:"🚗",keywords:["车","地铁","公交","打车","滴滴","出租","停车","加油","高铁","火车","飞机","机票","地铁卡"]},
+  {id:"study",name:"学习",icon:"📚",keywords:["书","课","学","培训","考试","教材","文具","资料","网课","知识付费"]},
+  {id:"shopping",name:"购物",icon:"🛒",keywords:["买","购","衣服","鞋","包","电子产品","手机","电脑","配件","日用品","家居"]},
+  {id:"entertain",name:"娱乐",icon:"🎮",keywords:["电影","游戏","唱歌","KTV","演出","票","会员","视频","音乐","健身卡"]},
+  {id:"health",name:"医疗",icon:"💊",keywords:["药","医院","看病","诊所","体检","牙","眼科","保健","维生素"]},
+  {id:"social",name:"社交",icon:"🍻",keywords:["请客","聚餐","红包","礼物","生日","聚会","AA"]},
+  {id:"house",name:"居家",icon:"🏠",keywords:["房租","水电","燃气","物业","网费","宽带","保洁","维修"]},
+  {id:"invest",name:"理财",icon:"📈",keywords:["基金","股票","理财","定投","保险","养老金"]},
+  {id:"other",name:"其他",icon:"📝",keywords:[]}
+];
+function autoCategorize(catText){
+  if(!catText)return"other";
+  const t=catText.toLowerCase();
+  for(const c of EXPENSE_CATEGORIES){
+    if(c.keywords.some(kw=>t.includes(kw)))return c.id;
+  }
+  return"other";
+}
+function getCatName(catId){
+  const c=EXPENSE_CATEGORIES.find(x=>x.id===catId);
+  return c?c.name:"其他";
+}
+function getCatIcon(catId){
+  const c=EXPENSE_CATEGORIES.find(x=>x.id===catId);
+  return c?c.icon:"📝";
+}
+
 /* 统一心情映射表 (emoji → {val:1-5, text:中文描述}) */
 const MOOD_MAP={
  "😊":{val:5,text:"开心"},"😄":{val:5,text:"开心"},"😁":{val:5,text:"开心"},"😃":{val:5,text:"开心"},"😀":{val:5,text:"开心"},
@@ -2278,7 +2307,7 @@ let state={
   projects:[],         // 项目/作业：[{id,name,type,deadline,outline,materials,courseRef,createdAt}]
   quotes:[],          // 摘抄/观后感：[{id,sourceType,source,excerpt,reflection,date,createdAt}]
   goals:[],           // 目标/OKR：[{id,title,level:"vision"|"annual"|"monthly",note,createdAt}]
-  financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200}, // 月度预算
+  financeBudget:{餐饮:1500,交通:300,学习:800,购物:500,娱乐:500,医疗:200,社交:300,居家:800,理财:1000,其他:200}, // 月度预算
   onboarded:false,      // 是否已引导
   treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},  // 生命之树
   alarms:[],            // 闹钟列表
@@ -2386,7 +2415,7 @@ function stateDefaults(){
       {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now(),archived:false},
       {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now(),archived:false}
     ],
-    customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[],moods:{},inbox:[],shopping:{lists:{default:[]},active:"default"},bodyData:{},reminders:[],alarmLog:[]
+    customTags:[],customQuestions:[],metrics:{},reviews:{},reflections:{},capsules:[],courses:{},courseOverrides:{},projects:[],quotes:[],goals:[],weeklyPlans:[],notes:[],financeInitialBalance:0,financeBudget:{餐饮:1500,交通:300,学习:800,购物:500,娱乐:500,医疗:200,社交:300,居家:800,理财:1000,其他:200},onboarded:false,treeData:{nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}},alarms:[],soundPresets:[],soundSettings:{volume:0.5,autoPomo:"",autoMed:""},unlockedAch:[],memos:[],moods:{},inbox:[],shopping:{lists:{default:[]},active:"default"},bodyData:{},reminders:[],alarmLog:[]
   };
 }
 function settingsDefaults(){
@@ -2421,7 +2450,7 @@ function load(){
   state.reflections=(state.reflections&&typeof state.reflections==="object")?state.reflections:{};
   state.courses=(state.courses&&typeof state.courses==="object")?state.courses:{};
   state.courseOverrides=(state.courseOverrides&&typeof state.courseOverrides==="object")?state.courseOverrides:{};
-  state.financeBudget=(state.financeBudget&&typeof state.financeBudget==="object")?state.financeBudget:{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200};
+  state.financeBudget=(state.financeBudget&&typeof state.financeBudget==="object")?state.financeBudget:{餐饮:1500,交通:300,学习:800,购物:500,娱乐:500,医疗:200,社交:300,居家:800,理财:1000,其他:200};
   state.soundSettings=(state.soundSettings&&typeof state.soundSettings==="object")?state.soundSettings:{volume:0.5,autoPomo:"",autoMed:""};
   state.shopping=(state.shopping&&typeof state.shopping==="object")?state.shopping:{lists:{default:[]},active:"default"};
   if(!state.shopping.lists)state.shopping.lists={default:[]};
@@ -2437,6 +2466,7 @@ function load(){
   if(!state.treeData.lastCalcDate)state.treeData.lastCalcDate="";
   state.onboarded=!!state.onboarded;
   migrate();
+  runMigrations();
   try{
     const s=localStorage.getItem(SET_KEY);
     if(s)settings=Object.assign(settingsDefaults(),JSON.parse(s));
@@ -2520,7 +2550,8 @@ function migrate(){
   state.weeklyPlans=state.weeklyPlans||[];
   state.notes=state.notes||[];
   if(state.financeInitialBalance==null)state.financeInitialBalance=0;
-  state.financeBudget=state.financeBudget||{餐饮:1500,学习:800,娱乐:500,交通:300,其他:200};
+  state.financeBudget=state.financeBudget||{};
+  EXPENSE_CATEGORIES.forEach(c=>{if(state.financeBudget[c.name]==null)state.financeBudget[c.name]=0;});
   state.contacts.forEach(c=>{if(!c.interactions)c.interactions=[];});
   state.version=SCHEMA_VERSION;
   Object.keys(state.entries).forEach(d=>{
@@ -2531,6 +2562,98 @@ function migrate(){
     if(e&&e.health&&e.health.meditation==null)e.health.meditation=[];
   });
   if(!state.treeData)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+}
+
+/* ═══════════ [JS 6.18] 数据迁移引擎 (#140) ═══════════ */
+const DATA_VERSION=2; // 当前数据版本
+
+// 迁移脚本注册表：每个版本到下一版本的升级脚本
+const MIGRATIONS=[
+  {
+    from:0,to:1,
+    desc:"v1: 初始化基础字段",
+    run:function(s){
+      // 确保 state 基本字段存在
+      if(!s.contacts)s.contacts=[];
+      if(!s.books)s.books=[];
+      if(!s.reflections)s.reflections={};
+      if(!s.moods)s.moods={};
+      if(!s.reviews)s.reviews={};
+      if(!s.goals)s.goals=[];
+      if(!s.projects)s.projects=[];
+      if(!s.notes)s.notes=[];
+      if(!s.memos)s.memos=[];
+      if(!s.capsules)s.capsules=[];
+      if(!s.quotes)s.quotes=[];
+      if(!s.treeData)s.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
+    }
+  },
+  {
+    from:1,to:2,
+    desc:"v2: 记账分类+联系人生日+快照",
+    run:function(s){
+      // 记账分类：给支出记录添加 catId
+      if(s.entries){
+        Object.keys(s.entries).forEach(date=>{
+          const e=s.entries[date];
+          if(e&&e.finance&&e.finance.out){
+            e.finance.out.forEach(o=>{
+              if(!o.catId&&o.cat){
+                if(typeof autoCategorize==="function"){
+                  o.catId=autoCategorize(o.cat);
+                }else{
+                  o.catId="other";
+                }
+              }
+            });
+          }
+        });
+      }
+      // 联系人添加 birthday 字段
+      if(s.contacts){
+        s.contacts.forEach(c=>{if(!c.birthday)c.birthday="";});
+      }
+      // 生命树添加 branchLevels
+      if(s.treeData&&!s.treeData.branchLevels){
+        s.treeData.branchLevels={checkin:1,study:1,health:1,reflect:1,book:1,project:1,achievement:1};
+      }
+      if(s.treeData&&!s.treeData.fruits){
+        s.treeData.fruits=[];
+      }
+      // 预算补全所有预设分类
+      if(s.financeBudget&&typeof EXPENSE_CATEGORIES!=="undefined"){
+        EXPENSE_CATEGORIES.forEach(c=>{
+          if(s.financeBudget[c.name]==null)s.financeBudget[c.name]=0;
+        });
+      }
+    }
+  }
+];
+
+function runMigrations(){
+  const currentVer=state._dataVersion||0;
+  if(currentVer>=DATA_VERSION)return false; // 已是最新
+
+  let migrated=false;
+  for(let v=currentVer;v<DATA_VERSION;v++){
+    const migration=MIGRATIONS.find(m=>m.from===v);
+    if(migration){
+      try{
+        migration.run(state);
+        console.log(`数据迁移: v${migration.from}→v${migration.to} (${migration.desc})`);
+        migrated=true;
+      }catch(e){
+        console.error(`迁移失败 v${v}→v${v+1}:`,e);
+        break; // 迁移失败不继续，避免数据损坏
+      }
+    }
+  }
+  if(migrated){
+    state._dataVersion=DATA_VERSION;
+    save(true);
+    console.log(`数据迁移完成，当前版本 v${DATA_VERSION}`);
+  }
+  return migrated;
 }
 
 /* ═══════════ [JS 3.3] 记录引擎：getDay / 连续打卡 / 周统计 ═══════════ */
@@ -2862,7 +2985,7 @@ function parseQuickCapture(raw){
   const moneyMatch=text.match(/^(.+?)[\s]*[¥￥]?\s*(\d+(?:\.\d+)?)\s*元?$/);
   if(moneyMatch&&(text.match(/买|花|餐|咖啡|打车|地铁|外卖|超市|购物|票|费|充值|订阅/) || text.match(/[¥￥]/))){
     const cat=guessExpenseCategory(moneyMatch[1]);
-    r.finance.out.push({cat:cat,amount:moneyMatch[2],date:currentDate});
+    r.finance.out.push({cat:cat,catId:autoCategorize(cat),amount:moneyMatch[2],date:currentDate});
     return {mod:"支出",detail:cat+" ¥"+moneyMatch[2],raw:text};
   }
 
@@ -3151,16 +3274,19 @@ const NAV_ITEMS=[
  {id:"finance",l:"资产",ico:"💰"},
  {id:"relate",l:"关系",ico:"🤝"},
  {id:"book",l:"书架",ico:"📚"},
- {id:"course",l:"课程",ico:"🗓"},
- {id:"project",l:"项目",ico:"🎯"},
- {id:"memo",l:"备忘录",ico:"📌"},
- {id:"mood",l:"心情",ico:"🌈"},
- {id:"inbox",l:"速记",ico:"💡"},
  {id:"toolbox",l:"工具箱",ico:"🧰"},
- {id:"tree",l:"生命树",ico:"🌳"},
- {id:"data",l:"数据",ico:"📊"},
- {id:"ai",l:"AI 助手",ico:"🤖"}
+ {id:"data",l:"数据",ico:"📊"}
 ];
+// 已并入子模块（侧栏不直接显示，通过母模块内按钮 / 顶栏 / 数据中心进入）
+const NAV_SUBTITLES={
+ course:"课程",project:"项目",memo:"备忘录",mood:"心情",
+ inbox:"速记",tree:"生命树",ai:"AI 助手",
+ sound:"声音",goals:"目标",reflect:"思考流",capsule:"时间胶囊",
+ quote:"摘抄",review:"周复盘",week:"周计划",note:"笔记",
+ board:"看板",library:"资源库",trends:"趋势",yearreview:"年回顾",
+ heatmap:"热力图",tomgarden:"番茄花园",spaced:"间隔复习",remind:"提醒",
+ graph:"模块图谱",shopping:"购物",body:"身体"
+};
 // 子模块并入母模块：
 //   身体 → 健康（健康页底部嵌入）
 //   购物 → 备忘录（备忘录页底部嵌入）
@@ -3215,10 +3341,45 @@ function renderData(){
        <button class="btn-ghost" data-nav="capsule">⏳ 胶囊</button>
      </div>
 
-     <div class="section-eyebrow" style="margin-top:14px">🌈 记录与灵感</div>
+     <div class="section-eyebrow" style="margin-top:14px">📸 每日快照</div>
+     <div class="data-row" style="flex-direction:column;align-items:stretch">
+       <p style="font-size:12px;color:var(--muted);margin:4px 0">每天自动备份，保留最近30天。可一键恢复。</p>
+       ${snapshotListHTML()}
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🔧 数据版本</div>
+     <div class="list-item">
+       <div class="li-row" style="align-items:center">
+         <span style="flex:1">当前数据版本: v${state._dataVersion||0} / v${typeof DATA_VERSION!=="undefined"?DATA_VERSION:0}</span>
+         <span style="font-size:11px;color:var(--muted)">${state._dataVersion>=DATA_VERSION?"✅ 最新":"⚠️ 需迁移"}</span>
+       </div>
+     </div>
+
+     <div class="section-eyebrow" style="margin-top:14px">🤖 AI 调度器</div>
+    <div class="list-item">
+      <div class="li-row" style="align-items:center">
+        <span style="flex:1">今日 AI 调用</span>
+        <span style="font-weight:600">${getAIUsageInfo().dailyUsed} / ${getAIUsageInfo().dailyLimit}</span>
+      </div>
+      <div class="li-row" style="align-items:center">
+        <span style="flex:1">缓存命中</span>
+        <span style="font-weight:600">${getAIUsageInfo().cacheSize} 条</span>
+      </div>
+    </div>
+
+    <div class="section-eyebrow" style="margin-top:14px">🌈 记录与灵感</div>
      <div class="data-row">
        <button class="btn-ghost" data-nav="mood">🌈 心情日志</button>
        <button class="btn-ghost" data-nav="inbox">💡 灵感速记</button>
+       <button class="btn-ghost" data-nav="memo">📌 备忘录</button>
+     </div>
+
+    <div class="section-eyebrow" style="margin-top:14px">🎨 外观与输入</div>
+     <div class="data-row">
+       <button class="btn-ghost" data-top="palette">🎨 配色</button>
+       <button class="btn-ghost" data-top="voice">🎤 语音录入</button>
+       <button class="btn-ghost" data-top="sound">🎵 声音</button>
+       <button class="btn-ghost" data-nav="ai">🤖 AI 助手</button>
      </div>
    </div>`;
 }
@@ -3235,7 +3396,7 @@ function renderTop(){
     const palNames={default:"🎨",forest:"🌲",ocean:"🌊",sunset:"🌅",lavender:"💜"};
     palBtn.textContent=palNames[settings.palette||"default"]||"🎨";
   }
-  document.getElementById("mobTitle").textContent=(NAV_ITEMS.find(x=>x.id===activeNav)||{}).l || "工作台";
+  document.getElementById("mobTitle").textContent=(NAV_ITEMS.find(x=>x.id===activeNav)||{}).l || NAV_SUBTITLES[activeNav] || "工作台";
 
   // mini 计时器（番茄钟/冥想运行时显示在顶栏）
   const mini=document.getElementById("miniTimer");
@@ -3679,6 +3840,10 @@ function viewLearn(){
      <div class="section-eyebrow">STUDY</div>
      <div class="section-title">📖 今日学习</div>
      <p class="section-desc">声乐 · 钢琴 · 英语 · 政策。每一项都有专属字段。</p>
+     <div class="data-row" style="margin-bottom:14px">
+       <button class="btn-ghost" data-nav="course">🗓 课程</button>
+       <button class="btn-ghost" data-nav="project">🎯 项目</button>
+     </div>
 
      <div class="pomo-box" id="pomoBox">
        <div class="pomo-display" id="pomoDisplay">${fmtPomoTime(pomoRemain)}</div>
@@ -3964,6 +4129,27 @@ function listWithAdd(key,title,fields){
     <div class="list">${rows||`<div class="empty">暂无</div>`}</div>
     <div class="input-row"><button class="btn-ghost" data-fin-add="${key}">+ 新增</button></div>`;
 }
+/* 支出列表渲染（带分类下拉） */
+function expenseListHtml(){
+  const arr=getDay(currentDate).finance.out||[];
+  const rows=arr.map((it,i)=>{
+    const catId=it.catId||autoCategorize(it.cat||"");
+    return `<div class="list-item">
+      <div class="li-row">
+        <select class="tl-input expense-cat-select" data-fin="out-${i}-catId" style="flex:0 0 90px">
+          ${EXPENSE_CATEGORIES.map(c=>`<option value="${c.id}" ${c.id===catId?"selected":""}>${c.icon} ${c.name}</option>`).join("")}
+        </select>
+        <input class="tl-input" data-fin="out-${i}-cat" value="${esc(it.cat||"")}" placeholder="具体名目" style="flex:1"/>
+        <input class="tl-input" data-fin="out-${i}-amount" value="${esc(it.amount||"")}" placeholder="金额" type="number" style="flex:0 0 80px"/>
+        <input class="tl-input" data-fin="out-${i}-date" value="${esc(it.date||currentDate)}" placeholder="日期" type="date" style="flex:0 0 130px"/>
+        <button class="check-del" data-fin-del="out-${i}">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+  return `<div class="section-eyebrow" style="margin-top:14px">💸 支出（支持负数冲销）</div>
+    <div class="list">${rows||`<div class="empty">暂无</div>`}</div>
+    <div class="input-row"><button class="btn-ghost" data-fin-add="out">+ 新增</button></div>`;
+}
 /* 按分类聚合某月支出 */
 function getMonthExpenseByCat(year,month){
   const prefix=fmtMonth(new Date(year,month,1))+"-";
@@ -3972,8 +4158,9 @@ function getMonthExpenseByCat(year,month){
     const e=state.entries[k];
     if(e&&e.finance&&e.finance.out){
       e.finance.out.forEach(o=>{
-        const cat=o.cat||"其他";
-        catSum[cat]=(catSum[cat]||0)+(+o.amount||0);
+        const catId=o.catId||autoCategorize(o.cat||"");
+        const catName=getCatName(catId);
+        catSum[catName]=(catSum[catName]||0)+(+o.amount||0);
       });
     }
   });
@@ -4031,7 +4218,7 @@ function viewFinance(){
        <div class="li-row" id="cur-bal-row" style="font-weight:700;font-size:18px;color:${balColor}">¥ ${curBal}</div></div>
 
      ${listWithAdd("in","💵 收入（支持负数退款）",[{f:"source",l:"来源"},{f:"amount",l:"金额(可负)",t:"number"},{f:"date",l:"日期",t:"date"}])}
-     ${listWithAdd("out","💸 支出（支持负数冲销）",[{f:"cat",l:"类别"},{f:"amount",l:"金额(可负)",t:"number"},{f:"date",l:"日期",t:"date"}])}
+     ${expenseListHtml()}
 
      ${listWithAdd("invest","📊 理财记录",[{f:"item",l:"项目"},{f:"income",l:"收益",t:"number"},{f:"risk",l:"风险备注"}])}
 
@@ -6933,6 +7120,7 @@ function onClick(e){
     else if(a==="data")openData();
     else if(a==="theme")toggleTheme();
     else if(a==="rest")toggleRest();
+    else if(a==="tree"){activeNav="tree";activeTool=null;render();}
     return;
   }
   // 打卡签到
@@ -7100,7 +7288,7 @@ function onClick(e){
     const k=t.dataset.finAdd;
     const r=getDay(currentDate);
     if(k==="in")r.finance.in.push({source:"",amount:"",date:""});
-    else if(k==="out")r.finance.out.push({cat:"",amount:"",date:""});
+    else if(k==="out")r.finance.out.push({cat:"",catId:"other",amount:"",date:""});
     else if(k==="invest")r.finance.invest.push({item:"",income:"",risk:""});
     save();recalcFinanceBalance();render();return;
   }
@@ -9606,6 +9794,7 @@ function bind(){
   else if(a==="palette")openPalette();
   else if(a==="voice")toggleVoice();
   else if(a==="sound"){activeNav="sound";activeTool=null;render();}
+  else if(a==="tree"){activeNav="tree";activeTool=null;render();}
   else if(a==="refresh"){
     // 按钮转圈反馈
     el.style.transition="transform .6s";
@@ -11202,6 +11391,8 @@ async function init(){
  // 存储容量预警：启动 5 秒后检查，之后每小时检查
  setTimeout(()=>{try{checkStorageHealth();}catch(e){}},5000);
  setInterval(()=>{try{checkStorageHealth();}catch(e){}},3600000);
+ // 每日快照备份：每天首次打开时自动拍一份
+ try{takeDailySnapshot();}catch(e){console.error("每日快照失败",e);}
  }catch(err){
   const sa=document.getElementById("scroll");
   const msg=(err&&err.stack)?(err.stack):String(err);
@@ -11459,6 +11650,145 @@ function aiAddMsg(role,content,thinking){
 }
 function aiUpdateLast(content){
   if(aiMsgs.length){aiMsgs[aiMsgs.length-1].content=content;aiMsgs[aiMsgs.length-1].thinking=false;aiRenderMsgs();}
+}
+
+/* ═══════════ [JS 6.19] 统一 AI 调度器 (#136) ═══════════ */
+const AI_DAILY_LIMIT=50;
+const AI_CACHE_TTL=3600000; // 1小时
+
+function getAIScheduler(){
+  if(!window._aiScheduler){
+    window._aiScheduler={
+      cache:new Map(),
+      dailyCount:0,
+      dailyDate:fmtDate(new Date()),
+      callLog:[]
+    };
+  }
+  const sch=window._aiScheduler;
+  // 每日重置
+  const today=fmtDate(new Date());
+  if(sch.dailyDate!==today){
+    sch.dailyDate=today;
+    sch.dailyCount=0;
+  }
+  return sch;
+}
+
+function aiRequest(prompt,options){
+  options=options||{};
+  const maxTokens=options.maxTokens||800;
+  const temperature=options.temperature||0.7;
+  const systemPrompt=options.systemPrompt||"你是人生工作台助手。";
+  const useCache=options.useCache!==false; // 默认开启缓存
+  const cacheKey=options.cacheKey||prompt;
+
+  if(!DEEPSEEK_KEY)return Promise.resolve(null);
+
+  const sch=getAIScheduler();
+
+  // 缓存检查
+  if(useCache){
+    const cached=sch.cache.get(cacheKey);
+    if(cached&&(Date.now()-cached.ts<AI_CACHE_TTL)){
+      return Promise.resolve(cached.result);
+    }
+  }
+
+  // 限流检查
+  if(sch.dailyCount>=AI_DAILY_LIMIT){
+    console.warn("AI 每日调用上限已达",AI_DAILY_LIMIT);
+    return Promise.resolve(null);
+  }
+
+  sch.dailyCount++;
+  sch.callLog.push({time:Date.now(),prompt:prompt.slice(0,50)});
+
+  const body=JSON.stringify({
+    model:"deepseek-chat",
+    messages:[
+      {role:"system",content:systemPrompt},
+      {role:"user",content:prompt}
+    ],
+    max_tokens:maxTokens,
+    temperature:temperature
+  });
+
+  // 重试逻辑
+  async function attempt(retryLeft){
+    try{
+      const resp=await fetch(DEEPSEEK_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+        body:body
+      });
+      if(!resp.ok){
+        if(retryLeft>0)return attempt(retryLeft-1);
+        return null;
+      }
+      const data=await resp.json();
+      if(data.error){
+        console.error("AI API error:",data.error);
+        if(retryLeft>0)return attempt(retryLeft-1);
+        return null;
+      }
+      const reply=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:null;
+      if(reply&&useCache){
+        sch.cache.set(cacheKey,{result:reply,ts:Date.now()});
+      }
+      return reply;
+    }catch(e){
+      console.error("AI request failed:",e);
+      if(retryLeft>0)return attempt(retryLeft-1);
+      return null;
+    }
+  }
+
+  return attempt(1);
+}
+
+// 带上下文的 AI 请求（保留对话历史）
+async function aiRequestWithHistory(messages,options){
+  options=options||{};
+  if(!DEEPSEEK_KEY)return Promise.resolve(null);
+
+  const sch=getAIScheduler();
+  const today=fmtDate(new Date());
+  if(sch.dailyDate!==today){
+    sch.dailyDate=today;
+    sch.dailyCount=0;
+  }
+  if(sch.dailyCount>=AI_DAILY_LIMIT)return Promise.resolve(null);
+  sch.dailyCount++;
+
+  const body=JSON.stringify({
+    model:"deepseek-chat",
+    messages:messages,
+    max_tokens:options.maxTokens||1200,
+    temperature:options.temperature||0.7
+  });
+
+  try{
+    const resp=await fetch(DEEPSEEK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+      body:body
+    });
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    if(data.error)return null;
+    return data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:null;
+  }catch(e){return null;}
+}
+
+function getAIUsageInfo(){
+  const sch=getAIScheduler();
+  return {
+    dailyUsed:sch.dailyCount,
+    dailyLimit:AI_DAILY_LIMIT,
+    cacheSize:sch.cache.size,
+    remaining:AI_DAILY_LIMIT-sch.dailyCount
+  };
 }
 
 async function aiSend(text){
@@ -12583,6 +12913,62 @@ function sceneCardHTML(){
   });
   html+=`</div></div>`;
   return html;
+}
+
+/* ═══════════ [JS 6.17] 每日快照备份 (#138) ═══════════ */
+function getSnapshots(){
+  try{return JSON.parse(localStorage.getItem("daily_snapshots")||"[]");}catch(e){return[];}
+}
+function saveSnapshots(snaps){
+  // 只保留最近30天
+  snaps=snaps.slice(-30);
+  try{localStorage.setItem("daily_snapshots",JSON.stringify(snaps));}catch(e){
+    // 存储满了解决方案：删掉最旧的
+    snaps=snaps.slice(-15);
+    try{localStorage.setItem("daily_snapshots",JSON.stringify(snaps));}catch(e2){console.error("快照存储失败",e2);}
+  }
+}
+function takeDailySnapshot(){
+  const today=fmtDate(new Date());
+  const snaps=getSnapshots();
+  // 今天已经拍过快照就跳过
+  if(snaps.length&&snaps[snaps.length-1].date===today)return;
+  try{
+    const snapshot={
+      date:today,
+      timestamp:Date.now(),
+      data:JSON.stringify(state),
+      size:JSON.stringify(state).length
+    };
+    snaps.push(snapshot);
+    saveSnapshots(snaps);
+  }catch(e){console.error("快照失败",e);}
+}
+function restoreSnapshot(dateStr){
+  const snaps=getSnapshots();
+  const snap=snaps.find(s=>s.date===dateStr);
+  if(!snap){toast("未找到该日期的快照");return;}
+  try{
+    const data=JSON.parse(snap.data);
+    state=data;
+    save(true);
+    toast("已恢复到 "+dateStr+" 的快照 ✅");
+    render();
+  }catch(e){toast("快照恢复失败："+e.message);}
+}
+function snapshotListHTML(){
+  const snaps=getSnapshots().reverse();
+  if(!snaps.length)return'<div class="empty">暂无快照</div>';
+  return snaps.map(s=>{
+    const sizeKB=Math.round(s.size/1024);
+    return `<div class="list-item">
+      <div class="li-row" style="align-items:center">
+        <span style="flex:1">📸 ${esc(s.date)}</span>
+        <span style="font-size:11px;color:var(--muted)">${sizeKB}KB</span>
+        <button class="btn-ghost" style="font-size:12px;padding:4px 10px" onclick="restoreSnapshot('${s.date}')">恢复</button>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
