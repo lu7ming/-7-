@@ -2291,16 +2291,6 @@ function viewMonthHighlight(){
   const last=new Date(year,month+1,0).getDate();
   const today=fmtDate(new Date());
   const todayY=today.startsWith(`${year}-${String(month+1).padStart(2,"0")}`);
-  const days=monthHeatmap(year,month);
-  // 迷你热力图 31 格
-  const mini=Array.from({length:31},(_,i)=>{
-    const d=i+1;
-    if(d>last)return `<div style="visibility:hidden"></div>`;
-    const ds=days[i];
-    const isT=todayY&&ds.date===today;
-    const cls=ds.checkIn?"check":"";
-    return `<div class="${cls} ${isT?'today':''}" title="${ds.date}${ds.checkIn?' · 已打卡':''}"></div>`;
-  }).join("");
   // 当月最新摘抄（最多1条）
   const monthQuotes=(state.quotes||[]).filter(q=>{
     if(!q.date)return false;
@@ -2313,7 +2303,6 @@ function viewMonthHighlight(){
   // 当月第几周 / 剩余天数
   const dayOfMonth=todayY?parseDate(today).getDate():last;
   const weekNum=Math.ceil(dayOfMonth/7);
-  const remain=last-dayOfMonth;
   const goalIn=round2(summary.inSum-summary.outSum); // 净额
 
   return `<div class="card month-card">
@@ -2338,10 +2327,6 @@ function viewMonthHighlight(){
         <div class="mc-label">结余</div>
         <div class="mc-val" style="color:${goalIn>=0?'var(--good)':'var(--bad)'}">¥${goalIn}</div>
       </div>
-    </div>
-    <div>
-      <div class="mc-label" style="font-size:11px;color:var(--muted);margin-bottom:6px">🗓 31 天打卡节奏${remain>0?` · 剩 ${remain} 天`:''}</div>
-      <div class="mc-mini">${mini}</div>
     </div>
     ${quoteHtml}
   </div>`;
