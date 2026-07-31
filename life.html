@@ -2318,7 +2318,7 @@ let state={
   inbox:[],             // 灵感速记收集箱：[{id,text,kind:"idea"|"link",cat:"",catered:false,createdAt}]
   unlockedAch:[]        // 已解锁成就
 };
-let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[]};
+let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinItems:[],notifEnabled:false,lastNotifDay:"",restMode:false,restXmas:false,bgGallery:[],bg:{mode:"gradient",sel:-1,blur:6,dim:0.3},favTools:[],aiComment:true};
 /* 模块动作注册表：各模块用 data-mod-action 触发，互不干扰主 data-action 系统 */
 const MODULE_ACTIONS={};
 let currentDate=fmtDate(new Date());
@@ -3364,6 +3364,18 @@ function renderData(){
       <div class="li-row" style="align-items:center">
         <span style="flex:1">缓存命中</span>
         <span style="font-weight:600">${getAIUsageInfo().cacheSize} 条</span>
+      </div>
+    </div>
+
+    <div class="section-eyebrow" style="margin-top:14px">⏱ 系统健康 · 定时器</div>
+    <div class="list-item">
+      <div class="li-row" style="align-items:center">
+        <span style="flex:1">活跃定时器（统一调度器管理）</span>
+        <span style="font-weight:600">${tmStats().total} 个</span>
+      </div>
+      <div class="li-row" style="align-items:center">
+        <span style="flex:1">低频后台轮询（≥60s）</span>
+        <span style="font-weight:600">${tmStats().slow} 个</span>
       </div>
     </div>
 
@@ -6131,6 +6143,12 @@ function viewTrends(){
     <div class="section-eyebrow" style="margin-top:18px">📚 全年学习强度热力图</div>
     ${studyYearHeatmap()}
 
+    <div class="section-eyebrow" style="margin-top:18px">💸 30 天支出趋势</div>
+    <div class="trend-chart">${expenseTrendChart()}</div>
+
+    <div class="section-eyebrow" style="margin-top:18px">🍅 30 天专注趋势（番茄钟）</div>
+    <div class="trend-chart">${focusTrendChart()}</div>
+
     <div class="section-eyebrow" style="margin-top:18px">😊 30 天情绪曲线</div>
     <div class="trend-chart">${moodLineChart()}</div>
 
@@ -6160,6 +6178,54 @@ function weightSvg(pts){
     ${pts.map((p,i)=>`<circle cx="${xs[i]}" cy="${h-pad-(p.weight-minW)*((h-2*pad)/(maxW-minW))}" r="3" fill="var(--ink)"/>`).join("")}
     <text x="${w-pad}" y="${pad+8}" text-anchor="end" fill="var(--muted)" font-size="10">${last.weight} kg</text>
   </svg>`;
+}
+
+/* ---- 通用柱状图 (#103) ---- */
+function barChartSVG(pts,opts){
+  opts=opts||{};
+  const color=opts.color||"var(--warm)";
+  const unit=opts.unit||"";
+  if(!pts||pts.length<2)return '<div class="empty">数据不足，至少记录 2 天</div>';
+  const w=720,h=opts.h||170,padB=26,padT=12,padL=8,padR=8;
+  const iw=w-padL-padR,ih=h-padT-padB;
+  const max=Math.max(...pts.map(p=>p.value),1);
+  const gap=iw/pts.length,bw=gap*0.66;
+  const bars=pts.map((p,i)=>{
+    const bh=max>0?(p.value/max)*ih:0;
+    const x=padL+i*gap+(gap-bw)/2;
+    const y=padT+ih-bh;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${color}" opacity="${p.value>0?0.85:0.12}"><title>${p.date}: ${p.value}${unit}</title></rect>`;
+  }).join("");
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${padT+ih}" x2="${w-padR}" y2="${padT+ih}" stroke="var(--line)"/>
+    ${bars}
+    <text x="${w-padR}" y="${padT+8}" text-anchor="end" fill="var(--muted)" font-size="10">最新 ${last.value}${unit} · 峰值 ${Math.round(max)}${unit}</text>
+  </svg>`;
+}
+/* ---- 30 天支出趋势 ---- */
+function expenseTrendChart(){
+  const now=new Date();
+  const pts=[];
+  for(let i=29;i>=0;i--){
+    const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
+    const e=state.entries[ds];
+    let sum=0;
+    if(e&&e.finance&&e.finance.out)(e.finance.out||[]).forEach(o=>sum+=(+o.amount||0));
+    pts.push({label:ds.slice(5),value:Math.round(sum*100)/100,date:ds});
+  }
+  return barChartSVG(pts,{color:"#E0745A",unit:"元"});
+}
+/* ---- 30 天专注趋势（番茄钟） ---- */
+function focusTrendChart(){
+  const now=new Date();
+  const pts=[];
+  for(let i=29;i>=0;i--){
+    const ds=fmtDate(new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
+    const e=state.entries[ds];
+    pts.push({label:ds.slice(5),value:(e&&e.pomodoros)||0,date:ds});
+  }
+  return barChartSVG(pts,{color:"#7FA06A",unit:"个"});
 }
 
 /* ---- 全年学习强度热力图（类似 GitHub 贡献图） ---- */
@@ -7132,6 +7198,7 @@ function onClick(e){
     const sn=document.getElementById("streakNum");
     if(sn)sn.textContent=streakDays();
     toast("已签到 ✓ 连续 +1 天");
+    try{deerComment("checkin");}catch(e){}
     return;
   }
   if(t.dataset.check!=null){
@@ -7167,6 +7234,7 @@ function onClick(e){
     updateWaterProgress();
     haptic(10);
     save();
+    try{deerComment("water");}catch(e){}
     return;
   }
   if(t.dataset.task!=null){
@@ -7368,7 +7436,7 @@ function onClick(e){
   if(t.dataset.action==="add-reflect"){
     const ta=document.getElementById("newReflect");const v=(ta&&ta.value.trim())||"";
     if(!v){toast("写点什么再存吧");return;}
-    addReflection(currentDate,{text:v,mood:selMood||""});selMood="";save();render();return;
+    addReflection(currentDate,{text:v,mood:selMood||""});selMood="";save();render();try{deerComment("reflect",{mood:selMood||""});}catch(e){}return;
   }
   if(t.dataset.reflDel!=null){
     const d=t.dataset.date;
@@ -7754,7 +7822,7 @@ function onInput(e){
     const r=getDay(currentDate);
     if(a[0]==="s"&&a.length>=4){
       // s-vocal-vocal_time / s-mood
-      if(a[1]==="mood"){r.study.mood=t.value;markSaved();return;}
+      if(a[1]==="mood"){r.study.mood=t.value;markSaved();try{deerComment("mood",{mood:t.value});}catch(e){}return;}
       const key=a[1];const field=a.slice(2).join("-");
       if(!r.study[key])r.study[key]={};
       r.study[key][field]=t.value;
@@ -7799,6 +7867,7 @@ function onInput(e){
       markSaved();
       recalcFinanceBalance();
       updateFinanceKpi();
+      if(k==="out"&&f==="amount"&&(+t.value>0)){try{deerComment("expense",{text:(r.finance.out[i].cat||"")+" "+t.value+"元"});}catch(e){}}
     }
     return;
   }
@@ -8675,12 +8744,37 @@ function calcTreeNutrients(){
 }
 
 /* 更新树数据（每次 render 时调用，确保养分实时） */
+/* ── 生命树 7 分支独立等级系统 (#118) ── */
+const BRANCH_DEFS=[
+  {key:"checkin",name:"根系·打卡",icon:"🌱",color:"var(--good)",calc:()=>{const r=getDay(currentDate);return CHECK_TPL.reduce((a,c)=>a+c.items.filter(it=>r.checks[c.cat+"-"+it]).length,0);},per:5},
+  {key:"study",name:"学习枝",icon:"📖",color:"var(--warm)",calc:()=>Math.round(((getDay(currentDate).focusSessions||[]).reduce((s,f)=>s+(+(f.duration||0)||0),0)/60)/10),per:3},
+  {key:"health",name:"健康枝",icon:"💪",color:"#5B9BD5",calc:()=>{const r=getDay(currentDate);const ex=r.health&&r.health.exercise;const exMin=typeof ex==="object"?(+(ex&&ex.minutes)||0):+(ex||0);const medMin=(r.health&&r.health.meditation)?r.health.meditation.reduce((s,m)=>s+Math.round((+(m.duration||0))/60),0):0;return Math.round((exMin+medMin)/10);},per:3},
+  {key:"reflect",name:"思考花",icon:"💭",color:"#9B7BC4",calc:()=>state.reflections[currentDate]?state.reflections[currentDate].length:0,per:4},
+  {key:"book",name:"书叶",icon:"📚",color:"#7FB069",calc:()=>state.books.filter(b=>b.status==="已读").length,per:8},
+  {key:"project",name:"果实·项目",icon:"🎯",color:"#E89B5A",calc:()=>state.projects.filter(p=>p.status==="done").length,per:10},
+  {key:"achievement",name:"荣耀枝",icon:"🏆",color:"#E0A85A",calc:()=>ACHIEVEMENTS.filter(a=>a.check&&a.check()).length,per:6}
+];
+function branchLevel(exp){ return Math.min(10, 1+Math.floor(Math.sqrt((exp||0)/20))); }
+function branchExpLive(key){
+  const td=state.treeData||{};
+  const def=BRANCH_DEFS.find(b=>b.key===key);
+  const base=((td.branchExp&&td.branchExp[key])||0);
+  const today=def?def.calc()*def.per:0;
+  return base+today;
+}
+function updateBranchExp(){
+  const td=state.treeData;
+  if(!td.branchExp)td.branchExp={};
+  BRANCH_DEFS.forEach(b=>{ td.branchExp[b.key]=(td.branchExp[b.key]||0)+b.calc()*b.per; });
+}
+
 function updateTreeData(){
   const today=fmtDate(new Date());
   if(!state.treeData)state.treeData={nutrients:0,water:0,sunlight:0,fertilizer:0,level:1,lastCalcDate:"",history:{}};
   const td=state.treeData;
   if(!td.history)td.history={};
   if(!td.lastCalcDate)td.lastCalcDate="";
+  if(!td.branchExp)td.branchExp={};
   // 如果今天还没计算过，累加今日养分
   if(td.lastCalcDate!==today){
     const n=calcTreeNutrients();
@@ -8694,6 +8788,7 @@ function updateTreeData(){
     for(let i=TREE_LEVELS.length-1;i>=0;i--){
       if(td.nutrients>=TREE_LEVELS[i].min){td.level=TREE_LEVELS[i].lv;break;}
     }
+    updateBranchExp();
     save();
   }
 }
@@ -9033,32 +9128,21 @@ function viewTree(){
   const lv=TREE_LEVELS[td.level-1]||TREE_LEVELS[0];
   const todayN=calcTreeNutrients();
 
-  // 各分支养分
-  const r=getDay(fmtDate(new Date()));
-  const checkDn=CHECK_TPL.reduce((a,c)=>a+c.items.filter(it=>r.checks[c.cat+"-"+it]).length,0);
-  const studyMin=(r.focusSessions||[]).reduce((s,f)=>s+Math.round((+(f.duration||0))/60),0);
-  const exerciseRaw=r.health&&r.health.exercise;
-  const exerciseMin=typeof exerciseRaw==="object"?(+(exerciseRaw&&exerciseRaw.minutes)||0):+(exerciseRaw||0);
-  const medMin=(r.health&&r.health.meditation)?r.health.meditation.reduce((s,m)=>s+Math.round((+(m.duration||0))/60),0):0;
-  const refls=state.reflections[fmtDate(new Date())]||[];
-  const booksRead=state.books.filter(b=>b.status==="已读").length;
-
-  const branches=[
-    {icon:"🌱",name:"根系·打卡",val:checkDn,max:15,color:"var(--good)",unit:"项"},
-    {icon:"📖",name:"学习枝",val:studyMin,max:120,color:"var(--warm)",unit:"分"},
-    {icon:"💪",name:"健康枝",val:exerciseMin+medMin,max:60,color:"#5B9BD5",unit:"分"},
-    {icon:"💭",name:"思考花",val:refls.length,max:5,color:"#9B7BC4",unit:"条"},
-    {icon:"📚",name:"书叶",val:booksRead,max:30,color:"#7FB069",unit:"本"},
-    {icon:"🎯",name:"果实",val:state.projects.filter(p=>p.status==="done").length,max:10,color:"#E89B5A",unit:"个"}
-  ];
+  // 7 分支独立等级（基于累计活跃度）
+  const branches=BRANCH_DEFS.map(b=>{
+    const exp=branchExpLive(b.key);
+    return {icon:b.icon,name:b.name,color:b.color,level:branchLevel(exp),exp:exp};
+  });
 
   const branchesHtml=branches.map(b=>{
-    const pct=Math.min(100,Math.round(b.val/b.max*100));
+    const cur=20*Math.pow(b.level-1,2);
+    const nxt=20*Math.pow(b.level,2);
+    const pct=b.level>=10?100:Math.min(100,Math.round((b.exp-cur)/(nxt-cur)*100));
     return `<div class="tree-branch-item">
       <span class="tbi-icon">${b.icon}</span>
       <div class="tbi-info">
-        <div class="tbi-name">${b.name}</div>
-        <div class="tbi-val">${b.val} ${b.unit}</div>
+        <div class="tbi-name">${b.name} · Lv.${b.level}</div>
+        <div class="tbi-val">${b.exp} exp</div>
         <div class="tbi-bar"><div class="tbi-bar-fill" style="width:${pct}%;background:${b.color}"></div></div>
       </div>
     </div>`;
@@ -9139,6 +9223,52 @@ function viewTree(){
         <div class="data-row" style="margin-top:10px">
           <button class="btn-ghost" data-nav="home">去打卡 →</button>
           <span style="font-size:12px;color:var(--muted);align-self:center">今日番茄 ${todayPomo} 个</span>
+        </div>
+      </div>`;
+    })()}
+
+    ${(()=>{ /* 里程碑果实挂树 (#118) */
+      const milestones=[];
+      (state.projects||[]).filter(p=>p.status==="done").forEach(p=>milestones.push({icon:"🎯",name:p.name,type:"项目"}));
+      getChallenges().filter(c=>c.completed).forEach(c=>milestones.push({icon:"🏅",name:c.title,type:"挑战"}));
+      ACHIEVEMENTS.filter(a=>a.check&&a.check()).forEach(a=>milestones.push({icon:a.icon,name:a.name,type:"成就"}));
+      const fruitsHtml=milestones.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+        ${milestones.slice(0,24).map(m=>`<span style="font-size:12px;background:var(--card-soft);padding:3px 10px;border-radius:999px">${m.icon} ${esc(m.name)}</span>`).join("")}
+        ${milestones.length>24?`<span style="font-size:12px;color:var(--muted)">+${milestones.length-24} 个</span>`:""}
+      </div>`:'<div class="section-desc" style="margin-top:8px">完成项目 / 挑战 / 解锁成就，会成为树上的果实 🍎</div>';
+      return `<div class="card" style="margin-top:14px;background:var(--card-soft);box-shadow:none">
+        <div class="section-eyebrow">MILESTONES · 里程碑果实（挂满生命树）</div>
+        ${fruitsHtml}
+      </div>`;
+    })()}
+
+    ${(()=>{ /* 年度成长报告 (#118) */
+      const y=new Date().getFullYear();
+      let checkin=0,pomo=0,studyMin=0,books=0,reflect=0;
+      Object.keys(state.entries).forEach(d=>{
+        if(!(""+d).startsWith(y+"-"))return;
+        const e=state.entries[d];
+        if(e.checkIn)checkin++;
+        pomo+=(e.pomodoros||0);
+        if(e.focusSessions)e.focusSessions.forEach(f=>studyMin+=Math.round((+(f.duration||0))/60));
+        const s=e.study;
+        if(s){
+          studyMin+=(s.vocal&&+s.vocal.vocal_time||0)+(s.piano&&+s.piano.minutes||0);
+          if(s.english)studyMin+=(+s.english.en_read||0)+(+s.english.en_listen||0);
+          if(s.reading)studyMin+=(+s.reading.minutes||0);
+        }
+      });
+      books=state.books.filter(b=>b.status==="已读").length;
+      Object.values(state.reflections||{}).forEach(arr=>reflect+=arr.length);
+      return `<div class="card" style="margin-top:14px;background:var(--card-soft);box-shadow:none">
+        <div class="section-eyebrow">YEAR ${y} · 年度成长报告</div>
+        <div class="review-gen">
+          <div class="rg-row"><span>📅 打卡天数</span><span class="v">${checkin} 天</span></div>
+          <div class="rg-row"><span>🍅 专注番茄</span><span class="v">${pomo} 个</span></div>
+          <div class="rg-row"><span>📖 学习时长</span><span class="v">${studyMin} 分钟</span></div>
+          <div class="rg-row"><span>📚 读完的书</span><span class="v">${books} 本</span></div>
+          <div class="rg-row"><span>💭 思考记录</span><span class="v">${reflect} 条</span></div>
+          <div class="rg-row"><span>🌳 树等级</span><span class="v">Lv.${state.treeData.level}</span></div>
         </div>
       </div>`;
     })()}
@@ -9555,6 +9685,7 @@ function startPomo(){
       pomoStartTime=null;
       save();
       toast("🍅 番茄完成！休息一下吧");
+      try{deerComment("pomo");}catch(e){}
       haptic([100,50,100]);
       updatePomoDisplay();
       render();
@@ -11341,11 +11472,11 @@ async function init(){
   // 异步获取天气（不阻塞渲染）
   setTimeout(()=>{try{fetchWeather().then(w=>{if(w)render();});}catch(e){}},1500);
   // 每分钟刷新一次问候/连续打卡
-  setInterval(()=>{renderTop();},60000);
+  tmRegister("renderTop", renderTop, 60000);
   // 自动暗色模式：每小时检查一次
   settings.themeAuto=settings.themeAuto!==false;
   setTimeout(()=>{try{autoThemeByTime();}catch(e){}},3000);
-  setInterval(()=>{try{autoThemeByTime();}catch(e){}},3600000);
+  tmRegister("autoTheme", autoThemeByTime, 3600000);
   // 启动时检查是否需要自动备份
   setTimeout(()=>{try{autoBackupCheck();}catch(e){}},3000);
   // 自动云同步：启动后拉取云端（若已开启自动同步）
@@ -11385,12 +11516,12 @@ async function init(){
      }).catch(()=>{});
    }catch(e){}
  // 小鹿行为记忆：每10分钟检查习惯提醒
- setInterval(()=>{try{deerSmartRemind();}catch(e){}},600000);
+ tmRegister("deerSmart", deerSmartRemind, 600000);
  initBatteryAPI();
  }
  // 存储容量预警：启动 5 秒后检查，之后每小时检查
  setTimeout(()=>{try{checkStorageHealth();}catch(e){}},5000);
- setInterval(()=>{try{checkStorageHealth();}catch(e){}},3600000);
+ tmRegister("storageHealth", checkStorageHealth, 3600000);
  // 每日快照备份：每天首次打开时自动拍一份
  try{takeDailySnapshot();}catch(e){console.error("每日快照失败",e);}
  }catch(err){
@@ -11400,6 +11531,34 @@ async function init(){
   console.error("[init] failed:",err);
  }
 }
+/* ═══════════ [JS 6.2.5] 统一定时器管理器 (#137) ═══════════ */
+/* 收口后台轮询类定时器：注册表 + 去重 + 错误兜底 + 监控 + 统一清理 */
+const TIMERS={};
+function tmRegister(name, fn, interval, opts={}){
+  if(TIMERS[name]) tmUnregister(name); // 去重：同名不重复注册
+  const id=setInterval(()=>{try{fn();}catch(e){console.error("[timer:"+name+"]",e);}}, interval);
+  TIMERS[name]={id, interval, priority:opts.priority||0, started:Date.now()};
+  return id;
+}
+function tmUnregister(name){
+  if(TIMERS[name]){clearInterval(TIMERS[name].id); delete TIMERS[name]; return true;}
+  return false;
+}
+function tmUnregisterAll(){
+  Object.keys(TIMERS).forEach(n=>{try{clearInterval(TIMERS[n].id);}catch(e){}});
+  for(const k in TIMERS) delete TIMERS[k];
+}
+function tmList(){
+  return Object.entries(TIMERS).map(([n,t])=>({name:n, interval:t.interval, runningMs:Date.now()-t.started, priority:t.priority}));
+}
+function tmStats(){
+  const list=tmList();
+  const total=list.length;
+  const slow=list.filter(t=>t.interval>=60000).length;
+  return {total, slow, fast:total-slow, list};
+}
+// 页面卸载时统一清理，防止定时器泄漏
+window.addEventListener("beforeunload", tmUnregisterAll);
 /* ═══════════ [JS 6.3] 小鹿 AI 伙伴系统（点击/长按/语音/气泡/提醒） ═══════════ */
 /* ============== 小鹿 AI 伙伴系统 ============== */
 function deerEl(){return document.getElementById("deerEl");}
@@ -11470,7 +11629,7 @@ function bindDeer(){
   window.__deerFlower=()=>deerSet("flower",1200);
   window.__deerCrown=(on)=>{const el=deerEl();if(el)el.classList.toggle("crown",on);};
   window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
-  deerReminders();setInterval(deerReminders,300000);
+  deerReminders();tmRegister("deerReminders", deerReminders, 300000);
 }
 function deerReminders(){
   try{
@@ -11789,6 +11948,40 @@ function getAIUsageInfo(){
     cacheSize:sch.cache.size,
     remaining:AI_DAILY_LIMIT-sch.dailyCount
   };
+}
+
+/* ═══════════ [JS 6.2.6] AI 全模块轻触反馈 (#148) ═══════════ */
+/* 操作后小鹿一句话智能点评：依赖 #136 调度器，限频防刷，失败静默降级 */
+let _deerCommentLast={};
+const _DEER_COMMENT_COOLDOWN=10*60*1000; // 同动作类型 10 分钟内不重复
+function deerComment(action, ctx){
+  try{
+    if(!settings.aiComment||settings.aiComment===false)return; // 用户可在设置关闭
+    const now=Date.now();
+    const last=_deerCommentLast[action]||0;
+    if(now-last<_DEER_COMMENT_COOLDOWN)return; // 限频
+    _deerCommentLast[action]=now;
+    const r=getDay(currentDate);
+    const prompts={
+      checkin:`用户刚在人生工作台完成今日打卡。连续打卡${streakDays()}天。用一句温暖有鼓励的话点评（不超过20字，不要称呼，直接说感悟）。`,
+      expense:`用户刚记了一笔账：${(ctx&&ctx.text)||""}。用一句轻松有趣的话点评这笔支出（不超过20字）。`,
+      pomo:`用户刚完成一个番茄钟专注。今日已${r.pomodoros||0}个番茄钟。用一句肯定专注的话（不超过20字）。`,
+      mood:`用户刚记录心情：${(ctx&&ctx.mood)||""}。用一句共情的话回应（不超过20字）。`,
+      goal:`用户刚推进一个目标/项目。用一句鼓励坚持的话（不超过20字）。`,
+      reflect:`用户刚写了一句思考。用一句启发深度的话（不超过20字）。`,
+      book:`用户刚记录阅读/笔记。用一句关于成长的话（不超过20字）。`,
+      water:`用户刚喝水打卡。用一句轻松提醒健康的话（不超过18字）。`
+    };
+    const p=prompts[action];
+    if(!p)return;
+    const t0=Date.now();
+    aiRequest(p,{maxTokens:60,temperature:0.9,useCache:true,cacheKey:"comment_"+action+"_"+fmtDate(new Date())}).then(res=>{
+      if(res&&res.choices&&res.choices[0]&&res.choices[0].message){
+        const txt=res.choices[0].message.content.trim().replace(/^["'“”]/,"").replace(/["'“”]$/,"").slice(0,40);
+        if(txt)deerBubble("💬 "+txt, 5000);
+      }
+    }).catch(()=>{});
+  }catch(e){/* 静默降级 */}
 }
 
 async function aiSend(text){
