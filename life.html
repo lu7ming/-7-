@@ -3240,51 +3240,22 @@ function viewHome(){
 <div class="greet-h">${greetOf(new Date())}，鹿7铭。</div>
     <div class="greet-meta">${(()=>{const d=parseDate(currentDate);return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${["日","一","二","三","四","五","六"][d.getDay()]} · ${tasksDone}/${tasksTotal} 任务 · 连续 ${streak} 天 · 最长 ${longest} 天`})()}</div>
     <div class="greet-deer" id="deerEl" title="鹿7铭的伙伴">
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <g class="deer-body" stroke="#4a2e1e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <!-- 鹿角 -->
-          <path d="M40 20 Q37 10 32 13 M32 13 Q28 8 26 12" fill="none"/>
-          <path d="M60 20 Q63 10 68 13 M68 13 Q72 8 74 12" fill="none"/>
-          <!-- 耳朵 -->
-          <ellipse cx="28" cy="38" rx="7" ry="10" fill="#c8956c" transform="rotate(-20 28 38)"/>
-          <ellipse cx="28" cy="38" rx="3.5" ry="6" fill="#f3c9bf" transform="rotate(-20 28 38)" stroke="none"/>
-          <ellipse cx="72" cy="38" rx="7" ry="10" fill="#c8956c" transform="rotate(20 72 38)"/>
-          <ellipse cx="72" cy="38" rx="3.5" ry="6" fill="#f3c9bf" transform="rotate(20 72 38)" stroke="none"/>
-          <!-- 头 -->
-          <ellipse cx="50" cy="44" rx="21" ry="19" fill="#d9a877"/>
-          <!-- 白色脸颊 -->
-          <path d="M50 50 Q32 50 32 60 Q32 70 50 70 Q68 70 68 60 Q68 50 50 50 Z" fill="#fff6ee" stroke="none"/>
-          <!-- 额头斑点 -->
-          <circle cx="44" cy="34" r="2" fill="#fff6ee" stroke="none"/>
-          <circle cx="50" cy="31" r="2.2" fill="#fff6ee" stroke="none"/>
-          <circle cx="56" cy="34" r="2" fill="#fff6ee" stroke="none"/>
-          <!-- 眼睛 -->
-          <ellipse cx="42" cy="46" rx="3" ry="3.8" fill="#2c1810" stroke="none"/>
-          <ellipse cx="58" cy="46" rx="3" ry="3.8" fill="#2c1810" stroke="none"/>
-          <circle cx="43.2" cy="44.5" r="1.1" fill="#fff" stroke="none"/>
-          <circle cx="59.2" cy="44.5" r="1.1" fill="#fff" stroke="none"/>
-          <!-- 腮红 -->
-          <ellipse cx="35" cy="54" rx="4" ry="2.6" fill="#f4a9a0" opacity=".6" stroke="none"/>
-          <ellipse cx="65" cy="54" rx="4" ry="2.6" fill="#f4a9a0" opacity=".6" stroke="none"/>
-          <!-- 鼻子嘴 -->
-          <ellipse cx="50" cy="58" rx="2.6" ry="1.8" fill="#4a2e1e" stroke="none"/>
-          <path d="M50 59.8 Q47 63 44 62" fill="none"/>
-          <path d="M50 59.8 Q53 63 56 62" fill="none"/>
-          <!-- 身体（坐姿圆胖） -->
-          <path d="M30 72 Q30 60 50 60 Q70 60 70 72 Q74 92 50 92 Q26 92 30 72 Z" fill="#d9a877"/>
-          <!-- 肚皮白 -->
-          <path d="M40 74 Q40 66 50 66 Q60 66 60 74 Q62 88 50 88 Q38 88 40 74 Z" fill="#fff6ee" stroke="none"/>
-          <!-- 身体斑点 -->
-          <circle cx="34" cy="74" r="2" fill="#fff6ee" stroke="none"/>
-          <circle cx="66" cy="74" r="2" fill="#fff6ee" stroke="none"/>
-          <circle cx="33" cy="82" r="2" fill="#fff6ee" stroke="none"/>
-          <circle cx="67" cy="82" r="2" fill="#fff6ee" stroke="none"/>
-          <!-- 前脚 -->
-          <rect x="40" y="90" width="6" height="9" rx="3" fill="#c8956c"/>
-          <rect x="54" y="90" width="6" height="9" rx="3" fill="#c8956c"/>
-          <!-- 尾巴 -->
-          <ellipse cx="28" cy="78" rx="4.5" ry="3.5" fill="#fff6ee"/>
-        </g>
+      <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" stroke="none" d="M55.0252,31.0855l1.2292,9.9167c0,0-1,6.75,4.6667,3.8333l-1.6667-3.1667l1.0833-4.5833l-0.9167-4.1667 L55.0252,31.0855z"/>
+        <path fill="#A57939" stroke="none" d="M17.7127,20.398l-10.375,5.625l0.625,2.1875c0,0,6.625,0.3125,7.25,1.6875s-2.375,13.8125,10.875,18.4375 l3.375,15.25c0,0-1.75,4.5625-1.5625,4.4375s2.875-0.0625,2.875-0.0625l1.875-5.5625l-0.25-7.8125l-0.5-5l4.3125,0.3125 l7.25-1.0625l4.3125-0.1875l2.75,4.375l-2.9375,10.8125l-2.6875,4.125h3.875l5.5-10.0625l1.25-3.75l-1.75-7.1875l3.3125-9.8125 c0,0,0.3125-3.5625-2.0625-6.0625s-13.25,0.5-13.25,0.5L30.2127,30.148l-4.3125,0.3125l-1.4375-2.5l-0.6875-2.8125 c0,0,3-0.125,3.1875-3.1875c0,0-3.375-2.75-6.5-0.1875C20.4627,21.773,17.9627,19.7105,17.7127,20.398z"/>
+        <polygon fill="#6A462F" stroke="none" points="20.921,45.5855 22.0877,51.3355 23.8377,62.4188 21.921,67.8355 24.8377,67.8355 27.421,62.1688 27.3377,53.5021 26.0877,48.3355"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M28.1685,67.0208l1.1788-3.4527L25.9181,48.107c-12.3235-3.8578-10.3927-17.6861-10.3927-17.6861 c-0.1921-1.7655-3.3238-1.8171-3.3238-1.8171l-2.6499,0.2126c-0.8005,0.0642-1.544-0.4182-1.8116-1.1753l-0.2103-0.595 c-0.2696-0.7629,0.0713-1.6072,0.795-1.969l9.0205-4.5102c0,0,2.2172-0.8563,3.168,1.5187c0,0,1.1184-2.6975,6.4764-0.5542 c0,0-0.4286,4.0721-5.1437,4.0721"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M33.0263,39.7485l0.5358,5.6795c0,0-3.0005,3.0188-2.1432,9.0642"/>
+        <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="23.0964,51.1838 24.0608,62.6628 22.2391,66.8421"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M23.7837,28.6554c0,0,0.671,3.2268,4.8768,1.8649c0.9554-0.3094,1.9838-0.2964,2.9608-0.064 c2.4541,0.5839,10.0605,1.4413,13.8729,0.783c0.5614-0.0969,1.1066-0.2553,1.637-0.4631c1.5592-0.6108,6.7173-2.1085,11.707,2.3083 c2.0034,1.7733,1.7879,4.751,1.0301,7.2283C59.8581,40.3464,59,43.023,60.4121,44.0855"/>
+        <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="47.6356,37.391 46.7784,46.5842 50.8505,53.2505 47.4678,63.8914 45.1174,67.0208"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M56.125,37.391c0,0,0.9716,4.995-2.0778,9.7294c0,0,0.1072,3.88,1.3931,6.2375l-2.036,4.1551"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M18.2026,20.2453c0,0,0.8573-4.1257,7.5548-2.4647c0,0,6.001,0.4822,7.9835-5.1437s-2.1788-7.698-2.1788-7.698"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M37.8498,8.1547c0,0,2.8621,1.9342,0.2904,4.8651c-2.5013,2.8506-4.8487,2.0226-4.8487,2.0226"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M14.5055,11.0295c0,0-1.2151,4.9964,1.2859,6.9654s2.4111,2.5629,2.4111,2.5629"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M27.847,10.6544c0,0-1.3159,1.711,0.1307,4.1802c0,0,0.6376,1.6171-0.6575,2.8709"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M20.5065,17.7055c0,0-1.9289-2.3896,0.6965-5.015"/>
+        <path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M36.24,48.9236c4.753,0.5107,8.8861,0.5288,11.6242-0.5618"/>
       </svg>
     </div>
    </div>
