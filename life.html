@@ -10754,15 +10754,6 @@ function bindDeer(){
   window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
   // 定时检查提醒（每5分钟）
   deerReminders();setInterval(deerReminders,300000);
-  // AI 回复后给鹿加气泡
-  const origAiAddMsg=aiAddMsg;
-  aiAddMsg=function(role,text){
-    origAiAddMsg(role,text);
-    if(role==="bot"){
-      const short=text.replace(/\n/g," ").slice(0,40)+(text.length>40?"…":"");
-      deerBubble(short,4000);
-    }
-  };
 }
 window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
@@ -10879,6 +10870,11 @@ function aiRenderMsgs(){
 function aiAddMsg(role,content,thinking){
   aiMsgs.push({role,content,thinking});
   aiRenderMsgs();
+  // 小鹿气泡：AI 回复时头顶弹气泡
+  if(role==="bot"){
+    const short=content.replace(/\n/g," ").slice(0,40)+(content.length>40?"…":"");
+    if(typeof deerBubble==="function")deerBubble(short,4000);
+  }
 }
 function aiUpdateLast(content){
   if(aiMsgs.length){aiMsgs[aiMsgs.length-1].content=content;aiMsgs[aiMsgs.length-1].thinking=false;aiRenderMsgs();}
