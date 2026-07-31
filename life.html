@@ -10707,7 +10707,7 @@ function deerBubble(msg,ms){
 /* 定时主动提醒 */
 function deerReminders(){
   const h=new Date().getHours();
-  const today=getToday();
+  const today=currentDate;
   const e=state.entries[today]||{};
   const tasks=e.tasks||[];
   const undone=tasks.filter(t=>t&&!t.done).length;
