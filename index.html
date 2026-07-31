@@ -6510,6 +6510,8 @@ function render(){
   sc.innerHTML=html;
   bindDateNav();
   updateSoundIndicator();
+  // 鹿事件委托绑定在 #scroll 上，render 后需重新绑定
+  if(activeNav==="home")bindDeer();
 }
 
 /* ============== 交互 ============== */
@@ -10703,93 +10705,41 @@ function deerBubble(msg,ms){
   b.textContent=msg;b.classList.add("show");
   if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
 }
-/* 定时主动提醒 */
-function deerReminders(){
-  const h=new Date().getHours();
-  const today=currentDate;
-  const e=state.entries[today]||{};
-  const tasks=e.tasks||[];
-  const undone=tasks.filter(t=>t&&!t.done).length;
-  const vocal=e.study&&e.study.vocal&&e.study.vocal.vocal_time?e.study.vocal.vocal_time:0;
-  // 深夜提醒睡觉
-  if((h>=23||h<1)&&!localStorage.getItem("deer_said_goodnight_"+today)){
-    deerBubble("🌙 夜深了，该休息啦~",8000);
-    localStorage.setItem("deer_said_goodnight_"+today,"1");
-  }
-  // 早上问候
-  else if(h>=7&&h<9&&!localStorage.getItem("deer_said_morning_"+today)){
-    deerBubble("☀️ 早上好鹿7铭！今天有"+undone+"件事要做~",6000);
-    localStorage.setItem("deer_said_morning_"+today,"1");
-  }
-  // 中午没练声提醒
-  else if(h>=11&&h<13&&vocal===0&&!localStorage.getItem("deer_said_vocal_"+today)){
-    deerBubble("🎤 今天还没练声哦，中午来一段？",6000);
-    localStorage.setItem("deer_said_vocal_"+today,"1");
-  }
-  // 下午任务提醒
-  else if(h>=14&&h<16&&undone>0&&!localStorage.getItem("deer_said_tasks_"+today)){
-    deerBubble("📋 还有"+undone+"个任务没完成，加油！",6000);
-    localStorage.setItem("deer_said_tasks_"+today,"1");
-  }
-  // 傍晚总结
-  else if(h>=19&&h<21&&!localStorage.getItem("deer_said_evening_"+today)){
-    const done=tasks.filter(t=>t&&t.done).length;
-    if(done>0)deerBubble("🌟 今天完成了"+done+"个任务，不错！",6000);
-    else deerBubble("💭 今天过得怎么样？点我聊聊~",6000);
-    localStorage.setItem("deer_said_evening_"+today,"1");
-  }
+/* 鹿事件状态（闭包变量，不受 DOM 重建影响） */
+let _dpTimer=null,_dpFired=false,_dpStart=0,_dpX=0,_dpY=0;
+const _DP_LONG=600,_DP_TH=10;
+function _dpClick(){deerSet("jump",500);openAIPanel();}
+function _dpVoice(){_dpFired=true;deerSet("glow",0);_deerVoiceSend();}
+function _dpClear(){if(_dpTimer){clearTimeout(_dpTimer);_dpTimer=null;}_dpFired=false;_dpStart=0;}
+function _dpTs(e){
+  const el=e.target.closest("#deerEl");if(!el)return;
+  _dpClear();const t=e.touches[0];_dpX=t.clientX;_dpY=t.clientY;_dpStart=Date.now();
+  _dpTimer=setTimeout(_dpVoice,_DP_LONG);
+}
+function _dpTm(e){
+  if(!_dpTimer||_dpFired)return;const t=e.touches[0];
+  if(Math.abs(t.clientX-_dpX)>_DP_TH||Math.abs(t.clientY-_dpY)>_DP_TH){clearTimeout(_dpTimer);_dpTimer=null;_dpStart=0;}
+}
+function _dpTe(e){
+  if(!_dpStart)return;
+  if(_dpFired){_dpClear();return;}
+  _dpClear();if(Date.now()-_dpStart<_DP_LONG)_dpClick();
+}
+function _dpClickFallback(e){
+  const el=e.target.closest("#deerEl");if(el){e.stopPropagation();_dpClick();}
 }
 function bindDeer(){
-  const el=deerEl();if(!el)return;
-  let pressTimer=null, pressFired=false, pressStart=0, startX=0, startY=0;
-  const LONG_MS=600, MOVE_TH=10;
-  function doClick(){
-    deerSet("jump",500);
-    openAIPanel();
-  }
-  function doVoice(){
-    pressFired=true;
-    deerSet("glow",0);
-    _deerVoiceSend();
-  }
-  function clearPress(){
-    if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
-    pressFired=false;pressStart=0;
-  }
-  el.addEventListener("touchstart",(e)=>{
-    clearPress();
-    const t=e.touches[0];
-    startX=t.clientX; startY=t.clientY; pressStart=Date.now();
-    pressTimer=setTimeout(doVoice, LONG_MS);
-  },{passive:true});
-  el.addEventListener("touchmove",(e)=>{
-    if(!pressTimer||pressFired)return;
-    const t=e.touches[0];
-    if(Math.abs(t.clientX-startX)>MOVE_TH||Math.abs(t.clientY-startY)>MOVE_TH){
-      clearTimeout(pressTimer);pressTimer=null;pressStart=0;
-    }
-  },{passive:true});
-  el.addEventListener("touchend",(e)=>{
-    e.preventDefault();
-    if(pressFired){clearPress();return;}
-    clearPress();
-    // 短按：<600ms 且 timer 还没触发 → 点击
-    if(pressStart&&Date.now()-pressStart<LONG_MS) doClick();
-  });
-  el.addEventListener("touchcancel",()=>{clearPress();});
-  el.addEventListener("click",(e)=>{
-    // 兜底：如果 touch 事件链没处理到（桌面端或某些浏览器），用 click 兜底
-    if(!('ontouchstart' in window)||!pressStart||Date.now()-pressStart>LONG_MS+300){
-      e.stopPropagation();
-      doClick();
-    }
-  });
-  // 暴露给外部调用
+  const sc=document.getElementById("scroll");if(!sc)return;
+  sc.removeEventListener("touchstart",_dpTs);sc.removeEventListener("touchmove",_dpTm);
+  sc.removeEventListener("touchend",_dpTe);sc.removeEventListener("click",_dpClickFallback);
+  sc.addEventListener("touchstart",_dpTs,{passive:true});
+  sc.addEventListener("touchmove",_dpTm,{passive:true});
+  sc.addEventListener("touchend",_dpTe);
+  sc.addEventListener("click",_dpClickFallback);
   window.__deerJump=()=>deerSet("jump",500);
   window.__deerFlower=()=>deerSet("flower",1200);
   window.__deerCrown=(on)=>{const el=deerEl();if(el)el.classList.toggle("crown",on);};
   window.__deerGlow=(on)=>{const el=deerEl();if(el)el.classList.toggle("glow",on);};
-  // 定时检查提醒（每5分钟）
   deerReminders();setInterval(deerReminders,300000);
 }
 /* 长按鹿 → 语音识别后自动发送给 AI */
