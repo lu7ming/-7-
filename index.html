@@ -2259,7 +2259,7 @@ function viewCalendar(){
     const isToday=d.date===today;
     const isSelected=d.date===currentDate;
     const cls=["cal-day"];
-    if(d.checkin)cls.push("checkin");
+    if(d.checkIn)cls.push("checkin");
     if(isToday)cls.push("today");
     if(isSelected)cls.push("selected");
     cells+=`<div class="${cls.join(" ")}" data-cal-date="${d.date}">${d.day}</div>`;
