@@ -331,8 +331,8 @@ body::after{
 .ai-panel{position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;height:100dvh;
   background:var(--glass-bg);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);
   border-left:1px solid var(--glass-border);box-shadow:-10px 0 40px rgba(0,0,0,.2),var(--glass-inset);
-  z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.22,.61,.36,1);}
-.ai-panel.open{transform:translateX(0);}
+  z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.22,.61,.36,1);pointer-events:none;}
+.ai-panel.open{transform:translateX(0);pointer-events:auto;}
 .ai-panel .ai-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);
   flex-shrink:0;padding-top:max(16px,env(safe-area-inset-top));}
 .ai-panel .ai-head .ai-title{flex:1;font-weight:700;font-size:16px;}
