@@ -11669,9 +11669,6 @@ function openAIPanel(){
   });
 })();
 
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-})();
-
 /* ═══════════ [JS 6.5] 每日推送系统（AI生成+缓存+兜底） ═══════════ */
 /* ============== 兜底数据：AI 不可用时使用 ============== */
 const FALLBACK_QUOTES=[
@@ -11977,6 +11974,11 @@ MODULE_ACTIONS["refresh-daily-push"]=function(){
     }catch(e){}
   };
 })();
+
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+
 </script>
 
 <!-- AI 对话面板 -->
