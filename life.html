@@ -10780,7 +10780,8 @@ function deerReminders(){
   try{
     const h=new Date().getHours();
     const today=currentDate;
-    const e=(state&&state.entries&&state.entries[today])||{};
+    // 通过 getDay() 公共接口访问，不直接读 state.entries
+    const e=(typeof getDay==="function"?getDay(today):(state&&state.entries&&state.entries[today]))||{};
     const tasks=e.tasks||[];
     const undone=tasks.filter(t=>t&&!t.done).length;
     const vocal=e.study&&e.study.vocal&&e.study.vocal.vocal_time?e.study.vocal.vocal_time:0;
@@ -11033,8 +11034,6 @@ function aiHandleRecord(parsed){
     const note=d.note||"";
     r.finance[dir].push({cat,amount,note});
     save(true);
-    recalcFinanceBalance();
-    updateFinanceKpi();
     msg=`✅ 已记一笔${dir==="in"?"收入":""}：${cat} ${amount}元${dir==="in"?"（收入）":""}`;
   }else if(t==="shopping"){
     state.shopping=state.shopping||{lists:{default:[]},active:"default"};
@@ -11075,7 +11074,7 @@ function aiBuildStats(){
     recent.forEach(d=>{const e=state.entries[d];if(!e)return;
       const ts=e.tasks||[];tasks+=ts.length;done+=ts.filter(t=>t&&t.done).length;
       const cs=e.checks||{};Object.keys(cs).forEach(k=>{checks++;if(cs[k])onchecks++;});
-      if(e.pomos)pomos+=e.pomos;
+      if(e.pomodoros)pomos+=e.pomodoros;
       if(e.mood!=null)moods.push(e.mood);
       if(typeof e.finance==="number")spent+=e.finance;
     });
