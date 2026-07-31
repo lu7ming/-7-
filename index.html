@@ -961,6 +961,35 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 .ai-suggestion .as-icon{flex-shrink:0;font-size:15px;}
 .ai-suggestion .as-text{font-size:12.5px;color:var(--ink-2);line-height:1.5;}
 
+/* ---- 每日推送卡片 ---- */
+.daily-push-card{padding:0;overflow:hidden;background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur));}
+.dpc-header{cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;user-select:none;gap:8px;flex-wrap:wrap;}
+.dpc-header:hover{background:rgba(255,255,255,.1);}
+.dpc-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dpc-icon{font-size:18px;}
+.dpc-label{font-size:14px;font-weight:700;color:var(--ink);}
+.dpc-date{font-size:11px;color:var(--muted);}
+.dpc-tag{font-size:10px;padding:1px 7px;border-radius:99px;background:var(--warm-soft);color:var(--warm);font-weight:600;}
+.dpc-summary{font-size:11px;color:var(--muted);display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+.dpc-arrow{font-size:11px;color:var(--muted);flex-shrink:0;}
+.dpc-body{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;}
+.dpc-body.expanded{max-height:800px;padding:0 16px 14px;}
+.dpc-section{padding:10px 0;border-top:1px solid var(--line-2);}
+.dpc-section:first-child{border-top:none;}
+.dpc-section-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.dpc-news-item{font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:6px;}
+.dpc-news-item b{color:var(--ink);}
+.dpc-quote{font-size:14px;line-height:1.7;color:var(--ink-2);font-style:italic;margin-bottom:4px;}
+.dpc-author{font-style:normal;font-size:12px;color:var(--muted);}
+.dpc-question{font-size:14px;line-height:1.6;color:var(--ink);margin-bottom:8px;font-weight:500;}
+.dpc-btn{display:inline-block;padding:5px 14px;margin:4px 6px 4px 0;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font-size:12px;cursor:pointer;transition:all .15s;}
+.dpc-btn:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.dpc-btn.warn{border-color:var(--warn);color:var(--warn);}
+.dpc-btn.warn:hover{background:var(--warn);color:#fff;}
+.dpc-btn.warm{border-color:var(--warm);color:var(--warm);}
+.dpc-btn.warm:hover{background:var(--warm);color:#fff;}
+.dpc-actions{display:flex;flex-wrap:wrap;gap:4px;}
+
 /* ---- 天气 ---- */
 .weather-row{display:flex;align-items:center;gap:12px;padding:10px 16px;}
 .weather-icon{font-size:28px;}
@@ -1639,6 +1668,27 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 @media (prefers-reduced-motion: reduce){
   .graph-node circle,.graph-edge,.graph-edge-dyn{transition:none;}
 }
+
+/* ═══════════ [CSS 1.6b] 每日学习推送卡片 ═══════════ */
+.daily-learning-card{background:linear-gradient(135deg,var(--card-soft) 0%,var(--card) 100%);border:1px solid var(--line-2);overflow:hidden;}
+.dlc-header{padding:0 0 8px;border-bottom:1px dashed var(--line);margin-bottom:10px;}
+.dlc-section{padding:8px 0;border-bottom:1px solid var(--line-2);}
+.dlc-section:last-child{border-bottom:none;}
+.dlc-row{display:flex;gap:12px;align-items:flex-start;}
+.dlc-icon{font-size:22px;flex-shrink:0;margin-top:2px;}
+.dlc-content{flex:1;min-width:0;}
+.dlc-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.dlc-word{font-size:18px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.dlc-meaning{font-size:13px;color:var(--ink-2);line-height:1.6;}
+.dlc-tag{display:inline-block;font-size:10px;padding:1px 8px;border-radius:99px;font-weight:600;}
+.dlc-tag.review{background:rgba(255,165,0,.15);color:#c77d20;}
+.dlc-tag.new{background:rgba(76,175,80,.15);color:#388e3c;}
+.dlc-btn{display:inline-block;margin-top:6px;padding:5px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font-size:12px;cursor:pointer;transition:all .15s;}
+.dlc-btn:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.dlc-btn.review-btn{border-color:var(--warm);color:var(--warm);}
+.dlc-btn.review-btn:hover{background:var(--warm);color:#fff;}
+.dlc-btn.add-btn{border-color:var(--good);color:var(--good);}
+.dlc-btn.add-btn:hover{background:var(--good);color:#fff;}
 
 /* ═══════════ [CSS 1.7] 工具箱 / 备工作台 ═══════════ */
 /* === MODULE CSS: 工具箱 / 备工作台 === */
@@ -3226,6 +3276,7 @@ function viewHome(){
      ${viewCalendar()}
      ${viewMonthHighlight()}
    </div>
+   ${dailyPushCard()}
    ${treePreview()}
    <div class="greet pano-full">
      <div class="greet-eyebrow">WORKSPACE / HOME</div>
@@ -3254,6 +3305,7 @@ function viewHome(){
 
    ${weatherHtml()}
    ${overviewCard()}
+   ${dailyLearningCard()}
    ${aiDailySummary()}
    ${dailyQuote()}
 
@@ -4849,6 +4901,433 @@ const DAILY_QUOTES=[
   {t:"凡是杀不死我的，必使我更强大。",a:"尼采"},
   {t:"未经审视的人生不值得过。",a:"苏格拉底"}
 ];
+
+/* ============== 时政词条库 ============== */
+const POLICY_TERMS=[
+  {t:"新质生产力",d:"创新起主导作用，摆脱传统经济增长方式、生产力发展路径，具有高科技、高效能、高质量特征，符合新发展理念的先进生产力质态。"},
+  {t:"高质量发展",d:"能够很好满足人民日益增长的美好生活需要的发展，是体现新发展理念的发展，是创新成为第一动力、协调成为内生特点、绿色成为普遍形态、开放成为必由之路、共享成为根本目的的发展。"},
+  {t:"共同富裕",d:"全体人民通过辛勤劳动和相互帮助，普遍达到生活富裕富足、精神自信自强、环境宜居宜业、社会和谐和睦、公共服务普及普惠，实现人的全面发展和社会全面进步。"},
+  {t:"双循环",d:"以国内大循环为主体、国内国际双循环相互促进的新发展格局。立足国内超大规模市场优势，畅通生产、分配、流通、消费各环节。"},
+  {t:"数字经济",d:"以数据资源为关键要素，以现代信息网络为主要载体，以信息通信技术融合应用、全要素数字化转型为重要推动力的新经济形态。"},
+  {t:"碳中和",d:"通过植树造林、节能减排等形式，抵消自身产生的二氧化碳排放量，实现二氧化碳'零排放'。中国承诺力争2030年前碳达峰、2060年前碳中和。"},
+  {t:"乡村振兴",d:"产业兴旺、生态宜居、乡风文明、治理有效、生活富裕的总要求，建立健全城乡融合发展体制机制和政策体系，加快推进农业农村现代化。"},
+  {t:"一带一路",d:"丝绸之路经济带和21世纪海上丝绸之路的简称。旨在借用古代丝绸之路的历史符号，积极发展与沿线国家的经济合作伙伴关系。"},
+  {t:"放管服",d:"简政放权、放管结合、优化服务的简称。是全面深化改革特别是供给侧结构性改革的重要内容，是转变政府职能的重要抓手。"},
+  {t:"专精特新",d:"专业化、精细化、特色化、新颖化。指具有'专业化、精细化、特色化、新颖化'特征的中小企业，是产业链供应链的关键环节。"},
+  {t:"供给侧改革",d:"从提高供给质量出发，用改革的办法推进结构调整，矫正要素配置扭曲，扩大有效供给，提高供给结构对需求变化的适应性和灵活性。"},
+  {t:"全国统一大市场",d:"在全国范围内，建设一个市场基础制度规则统一、市场设施高标准联通、要素和资源市场统一、商品和服务市场高水平统一、市场监管公平统一的大市场。"},
+  {t:"新型城镇化",d:"以城乡统筹、城乡一体、产业互动、节约集约、生态宜居、和谐发展为基本特征的城镇化，核心是人的城镇化。"},
+  {t:"人工智能+",d:"将人工智能技术与各行各业深度融合，推动产业升级和创新发展的战略方向。涵盖AI+制造、AI+医疗、AI+教育等广泛领域。"},
+  {t:"新三样",d:"指电动汽车、锂电池、光伏产品，是中国外贸出口的新增长极，体现了中国制造业向绿色化、高端化转型的趋势。"},
+  {t:"耐心资本",d:"不急于短期回报、愿意长期投入的资本。强调对科技创新和实体经济的长期支持，是发展新质生产力的重要金融支撑。"},
+  {t:"首发经济",d:"企业发布新产品、推出新业态、新模式、新服务、新技术，以及开设首店等经济活动的总称，是消费升级的重要体现。"},
+  {t:"低空经济",d:"以各种有人驾驶和无人驾驶航空器的低空飞行活动为牵引，辐射带动相关领域融合发展的综合性经济形态。"},
+  {t:"银发经济",d:"围绕老年人消费需求形成的产业体系，涵盖养老服务、健康管理、老年用品、文化娱乐等多个领域，是应对人口老龄化的重要经济形态。"},
+  {t:"未来产业",d:"由前沿技术驱动，当前处于孕育萌发阶段或产业化初期，具有显著战略性、引领性、颠覆性和不确定性的前瞻性新兴产业。"},
+  {t:"新就业形态",d:"伴随着互联网技术进步与大众消费升级出现的去雇主化、平台化的就业模式，如网约车司机、外卖骑手、网络主播等。"},
+  {t:"城市更新",d:"对城市建成区城市空间形态和功能进行整治、改善、优化，从而实现房屋使用、市政设施、公建配套等全面完善。"},
+  {t:"韧性城市",d:"能够有效应对自然灾害、气候变化、公共卫生事件等各类风险的冲击，并在灾后快速恢复的城市系统。"},
+  {t:"东数西算",d:"通过构建数据中心、云计算、大数据一体化的新型算力网络体系，将东部算力需求有序引导到西部，优化数据中心建设布局。"},
+  {t:"现代化产业体系",d:"以实体经济为基石，以科技创新为引领，以现代金融、人力资源为支撑，建设自主可控、安全可靠、竞争力强的产业体系。"},
+  {t:"美丽中国",d:"把生态文明建设放在突出地位，融入经济建设、政治建设、文化建设、社会建设各方面和全过程，努力建设人与自然和谐共生的现代化。"},
+  {t:"数字中国",d:"以数字化转型整体驱动生产方式、生活方式和治理方式变革，建设网络强国、数字中国、智慧社会。"},
+  {t:"健康中国",d:"以提高人民健康水平为核心，以体制机制改革创新为动力，把健康融入所有政策，全方位、全周期保障人民健康。"},
+  {t:"法治中国",d:"坚持依法治国、依法执政、依法行政共同推进，坚持法治国家、法治政府、法治社会一体建设。"},
+  {t:"平安中国",d:"全面提升平安中国建设科学化、社会化、法治化、智能化水平，不断增强人民群众获得感、幸福感、安全感。"}
+];
+
+/* ============== 每日学习推送引擎 ============== */
+/* 学习偏好设置：存在 localStorage 中 */
+function getLearningPrefs(){
+  try{return JSON.parse(localStorage.getItem("life_learning_prefs")||"{}");}catch(e){return{};}
+}
+function setLearningPrefs(p){
+  const cur=getLearningPrefs();
+  const merged={...cur,...p};
+  localStorage.setItem("life_learning_prefs",JSON.stringify(merged));
+}
+
+/* 获取今日英语单词推送（基于艾宾浩斯遗忘曲线 + 词库） */
+function getDailyWord(){
+  const today=fmtDate(new Date());
+  const seed=parseInt(today.replace(/-/g,""));
+  // 1. 先从 wordCache 中找需要复习的单词（mastered<2 且到了复习日）
+  const now=Date.now();
+  const DAY_MS=86400000;
+  const ebbinghausIntervals=[0,1,2,4,7,15,30]; // 艾宾浩斯复习间隔（天）
+  // 候选复习单词
+  let reviewWords=[];
+  if(wordCache&&wordCache.length){
+    wordCache.forEach(w=>{
+      if(w.mastered>=2)return; // 已掌握跳过
+      const stage=w.reviewStage||0;
+      if(stage>=ebbinghausIntervals.length)return; // 复习完成
+      const lastReview=w.lastReview||w.added||0;
+      const daysSince=Math.floor((now-lastReview)/DAY_MS);
+      const needReview=daysSince>=ebbinghausIntervals[stage];
+      if(needReview)reviewWords.push(w);
+    });
+  }
+  // 2. 如果没有需要复习的，从词库中按日期种子选一个新词
+  let word=null;
+  if(reviewWords.length>0){
+    // 按复习紧迫度排序（stage越大越该复习）
+    reviewWords.sort((a,b)=>(b.reviewStage||0)-(a.reviewStage||0));
+    word=reviewWords[0];
+    return {word:word.word,meaning:word.meaning||"",review:true,stage:word.reviewStage||0,id:word.id};
+  }
+  // 3. 没有需要复习的→从内置基础词库中按日期选
+  const basicWords=getBuiltinWordByDay(seed);
+  return {word:basicWords.word,meaning:basicWords.meaning,review:false,stage:0,id:null};
+}
+
+/* 内置基础英语词库（300+ 核心词，按难度分级） */
+function getBuiltinWordByDay(seed){
+  const BUILTIN_WORDS=[
+    {w:"serendipity",m:"意外发现美好事物的能力，机缘巧合"},
+    {w:"ephemeral",m:"短暂的，转瞬即逝的"},
+    {w:"resilience",m:"韧性，恢复力，适应力"},
+    {w:"ubiquitous",m:"无处不在的，普遍存在的"},
+    {w:"eloquent",m:"雄辩的，有口才的，清楚表明的"},
+    {w:"pragmatic",m:"务实的，实用主义的"},
+    {w:"ambivalent",m:"矛盾的，摇摆不定的"},
+    {w:"candid",m:"坦率的，直言不讳的"},
+    {w:"diligent",m:"勤奋的，勤勉的"},
+    {w:"empathy",m:"同理心，共情"},
+    {w:"flourish",m:"繁荣，兴旺，茁壮成长"},
+    {w:"gratitude",m:"感激，感恩"},
+    {w:"humility",m:"谦逊，谦虚"},
+    {w:"integrity",m:"正直，诚实，完整"},
+    {w:"jeopardize",m:"危及，损害"},
+    {w:"keen",m:"敏锐的，热切的，渴望的"},
+    {w:"legacy",m:"遗产，遗留的影响"},
+    {w:"meticulous",m:"一丝不苟的，极细致的"},
+    {w:"nostalgia",m:"怀旧，乡愁"},
+    {w:"optimism",m:"乐观，乐观主义"},
+    {w:"persevere",m:"坚持不懈，不屈不挠"},
+    {w:"quintessential",m:"典型的，精髓的"},
+    {w:"reciprocate",m:"回报，回应"},
+    {w:"scrutinize",m:"仔细审查，审视"},
+    {w:"tenacious",m:"坚韧的，紧抓不放的"},
+    {w:"unprecedented",m:"史无前例的，空前的"},
+    {w:"versatile",m:"多才多艺的，多功能的"},
+    {w:"whimsical",m:"异想天开的，古怪有趣的"},
+    {w:"zenith",m:"顶峰，顶点"},
+    {w:"alleviate",m:"减轻，缓解"},
+    {w:"benevolent",m:"仁慈的，慈善的"},
+    {w:"conscientious",m:"认真负责的，有良心的"},
+    {w:"deteriorate",m:"恶化，变坏"},
+    {w:"exacerbate",m:"加剧，使恶化"},
+    {w:"formidable",m:"令人生畏的，强大的"},
+    {w:"gregarious",m:"爱社交的，群居的"},
+    {w:"hypothetical",m:"假设的，假想的"},
+    {w:"inevitable",m:"不可避免的"},
+    {w:"juxtapose",m:"并列放置，对比"},
+    {w:"lucrative",m:"有利可图的，赚钱的"},
+    {w:"magnanimous",m:"宽宏大量的"},
+    {w:"negligible",m:"可忽略不计的"},
+    {w:"obsolete",m:"过时的，淘汰的"},
+    {w:"paradigm",m:"范式，典范"},
+    {w:"redundant",m:"多余的，冗余的"},
+    {w:"spontaneous",m:"自发的，自然而然的"},
+    {w:"tangible",m:"有形的，可触摸的"},
+    {w:"unanimous",m:"一致同意的"},
+    {w:"vindicate",m:"证明…正确，为…辩护"},
+    {w:"warrant",m:"保证，授权；正当理由"},
+    {w:"ambiguous",m:"模棱两可的，含糊的"},
+    {w:"brevity",m:"简短，简洁"},
+    {w:"coherent",m:"连贯的，条理清楚的"},
+    {w:"disseminate",m:"传播，散布"},
+    {w:"elicit",m:"引出，诱出"},
+    {w:"feasible",m:"可行的，行得通的"},
+    {w:"hamper",m:"阻碍，妨碍"},
+    {w:"imminent",m:"即将来临的，逼近的"},
+    {w:"lethargic",m:"昏昏欲睡的，无精打采的"},
+    {w:"mitigate",m:"减轻，缓和"},
+    {w:"nuance",m:"细微差别，微妙之处"},
+    {w:"ominous",m:"不祥的，不吉利的"},
+    {w:"prolific",m:"多产的，丰富的"},
+    {w:"reconcile",m:"调和，使和解"},
+    {w:"substantiate",m:"证实，证明"},
+    {w:"trivial",m:"琐碎的，微不足道的"},
+    {w:"undermine",m:"削弱，暗中破坏"},
+    {w:"volatile",m:"不稳定的，易变的"},
+    {w:"wary",m:"谨慎的，小心翼翼的"},
+    {w:"yield",m:"产出，屈服；产量"},
+    {w:"zealous",m:"热情的，狂热的"},
+    {w:"abstain",m:"戒除，弃权"},
+    {w:"complacent",m:"自满的，自鸣得意的"},
+    {w:"detrimental",m:"有害的，不利的"},
+    {w:"elaborate",m:"精心制作的；详细阐述"},
+    {w:"facilitate",m:"促进，使便利"},
+    {w:"gauge",m:"测量，评估；量规"},
+    {w:"hinder",m:"阻碍，妨碍"},
+    {w:"impartial",m:"公正的，不偏不倚的"},
+    {w:"lenient",m:"宽容的，宽大的"},
+    {w:"mundane",m:"平凡的，世俗的"},
+    {w:"notion",m:"观念，概念"},
+    {w:"perpetual",m:"永久的，持续的"},
+    {w:"reprimand",m:"训斥，斥责"},
+    {w:"skeptical",m:"怀疑的"},
+    {w:"tedious",m:"单调乏味的，冗长的"},
+    {w:"validate",m:"验证，确认"},
+    {w:"adaptable",m:"适应性强的"},
+    {w:"boisterous",m:"喧闹的，活跃的"},
+    {w:"chronic",m:"慢性的，长期的"},
+    {w:"devastate",m:"摧毁，使震惊"},
+    {w:"endure",m:"忍受，持续"},
+    {w:"frugal",m:"节俭的"},
+    {w:"genuine",m:"真正的，真诚的"},
+    {w:"hostile",m:"敌对的，敌意的"},
+    {w:"illuminate",m:"照亮，阐明"},
+    {w:"lament",m:"哀叹，悲叹"},
+    {w:"novel",m:"新颖的；小说"},
+    {w:"ornate",m:"华丽的，装饰精美的"},
+    {w:"plausible",m:"看似合理的，可信的"},
+    {w:"reluctant",m:"不情愿的，勉强的"},
+    {w:"saturate",m:"使饱和，浸透"},
+    {w:"turbulent",m:"动荡的，混乱的"},
+    {w:"verbose",m:"啰嗦的，冗长的"},
+    {w:"wholesome",m:"有益健康的，健全的"},
+    {w:"acquiesce",m:"默许，勉强同意"},
+    {w:"belittle",m:"贬低，轻视"},
+    {w:"concur",m:"同意，一致"},
+    {w:"dwindle",m:"逐渐减少，缩小"},
+    {w:"engross",m:"使全神贯注"},
+    {w:"falter",m:"动摇，犹豫"},
+    {w:"glean",m:"收集（信息），拾取"},
+    {w:"heed",m:"注意，留心"},
+    {w:"impede",m:"阻碍，妨碍"},
+    {w:"jeer",m:"嘲笑，嘲弄"},
+    {w:"kindle",m:"点燃，激起"},
+    {w:"linger",m:"徘徊，逗留"},
+    {w:"muse",m:"沉思，冥想"},
+    {w:"nurture",m:"培养，滋养"},
+    {w:"obscure",m:"模糊的，无名的；使模糊"},
+    {w:"plight",m:"困境，苦境"},
+    {w:"quench",m:"熄灭，解渴"},
+    {w:"revere",m:"尊敬，崇敬"},
+    {w:"solicit",m:"请求，招揽"},
+    {w:"thrive",m:"繁荣，兴旺"},
+    {w:"uphold",m:"支持，维护"},
+    {w:"vigilant",m:"警惕的，警觉的"},
+    {w:"waver",m:"动摇，犹豫不决"},
+    {w:"abundant",m:"丰富的，充裕的"},
+    {w:"barren",m:"贫瘠的，荒芜的"},
+    {w:"conceal",m:"隐藏，隐瞒"},
+    {w:"deceive",m:"欺骗，蒙骗"},
+    {w:"embrace",m:"拥抱，欣然接受"},
+    {w:"futile",m:"徒劳的，无用的"},
+    {w:"glimpse",m:"一瞥，瞥见"},
+    {w:"harsh",m:"严酷的，刺耳的"},
+    {w:"idle",m:"闲置的，懒散的"},
+    {w:"jovial",m:"快活的，愉快的"},
+    {w:"knack",m:"诀窍，本领"},
+    {w:"loathe",m:"厌恶，憎恨"},
+    {w:"meager",m:"贫乏的，不足的"},
+    {w:"nimble",m:"灵活的，敏捷的"},
+    {w:"ordeal",m:"磨难，严峻考验"},
+    {w:"petition",m:"请愿，请求"},
+    {w:"quest",m:"探索，追求"},
+    {w:"ravenous",m:"极饿的，贪婪的"},
+    {w:"solemn",m:"庄严的，严肃的"},
+    {w:"timid",m:"胆小的，羞怯的"},
+    {w:"utilize",m:"利用，使用"},
+    {w:"vibrant",m:"充满活力的，鲜艳的"},
+    {w:"wistful",m:"渴望的，惆怅的"},
+    {w:"yearn",m:"渴望，向往"},
+    {w:"agile",m:"敏捷的，灵活的"},
+    {w:"bliss",m:"极乐，幸福"},
+    {w:"compel",m:"强迫，迫使"},
+    {w:"depict",m:"描绘，描述"},
+    {w:"essence",m:"本质，精华"},
+    {w:"flaw",m:"缺陷，瑕疵"},
+    {w:"grieve",m:"悲伤，悲痛"},
+    {w:"haven",m:"避难所，安全地"},
+    {w:"impose",m:"强加，征收"},
+    {w:"jargon",m:"行话，术语"},
+    {w:"knack",m:"诀窍，本领"},
+    {w:"lure",m:"诱惑，引诱"},
+    {w:"momentum",m:"势头，动力"},
+    {w:"neglect",m:"忽视，疏忽"},
+    {w:"ordeal",m:"磨难，考验"},
+    {w:"precede",m:"在…之前，先于"},
+    {w:"quota",m:"配额，限额"},
+    {w:"reign",m:"统治，支配"},
+    {w:"sustain",m:"维持，支撑"},
+    {w:"torment",m:"折磨，痛苦"},
+    {w:"utmost",m:"最大的，极度的"},
+    {w:"vain",m:"徒劳的，自负的"},
+    {w:"wreck",m:"破坏，毁坏"},
+    {w:"adept",m:"熟练的，擅长的"},
+    {w:"bias",m:"偏见，偏袒"},
+    {w:"clarity",m:"清晰，明确"},
+    {w:"dismay",m:"沮丧，惊恐"},
+    {w:"ethic",m:"伦理，道德准则"},
+    {w:"flock",m:"群，聚集"},
+    {w:"grapple",m:"搏斗，努力解决"},
+    {w:"hazard",m:"危险，风险"},
+    {w:"indulge",m:"沉溺，放纵"},
+    {w:"jolt",m:"震动，使震惊"},
+    {w:"kinship",m:"亲属关系，亲切感"},
+    {w:"linger",m:"徘徊，逗留"},
+    {w:"malice",m:"恶意，怨恨"},
+    {w:"naive",m:"天真的，幼稚的"},
+    {w:"onset",m:"开始，发作"},
+    {w:"plummet",m:"骤降，暴跌"},
+    {w:"quaint",m:"古雅的，奇特的"},
+    {w:"ravage",m:"毁坏，蹂躏"},
+    {w:"stigma",m:"耻辱，污名"},
+    {w:"tact",m:"机智，圆滑"},
+    {w:"unveil",m:"揭开，公布"},
+    {w:"vivid",m:"生动的，鲜明的"},
+    {w:"wield",m:"行使，挥动"},
+    {w:"abyss",m:"深渊，无底洞"},
+    {w:"brisk",m:"轻快的，活跃的"},
+    {w:"censor",m:"审查，删改"},
+    {w:"demise",m:"死亡，终止"},
+    {w:"exile",m:"流放，放逐"},
+    {w:"famine",m:"饥荒，严重短缺"},
+    {w:"grit",m:"勇气，毅力"},
+    {w:"hoard",m:"囤积，储藏"},
+    {w:"intact",m:"完好无损的"},
+    {w:"jubilant",m:"欢欣鼓舞的"},
+    {w:"knack",m:"诀窍，本领"},
+    {w:"loom",m:"隐约出现，逼近"},
+    {w:"malice",m:"恶意，怨恨"},
+    {w:"noble",m:"高尚的，贵族的"},
+    {w:"outset",m:"开始，开端"},
+    {w:"peril",m:"危险，险境"},
+    {w:"quota",m:"配额，限额"},
+    {w:"realm",m:"领域，王国"},
+    {w:"shrewd",m:"精明的，敏锐的"},
+    {w:"trait",m:"特征，特点"},
+    {w:"utmost",m:"最大的，极度的"},
+    {w:"verge",m:"边缘，濒临"},
+    {w:"wrath",m:"愤怒，暴怒"},
+    {w:"apt",m:"恰当的，有…倾向的"},
+    {w:"baffle",m:"使困惑，难住"},
+    {w:"clutch",m:"抓紧，抓住"},
+    {w:"defy",m:"违抗，挑战"},
+    {w:"erode",m:"侵蚀，腐蚀"},
+    {w:"famine",m:"饥荒，严重短缺"},
+    {w:"gasp",m:"喘气，倒抽气"},
+    {w:"hurl",m:"猛投，用力扔"},
+    {w:"inert",m:"惰性的，不动的"},
+    {w:"jest",m:"玩笑，打趣"},
+    {w:"knack",m:"诀窍，本领"},
+    {w:"loom",m:"隐约出现，逼近"},
+    {w:"mingle",m:"混合，交际"},
+    {w:"novice",m:"新手，初学者"},
+    {w:"ordeal",m:"磨难，严峻考验"},
+    {w:"plight",m:"困境，苦境"},
+    {w:"quota",m:"配额，限额"},
+    {w:"reap",m:"收获，获得"},
+    {w:"scorn",m:"轻蔑，鄙视"},
+    {w:"trait",m:"特征，特点"},
+    {w:"usurp",m:"篡夺，侵占"},
+    {w:"vent",m:"发泄，排放"},
+    {w:"wane",m:"衰退，减弱"},
+    {w:"yoke",m:"枷锁，束缚"},
+    {w:"zenith",m:"顶峰，顶点"}
+  ];
+  const idx=seed%BUILTIN_WORDS.length;
+  const w=BUILTIN_WORDS[idx];
+  return {word:w.w,meaning:w.m};
+}
+
+/* 获取每日时政词条 */
+function getDailyPolicyTerm(){
+  const today=fmtDate(new Date());
+  const seed=parseInt(today.replace(/-/g,""));
+  const idx=seed%POLICY_TERMS.length;
+  return POLICY_TERMS[idx];
+}
+
+/* 获取艾宾浩斯复习统计 */
+function getEbbinghausStats(){
+  state.spaced=state.spaced||{cards:[]};
+  const now=Date.now();
+  const cards=state.spaced.cards;
+  const due=cards.filter(c=>c.next<=now).length;
+  const mastered=cards.filter(c=>c.box>=4).length;
+  const total=cards.length;
+  return {due,mastered,total};
+}
+
+/* 标记单词已复习（更新复习阶段） */
+async function markWordReviewed(wordId,stage){
+  if(!wordId||!wordCache)return;
+  const w=wordCache.find(x=>x.id===wordId);
+  if(!w)return;
+  w.lastReview=Date.now();
+  w.reviewStage=(stage||0)+1;
+  // 如果复习完所有阶段，标记为掌握
+  if(w.reviewStage>=7)w.mastered=2;
+  else if(w.reviewStage>=4)w.mastered=1;
+  await saveWord(w);
+}
+
+/* 渲染每日学习推送卡片（首页用） */
+function dailyLearningCard(){
+  const word=getDailyWord();
+  const policy=getDailyPolicyTerm();
+  const eb=getEbbinghausStats();
+
+  let html=`<div class="card daily-learning-card pano-full">
+    <div class="dlc-header">
+      <span class="section-eyebrow">DAILY LEARNING · 每日学习推送</span>
+    </div>`;
+
+  // 英语单词区
+  const reviewTag=word.review?`<span class="dlc-tag review">复习 · 第${word.stage+1}轮</span>`:`<span class="dlc-tag new">新词</span>`;
+  html+=`
+    <div class="dlc-section">
+      <div class="dlc-row">
+        <span class="dlc-icon">📖</span>
+        <div class="dlc-content">
+          <div class="dlc-label">今日单词 ${reviewTag}</div>
+          <div class="dlc-word">${esc(word.word)}</div>
+          <div class="dlc-meaning">${esc(word.meaning)}</div>
+          ${word.review?`<button class="dlc-btn review-btn" data-mod-action="mark-word-reviewed" data-word-id="${esc(word.id||"")}" data-word-stage="${word.stage}">✓ 已复习</button>`:`<button class="dlc-btn add-btn" data-mod-action="add-word-to-lib" data-word="${esc(word.word)}" data-meaning="${esc(word.meaning)}">+ 加入词库</button>`}
+        </div>
+      </div>
+    </div>`;
+
+  // 时政词条区
+  html+=`
+    <div class="dlc-section">
+      <div class="dlc-row">
+        <span class="dlc-icon">🏛️</span>
+        <div class="dlc-content">
+          <div class="dlc-label">时政词条</div>
+          <div class="dlc-word">${esc(policy.t)}</div>
+          <div class="dlc-meaning" style="font-size:12.5px;line-height:1.7">${esc(policy.d)}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // 艾宾浩斯复习提醒区
+  html+=`
+    <div class="dlc-section">
+      <div class="dlc-row">
+        <span class="dlc-icon">🧠</span>
+        <div class="dlc-content">
+          <div class="dlc-label">间隔复习</div>
+          <div class="dlc-meaning">
+            ${eb.total>0
+              ?`待复习 <b style="color:${eb.due>0?'var(--warn)':'var(--good)'}">${eb.due}</b> 张 · 已掌握 <b>${eb.mastered}</b> 张 · 共 <b>${eb.total}</b> 张`
+              :`还没有复习卡片，去「摘抄/备忘/笔记」添加内容，自动生成复习卡片`}
+          </div>
+          ${eb.due>0?`<button class="dlc-btn review-btn" data-nav="spaced">去复习 (${eb.due})</button>`:""}
+        </div>
+      </div>
+    </div>`;
+
+  html+=`</div>`;
+  return html;
+}
+
 function dailyQuote(){
   const today=fmtDate(new Date());
   const seed=today.split("-").join("");
@@ -10078,6 +10557,46 @@ function srSyncAction(){srSync();save();toast('已重新同步复习卡');render
 MODULE_ACTIONS['sr-show']=srShow;
 MODULE_ACTIONS['sr-grade']=srGrade;
 MODULE_ACTIONS['sr-sync']=srSyncAction;
+/* 每日学习推送动作 */
+MODULE_ACTIONS['mark-word-reviewed']=function(t){
+  const id=t.dataset.wordId;
+  const stage=parseInt(t.dataset.wordStage)||0;
+  if(id){
+    markWordReviewed(id,stage).then(()=>{
+      t.textContent="✓ 已复习";
+      t.disabled=true;
+      t.style.opacity="0.5";
+      toast("已标记复习 ✓");
+    });
+  }
+};
+MODULE_ACTIONS['add-word-to-lib']=function(t){
+  const word=t.dataset.word;
+  const meaning=t.dataset.meaning;
+  if(!word)return;
+  // 检查是否已存在
+  if(wordCache.some(w=>w.word.toLowerCase()===word.toLowerCase())){
+    toast("该单词已在词库中");
+    return;
+  }
+  const entry={
+    id:uid(),
+    word:word,
+    meaning:meaning||"",
+    category:"",
+    mastered:0,
+    reviewStage:0,
+    lastReview:0,
+    added:Date.now()
+  };
+  saveWord(entry).then(()=>{
+    wordCache.push(entry);
+    t.textContent="✓ 已加入";
+    t.disabled=true;
+    t.style.opacity="0.5";
+    toast("单词已加入词库 📖");
+  });
+};
 /* === MODULE JS: remind === */
 /* === MODULE JS: remind === */
 /* 提醒中心（含健康提醒）模块
@@ -10675,6 +11194,8 @@ async function init(){
   loadWords();
   // 初始化推送提醒
   setTimeout(()=>{try{initNotifications();}catch(e){}},2000);
+  // 初始化每日推送（异步不阻塞）
+  setTimeout(()=>{try{getDailyPush();}catch(e){}},1000);
   // 恢复休息模式（若上次开启）
   applyRestMode();
   // 异步获取天气（不阻塞渲染）
@@ -10802,6 +11323,14 @@ function deerReminders(){
       if(done>0)deerBubble("🌟 今天完成了"+done+"个任务，不错！",6000);
       else deerBubble("💭 今天过得怎么样？点我聊聊~",6000);
       localStorage.setItem("deer_said_evening_"+today,"1");
+    }
+    // 学习推送提醒（早晚各一次）
+    if(h>=8&&h<10&&!localStorage.getItem("deer_said_learn_"+today)){
+      try{
+        const w=getDailyWord();
+        deerBubble("📖 今日单词："+w.word+" — "+w.meaning.slice(0,20)+(w.meaning.length>20?"…":""),8000);
+        localStorage.setItem("deer_said_learn_"+today,"1");
+      }catch(e){}
     }
   }catch(err){console.error("[deerReminders] error:",err);}
 }
@@ -11141,6 +11670,312 @@ function openAIPanel(){
 })();
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+
+/* ═══════════ [JS 6.5] 每日推送系统（AI生成+缓存+兜底） ═══════════ */
+/* ============== 兜底数据：AI 不可用时使用 ============== */
+const FALLBACK_QUOTES=[
+  {t:"种一棵树最好的时间是十年前，其次是现在。",a:"中国谚语"},
+  {t:"行动是治愈恐惧的良药，而犹豫拖延将不断滋养恐惧。",a:"威廉·詹姆斯"},
+  {t:"未经审视的人生不值得过。",a:"苏格拉底"},
+  {t:"你今天的努力，是幸运的伏笔。",a:""},
+  {t:"不要等到完美才开始，开始本身就是完美的一部分。",a:""},
+  {t:"深度工作的能力越来越稀有，因而越来越珍贵。",a:"Cal Newport"},
+  {t:"真正的幸福不是没有问题，而是有能力解决问题。",a:""},
+  {t:"自律者自由，自制者自强。",a:"康德"},
+  {t:"生活不是等待暴风雨过去，而是学会在雨中跳舞。",a:""},
+  {t:"成功是日复一日小小努力的总和。",a:"罗伯特·科利尔"},
+  {t:"每一个不曾起舞的日子，都是对生命的辜负。",a:"尼采"},
+  {t:"凡是杀不死我的，必使我更强大。",a:"尼采"},
+  {t:"千里之行，始于足下。",a:"老子"},
+  {t:"业精于勤，荒于嬉；行成于思，毁于随。",a:"韩愈"},
+  {t:"天行健，君子以自强不息。",a:"《周易》"},
+  {t:"学而不思则罔，思而不学则殆。",a:"孔子"},
+  {t:"心之所向，素履以往。",a:""},
+  {t:"知道的越多，才知知道的越少。",a:"苏格拉底"},
+  {t:"把每一天当作生命的第一天来过。",a:""},
+  {t:"身体是革命的本钱。",a:"毛泽东"},
+  {t:"宁静致远。",a:"诸葛亮"},
+  {t:"知者不惑，仁者不忧，勇者不惧。",a:"孔子"},
+  {t:"三人行，必有我师焉。",a:"孔子"},
+  {t:"博学之，审问之，慎思之，明辨之，笃行之。",a:"《中庸》"},
+  {t:"不积跬步，无以至千里。",a:"荀子"},
+  {t:"纸上得来终觉浅，绝知此事要躬行。",a:"陆游"},
+  {t:"勿以善小而不为，勿以恶小而为之。",a:"刘备"},
+  {t:"读书是在别人思想的帮助下，建立起自己的思想。",a:"尼克拉斯·卢曼"},
+  {t:"习惯不是束缚，而是自由的基石。",a:"James Clear"},
+  {t:"你不需要比别人优秀，只需要比昨天的自己好一点。",a:""}
+];
+const FALLBACK_QUESTIONS=[
+  "如果今天是今年的最后一天，你最想完成的一件事是什么？",
+  "过去一周，哪个瞬间让你觉得最有成就感？",
+  "你现在最大的焦虑来自哪里？试着把它写下来。",
+  "如果只能保留一个习惯，你会选哪个？为什么？",
+  "今天有什么小事值得你感恩？",
+  "你最近一次突破舒适区是什么时候？",
+  "五年后的你会对现在的你说什么？",
+  "今天有没有什么事情你本可以做得更好？",
+  "你目前在逃避什么？为什么？",
+  "如果今天可以重来，你会改变哪件事？",
+  "你现在投入最多时间的事情，十年后还重要吗？",
+  "最近有什么想法一直萦绕在脑海里，但还没行动？",
+  "你觉得现在的自己和一年前的自己，最大的不同是什么？",
+  "你上一次完全沉浸在一件事中忘记时间是什么时候？",
+  "如果你有无限的资源，你最想解决什么问题？",
+  "今天学到的最有价值的东西是什么？",
+  "有没有人对你产生过深远的影响？是什么？",
+  "你觉得自己最大的优势是什么？你多久用一次？",
+  "如果只能给年轻时的自己一条建议，会是什么？",
+  "你今天帮助了谁？或者谁帮助了你？",
+  "什么事情你一直在拖延？第一步可以做什么？",
+  "你的时间花在哪里，你的未来就在哪里。今天你的时间花对了吗？",
+  "你最近一次感到真正快乐是什么时候？为什么？",
+  "如果让你给三个月后的自己写一封信，你会写什么？",
+  "什么信念在支撑你每天早起？",
+  "你多久没有好好休息了？今天给自己放个假吧。",
+  "你觉得什么样的人生算成功？",
+  "最近有没有一本书或一部电影让你深受触动？",
+  "你希望别人如何记住你？",
+  "今天你做了什么事，让明天的你会感谢今天的自己？"
+];
+
+/* ============== 推送核心：缓存调度 ============== */
+let _dailyPushCache=null;
+function getDailyPush(){
+  const today=fmtDate(new Date());
+  const cacheKey="daily_push_"+today;
+  // 1. 读缓存
+  try{
+    const cached=localStorage.getItem(cacheKey);
+    if(cached){
+      const data=JSON.parse(cached);
+      if(data&&data.news)return data;
+    }
+  }catch(e){}
+  // 2. 异步调 AI（不阻塞渲染），返回后自动刷新卡片
+  if(DEEPSEEK_KEY){
+    aiGenerateDailyPush(today,cacheKey).then(data=>{
+      if(data){
+        _dailyPushCache=data;
+        // 局部刷新推送卡片
+        const card=document.getElementById("dailyPushCard");
+        if(card)card.outerHTML=dailyPushCardHTML(data);
+      }
+    }).catch(()=>{});
+  }
+  // 3. 返回兜底数据（AI 结果异步更新）
+  return fallbackDailyPush();
+}
+function fallbackDailyPush(){
+  const today=fmtDate(new Date());
+  const seed=parseInt(today.replace(/-/g,""));
+  const qi=seed%FALLBACK_QUOTES.length;
+  const q2i=(seed+7)%FALLBACK_QUOTES.length;
+  const di=seed%FALLBACK_QUESTIONS.length;
+  return {
+    news:[
+      {title:"坚持就是胜利",detail:"每天进步一点点，日积月累就是巨大的改变。今天也请全力以赴。"},
+      {title:"关注当下",detail:"考研路上，每一个知识点的积累都会在未来发挥价值。专注今天的学习。"}
+    ],
+    quotes:[FALLBACK_QUOTES[qi],FALLBACK_QUOTES[q2i]],
+    question:FALLBACK_QUESTIONS[di],
+    generated:false
+  };
+}
+
+/* ============== AI 生成推送 ============== */
+async function aiGenerateDailyPush(today,cacheKey){
+  if(!DEEPSEEK_KEY)return null;
+  try{
+    const ctx=collectContextData();
+    const prompt=`你是"人生工作台"的每日推送助手，服务于用户鹿7铭（考研备考中）。
+
+请根据以下工作台数据，生成今日推送内容。返回纯 JSON（不要 markdown 代码块）：
+
+{
+  "news": [
+    {"title": "考研政治核心考点或时事热点（15字以内）", "detail": "一句话解释（40-60字）"},
+    {"title": "第二条考点/热点（15字以内）", "detail": "一句话解释（40-60字）"}
+  ],
+  "quotes": [
+    {"t": "励志/哲思金句", "a": "出处或作者"},
+    {"t": "第二条金句", "a": "出处或作者"}
+  ],
+  "question": "一个引导用户反思的开放性问题（30字以内）"
+}
+
+要求：
+- news 聚焦考研政治：马原/毛中特/史纲/思修/当代世界经济与政治，每天选1-2个板块
+- quotes 一条偏励志行动，一条偏哲学思辨
+- question 引导用户深入思考，与当天推送内容或用户数据相关
+
+当前工作台数据：
+日期：${today}
+连续打卡：${ctx.streak} 天
+今日任务：${ctx.today.tasksDone}/${ctx.today.tasksTotal} 完成
+今日番茄：${ctx.today.pomodoros} 个
+本周番茄总计：${ctx.totalPomo} 个`;
+
+    const resp=await fetch(DEEPSEEK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+DEEPSEEK_KEY},
+      body:JSON.stringify({
+        model:"deepseek-chat",
+        messages:[{role:"system",content:"你是考研政治+人生成长助手。只返回 JSON，不要任何额外文字。"},{role:"user",content:prompt}],
+        max_tokens:800,
+        temperature:0.8
+      })
+    });
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    const content=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:"";
+    // 解析 JSON（处理可能的 markdown 代码块包裹）
+    let json=content.trim();
+    json=json.replace(/^```(?:json)?\s*/,"").replace(/\s*```$/,"");
+    const result=JSON.parse(json);
+    if(!result.news||!result.quotes||!result.question)return null;
+    result.generated=true;
+    result.timestamp=Date.now();
+    // 缓存
+    try{localStorage.setItem(cacheKey,JSON.stringify(result));}catch(e){}
+    return result;
+  }catch(e){console.error("[aiDailyPush]",e);return null;}
+}
+
+/* ============== 推送卡片 HTML ============== */
+function dailyPushCardHTML(data){
+  if(!data)data=getDailyPush();
+  if(_dailyPushCache)data=_dailyPushCache;
+  const today=fmtDate(new Date());
+  const d=parseDate(today);
+  const dateStr=`${d.getMonth()+1}月${d.getDate()}日`;
+  const generatedTag=data.generated!==false?"🤖 AI 生成":"📋 离线推送";
+  const r=getDay(today);
+  const undone=(r.tasks||[]).filter(t=>!t.done).length;
+  state.spaced=state.spaced||{cards:[]};
+  const dueCards=state.spaced.cards.filter(c=>c.next<=Date.now()).length;
+  const isExpanded=localStorage.getItem("daily_push_expanded_"+today)==="1";
+
+  return `<div class="daily-push-card card pano-full" id="dailyPushCard">
+    <div class="dpc-header" data-mod-action="toggle-daily-push">
+      <div class="dpc-title">
+        <span class="dpc-icon">📰</span>
+        <span class="dpc-label">今日推送</span>
+        <span class="dpc-date">${dateStr}</span>
+        <span class="dpc-tag">${generatedTag}</span>
+      </div>
+      <div class="dpc-summary">
+        <span>${data.news?data.news.length:2}条时政</span>
+        <span>·</span>
+        <span>${data.quotes?data.quotes.length:2}条金句</span>
+        <span>·</span>
+        <span>${data.question?"1问":""}</span>
+        ${undone>0?`<span>·</span><span style="color:var(--warn)">${undone}待办</span>`:""}
+        ${dueCards>0?`<span>·</span><span style="color:var(--warm)">${dueCards}待复习</span>`:""}
+      </div>
+      <span class="dpc-arrow">${isExpanded?"▲":"▼"}</span>
+    </div>
+    <div class="dpc-body ${isExpanded?"expanded":""}">
+      ${data.news&&data.news.length?`
+        <div class="dpc-section">
+          <div class="dpc-section-title">🏛️ 时政要闻</div>
+          ${data.news.map(n=>`<div class="dpc-news-item"><b>${esc(n.title)}</b>：${esc(n.detail)}</div>`).join("")}
+        </div>
+      `:""}
+      ${data.quotes&&data.quotes.length?`
+        <div class="dpc-section">
+          <div class="dpc-section-title">💬 每日金句</div>
+          ${data.quotes.map(q=>`<div class="dpc-quote">"${esc(q.t)}"${q.a?`<span class="dpc-author"> — ${esc(q.a)}</span>`:""}</div>`).join("")}
+        </div>
+      `:""}
+      ${data.question?`
+        <div class="dpc-section">
+          <div class="dpc-section-title">💡 每日一问</div>
+          <div class="dpc-question">${esc(data.question)}</div>
+          <button class="dpc-btn" data-mod-action="answer-daily-question" data-question="${esc(data.question)}">去思考流回答 →</button>
+        </div>
+      `:""}
+      <div class="dpc-section dpc-actions">
+        ${undone>0?`<button class="dpc-btn warn" data-nav="home">📝 ${undone} 项待办</button>`:""}
+        ${dueCards>0?`<button class="dpc-btn warm" data-nav="spaced">🧠 ${dueCards} 张待复习</button>`:""}
+        ${data.generated===false?`<button class="dpc-btn" data-mod-action="refresh-daily-push">🔄 重新生成</button>`:""}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* 在 viewHome 中调用的包装函数 */
+function dailyPushCard(){
+  const data=getDailyPush();
+  return dailyPushCardHTML(data);
+}
+
+/* ============== 模块动作注册 ============== */
+MODULE_ACTIONS["toggle-daily-push"]=function(){
+  const today=fmtDate(new Date());
+  const key="daily_push_expanded_"+today;
+  const was=localStorage.getItem(key)==="1";
+  localStorage.setItem(key,was?"0":"1");
+  // 局部更新展开状态
+  const body=document.querySelector(".dpc-body");
+  if(body)body.classList.toggle("expanded",!was);
+  const arrow=document.querySelector(".dpc-arrow");
+  if(arrow)arrow.textContent=was?"▼":"▲";
+};
+MODULE_ACTIONS["answer-daily-question"]=function(t){
+  const q=t.dataset.question;
+  activeNav="reflect";
+  render();
+  setTimeout(()=>{
+    const inp=document.getElementById("reflInput");
+    if(inp){inp.value=q;inp.focus();}
+  },200);
+};
+MODULE_ACTIONS["refresh-daily-push"]=function(){
+  const today=fmtDate(new Date());
+  const cacheKey="daily_push_"+today;
+  localStorage.removeItem(cacheKey);
+  _dailyPushCache=null;
+  const card=document.getElementById("dailyPushCard");
+  if(card){
+    card.innerHTML=`<div class="dpc-header"><div class="dpc-title"><span class="dpc-icon">📰</span><span class="dpc-label">正在生成…</span></div></div>`;
+  }
+  aiGenerateDailyPush(today,cacheKey).then(data=>{
+    if(data){
+      _dailyPushCache=data;
+      const c=document.getElementById("dailyPushCard");
+      if(c)c.outerHTML=dailyPushCardHTML(data);
+    }else{
+      const c=document.getElementById("dailyPushCard");
+      if(c)c.outerHTML=dailyPushCardHTML(fallbackDailyPush());
+    }
+  });
+};
+
+/* ============== 小鹿学习提醒扩展 ============== */
+/* 在 deerReminders 中添加推送摘要（通过 monkey-patch 方式追加） */
+(function(){
+  const _origDeerReminders=deerReminders;
+  deerReminders=function(){
+    _origDeerReminders();
+    try{
+      const h=new Date().getHours();
+      const today=fmtDate(new Date());
+      if(h>=8&&h<10&&!localStorage.getItem("deer_said_push_morning_"+today)){
+        const data=getDailyPush();
+        if(data&&data.news&&data.news[0]){
+          deerBubble("📰 今日推送已更新："+data.news[0].title.slice(0,15)+"…",6000);
+          localStorage.setItem("deer_said_push_morning_"+today,"1");
+        }
+      }else if(h>=19&&h<21&&!localStorage.getItem("deer_said_push_evening_"+today)){
+        const data=getDailyPush();
+        if(data&&data.question){
+          deerBubble("💡 今天的每日一问还没回答哦~",5000);
+          localStorage.setItem("deer_said_push_evening_"+today,"1");
+        }
+      }
+    }catch(e){}
+  };
 })();
 </script>
 
