@@ -41,23 +41,6 @@ try{
   if(m)m.setAttribute("content",bg);
 }catch(e){}
 </script>
-<script>
-/* 强制检查 Service Worker 更新：发现新版本立即激活 */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./service-worker.js').then(function(reg){
-    reg.addEventListener('updatefound', function(){
-      var newWorker = reg.installing;
-      newWorker.addEventListener('statechange', function(){
-        if(newWorker.state === 'activated'){
-          if(confirm('人生工作台已更新到新版，是否立即刷新？')){
-            location.reload();
-          }
-        }
-      });
-    });
-  }).catch(function(){});
-}
-</script>
 <title>鹿7铭 · 人生工作台</title>
 <style>
 /* 防刷新白边：在 CSS 变量加载前就铺好背景 */
@@ -12104,21 +12087,29 @@ function initEnhancements(){
 /* ═══════════ [JS 6.2] 启动 init() ═══════════ */
 /* ============== 启动 ============== */
 async function init(){
+ window.__initStage="init start";
  try{
   // 请求持久化存储权限，防止浏览器自动清理 localStorage（保险库数据等）
+  window.__initStage="persist";
   try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().then(()=>{}).catch(()=>{});}}catch(e){}
+  window.__initStage="ttsInit";
   ttsInit();
   // 绑定 TTS 切换按钮
+  window.__initStage="bindTTS";
   const _ttsBtn=document.getElementById("ttsToggleBtn");
   if(_ttsBtn)_ttsBtn.addEventListener("click",ttsToggle);
+  window.__initStage="load";
   load();
   // 打开 IndexedDB 并尝试恢复（如果 localStorage 丢失）
+  window.__initStage="openIDB";
   await openIDB();
+  window.__initStage="restoreIDB";
   if(idbDB && !localStorage.getItem(STORE_KEY)){
     const restored=await tryRestoreFromIDB();
     if(restored)toast("已从 IndexedDB 恢复数据");
   }
   // 保险库数据恢复：如果 localStorage 里的 vault 键丢失，从 IndexedDB 恢复
+  window.__initStage="restoreVault";
   if(idbDB){
     try{
       const vHash=localStorage.getItem(VAULT_HASH_KEY);
@@ -12147,40 +12138,59 @@ async function init(){
       }
     }catch(e){console.error("[vault/ai] 恢复失败",e);}
   }
+  window.__initStage="restoreBg";
   // 从 IndexedDB 恢复背景图 base64（已移出 localStorage 以扩容）
   await restoreBgImages();
   // 修补可能缺失的倒计时默认
+  window.__initStage="countdowns";
   if(!state.countdowns||state.countdowns.length===0){
    state.countdowns=[
     {id:"cd1",name:"本周复盘（每周六）",date:nextSaturdayISO(),createdAt:Date.now()},
     {id:"cd2",name:"2027 年",date:"2027-01-01",createdAt:Date.now()}
    ];
   }
+  window.__initStage="applyTheme";
   applyTheme();
+  window.__initStage="render";
   render();
+  window.__initStage="bind";
   bind();
+  window.__initStage="bindBg";
   bindBgControls();
+  window.__initStage="bindDeer";
   bindDeer();
   // 初始化依赖 body 末尾 DOM 的弹窗/面板（必须在 DOMContentLoaded 后）
+  window.__initStage="initChallengeForm";
   try{initChallengeForm();}catch(e){console.error("initChallengeForm 失败",e);}
+  window.__initStage="initDailyPhoto";
   try{initDailyPhoto();}catch(e){console.error("initDailyPhoto 失败",e);}
+  window.__initStage="initQuickPanel";
   try{initQuickPanel();}catch(e){console.error("initQuickPanel 失败",e);}
+  window.__initStage="bindAI";
   try{bindAI();}catch(e){console.error("bindAI 失败",e);}
   // #116/#108 体验增强：手势系统 + 全屏按钮绑定
+  window.__initStage="initGestures";
   try{initGestures();}catch(e){console.error("initGestures 失败",e);}
+  window.__initStage="initEnhancements";
   try{initEnhancements();}catch(e){console.error("initEnhancements 失败",e);}
   // 初始化生命之树
+  window.__initStage="updateTreeData";
   updateTreeData();
   // 初始化闹钟检查
+  window.__initStage="initAlarms";
   initAlarms();
+  window.__initStage="restoreSoundTimer";
   restoreSoundTimer();
   // 异步加载单词本
+  window.__initStage="loadWords";
   loadWords();
   // 初始化推送提醒
+  window.__initStage="registerTimers";
   setTimeout(()=>{try{initNotifications();}catch(e){}},2000);
   // 初始化每日推送（异步不阻塞）
   setTimeout(()=>{try{getDailyPush();}catch(e){}},1000);
   // 恢复休息模式（若上次开启）
+  window.__initStage="applyRestMode";
   applyRestMode();
   // 异步获取天气（不阻塞渲染）
   setTimeout(()=>{try{fetchWeather().then(w=>{if(w)render();});}catch(e){}},1500);
@@ -12548,8 +12558,9 @@ window.addEventListener("error",function(e){
  const m=(e&&(e.message||(e.error&&e.error.message)))||"未知错误";
  const where=(e&&e.filename?" · "+e.filename+":"+e.lineno+":"+e.colno:"");
  const stack=(e&&e.error&&e.error.stack)?"\n\nStack:\n"+e.error.stack.slice(0,500):"";
+ const stage=window.__initStage?"\nStage: "+window.__initStage:"";
  console.error("[window.onerror]",m,where,stack,e);
- if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+esc(stack)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
+ if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+esc(stack)+esc(stage)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
 });
 window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
