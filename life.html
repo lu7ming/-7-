@@ -9965,6 +9965,8 @@ async function vaultSavePassword(gestureArr){
   const key=await vaultDeriveKey(gestureStr,salt);
   const enc=await vaultEncrypt([],key);
   localStorage.setItem(VAULT_DATA_KEY,enc);
+  // 同步备份到 IndexedDB（防止浏览器自动清理 localStorage）
+  try{idbSet("vault_hash",hash);idbSet("vault_salt",btoa(String.fromCharCode(...salt)));idbSet("vault_data",enc);}catch(e){}
 }
 /* 解锁：画手势 → 校验哈希 → 解密密钥列表 */
 function vaultUnlock(){
@@ -10042,6 +10044,8 @@ async function vaultPersist(items){
   if(!window.__vaultKey){toast("保险柜未解锁");return;}
   const enc=await vaultEncrypt(items,window.__vaultKey);
   localStorage.setItem(VAULT_DATA_KEY,enc);
+  // 同步备份到 IndexedDB（防止浏览器自动清理 localStorage）
+  try{idbSet("vault_data",enc);}catch(e){}
 }
 /* 修改 vaultUnlock：解锁后把 key 存到 window.__vaultKey 供后续加密用 */
 
@@ -12082,6 +12086,8 @@ function initEnhancements(){
 /* ============== 启动 ============== */
 async function init(){
  try{
+  // 请求持久化存储权限，防止浏览器自动清理 localStorage（保险库数据等）
+  try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().then(()=>{}).catch(()=>{});}}catch(e){}
   ttsInit();
   // 绑定 TTS 切换按钮
   const _ttsBtn=document.getElementById("ttsToggleBtn");
@@ -12092,6 +12098,35 @@ async function init(){
   if(idbDB && !localStorage.getItem(STORE_KEY)){
     const restored=await tryRestoreFromIDB();
     if(restored)toast("已从 IndexedDB 恢复数据");
+  }
+  // 保险库数据恢复：如果 localStorage 里的 vault 键丢失，从 IndexedDB 恢复
+  if(idbDB){
+    try{
+      const vHash=localStorage.getItem(VAULT_HASH_KEY);
+      if(!vHash){
+        const bkHash=await idbGet("vault_hash");
+        const bkSalt=await idbGet("vault_salt");
+        const bkData=await idbGet("vault_data");
+        if(bkHash&&bkSalt&&bkData){
+          localStorage.setItem(VAULT_HASH_KEY,bkHash);
+          localStorage.setItem(VAULT_SALT_KEY,bkSalt);
+          localStorage.setItem(VAULT_DATA_KEY,bkData);
+          console.log("[vault] 已从 IndexedDB 恢复保险库数据");
+        }
+      }
+      // DeepSeek API Key 恢复
+      if(!localStorage.getItem("ai_deepseek_key")){
+        const bkKey=await idbGet("ai_deepseek_key");
+        if(bkKey){
+          localStorage.setItem("ai_deepseek_key",bkKey);
+          DEEPSEEK_KEY=bkKey;
+          console.log("[ai] 已从 IndexedDB 恢复 DeepSeek API Key");
+        }
+      }else{
+        // localStorage 有 key，同步到全局变量（确保 init 后 DEEPSEEK_KEY 不为空）
+        DEEPSEEK_KEY=localStorage.getItem("ai_deepseek_key");
+      }
+    }catch(e){console.error("[vault/ai] 恢复失败",e);}
   }
   // 从 IndexedDB 恢复背景图 base64（已移出 localStorage 以扩容）
   await restoreBgImages();
@@ -12798,6 +12833,7 @@ async function aiSend(text){
     if(newKey&&newKey.trim()){
       DEEPSEEK_KEY=newKey.trim();
       localStorage.setItem("ai_deepseek_key",DEEPSEEK_KEY);
+      try{idbSet("ai_deepseek_key",DEEPSEEK_KEY);}catch(e){}
       aiAddMsg("bot","✅ key 已保存，刷新也不丢失。可以问我任何事了～");
     }else{
       aiAddMsg("bot","好的，需要时随时说「配置 key」");
@@ -13092,6 +13128,8 @@ let _dailyPushCache=null;
 function getDailyPush(){
   const today=fmtDate(new Date());
   const cacheKey="daily_push_"+today;
+  // 0. 重新读取 key（防止 init() 中从 IndexedDB 恢复后全局变量未同步）
+  DEEPSEEK_KEY=localStorage.getItem("ai_deepseek_key")||DEEPSEEK_KEY||"";
   // 1. 读缓存
   try{
     const cached=localStorage.getItem(cacheKey);
