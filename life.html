@@ -14768,6 +14768,43 @@ window.openPhotoCapture=openPhotoCapture;
 window.openPhotoView=openPhotoView;
 window.applyScene=applyScene;
 window.restoreSnapshot=restoreSnapshot;
+window.goNav=goNav;
+/* 挑战表单内联按钮用的全局包装 */
+window.applyChallengePreset=function(preset){
+  const parts=preset.split("|");
+  document.getElementById("challengeTitleInput").value=parts[0]||"";
+  document.getElementById("challengeDescInput").value=parts[1]||"";
+  document.getElementById("challengeTargetInput").value=parts[2]||"7";
+  document.getElementById("challengeUnitInput").value=parts[3]||"天";
+};
+window.saveChallengeForm=function(){
+  const title=document.getElementById("challengeTitleInput").value.trim();
+  if(!title){toast("请输入挑战名称");return;}
+  const desc=document.getElementById("challengeDescInput").value.trim();
+  const target=parseInt(document.getElementById("challengeTargetInput").value)||7;
+  const unit=document.getElementById("challengeUnitInput").value.trim()||"天";
+  createChallenge(title,desc,target,unit);
+  closeChallengeForm();
+};
+/* 每日一拍内联按钮用的全局包装 */
+window.closePhotoCapture=closePhotoCapture;
+window.selectPhotoMood=function(btn,mood){
+  document.querySelectorAll(".photo-mood-btn").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  window.__photoMood=mood;
+};
+window.saveDailyPhotoForm=function(){
+  const preview=document.getElementById("photoPreview");
+  if(!preview.src||!preview.classList.contains("has-photo")){toast("请先拍照或选择照片");return;}
+  const today=fmtDate(new Date());
+  const photos=getDailyPhotos();
+  photos[today]={dataUrl:preview.src,mood:window.__photoMood||"",note:document.getElementById("photoNoteInput").value.trim(),ts:Date.now()};
+  saveDailyPhotos(photos);
+  closePhotoCapture();
+  toast("今日照片已保存 📸");
+  const card=document.querySelector(".daily-photo-card");
+  if(card)card.outerHTML=dailyPhotoCardHTML();
+};
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
@@ -14821,14 +14858,14 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   </div>
 </div>
 <!-- 挑战模式创建表单 -->
-<div class="challenge-form-overlay" id="challengeFormOverlay">
+<div class="challenge-form-overlay" id="challengeFormOverlay" onclick="if(event.target===this)closeChallengeForm()">
   <div class="challenge-form">
     <h3>🏆 创建挑战</h3>
     <div class="challenge-presets" id="challengePresets">
-      <button class="challenge-preset" data-preset="早睡7天|连续7天23点前入睡|7|天">🌙 早睡7天</button>
-      <button class="challenge-preset" data-preset="阅读5本|读完5本书|5|本">📚 阅读5本</button>
-      <button class="challenge-preset" data-preset="运动30天|坚持运动30天|30|天">💪 运动30天</button>
-      <button class="challenge-preset" data-preset="冥想21天|每日冥想21天|21|天">🧘 冥想21天</button>
+      <button class="challenge-preset" data-preset="早睡7天|连续7天23点前入睡|7|天" onclick="applyChallengePreset(this.dataset.preset)">🌙 早睡7天</button>
+      <button class="challenge-preset" data-preset="阅读5本|读完5本书|5|本" onclick="applyChallengePreset(this.dataset.preset)">📚 阅读5本</button>
+      <button class="challenge-preset" data-preset="运动30天|坚持运动30天|30|天" onclick="applyChallengePreset(this.dataset.preset)">💪 运动30天</button>
+      <button class="challenge-preset" data-preset="冥想21天|每日冥想21天|21|天" onclick="applyChallengePreset(this.dataset.preset)">🧘 冥想21天</button>
     </div>
     <input type="text" id="challengeTitleInput" placeholder="挑战名称">
     <textarea id="challengeDescInput" rows="2" placeholder="描述（可选）"></textarea>
@@ -14837,28 +14874,28 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
       <input type="text" id="challengeUnitInput" placeholder="单位（天/次/本）" value="天">
     </div>
     <div class="challenge-form-actions">
-      <button class="btn btn-ghost" id="challengeFormCancel">取消</button>
-      <button class="btn btn-primary" id="challengeFormSave">创建</button>
+      <button class="btn btn-ghost" id="challengeFormCancel" onclick="closeChallengeForm()">取消</button>
+      <button class="btn btn-primary" id="challengeFormSave" onclick="saveChallengeForm()">创建</button>
     </div>
   </div>
 </div>
 <!-- 每日一拍弹窗 -->
-<div class="photo-capture-overlay" id="photoCaptureOverlay">
+<div class="photo-capture-overlay" id="photoCaptureOverlay" onclick="if(event.target===this)closePhotoCapture()">
   <div class="photo-capture-dialog">
     <h3>📸 每日一拍</h3>
     <img class="photo-preview" id="photoPreview" alt="预览">
     <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none">
     <div class="photo-mood-row" id="photoMoodRow">
-      <button class="photo-mood-btn" data-mood="happy">😊</button>
-      <button class="photo-mood-btn" data-mood="calm">😌</button>
-      <button class="photo-mood-btn" data-mood="tired">😫</button>
-      <button class="photo-mood-btn" data-mood="excited">🤩</button>
-      <button class="photo-mood-btn" data-mood="grateful">🙏</button>
+      <button class="photo-mood-btn" data-mood="happy" onclick="selectPhotoMood(this,'happy')">😊</button>
+      <button class="photo-mood-btn" data-mood="calm" onclick="selectPhotoMood(this,'calm')">😌</button>
+      <button class="photo-mood-btn" data-mood="tired" onclick="selectPhotoMood(this,'tired')">😫</button>
+      <button class="photo-mood-btn" data-mood="excited" onclick="selectPhotoMood(this,'excited')">🤩</button>
+      <button class="photo-mood-btn" data-mood="grateful" onclick="selectPhotoMood(this,'grateful')">🙏</button>
     </div>
     <textarea class="photo-note-input" id="photoNoteInput" rows="2" placeholder="写一句话记录此刻…"></textarea>
     <div class="photo-capture-actions">
-      <button class="btn btn-ghost" id="photoCancelBtn">取消</button>
-      <button class="btn btn-primary" id="photoSaveBtn">保存</button>
+      <button class="btn btn-ghost" id="photoCancelBtn" onclick="closePhotoCapture()">取消</button>
+      <button class="btn btn-primary" id="photoSaveBtn" onclick="saveDailyPhotoForm()">保存</button>
     </div>
   </div>
 </div>
