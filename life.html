@@ -13673,66 +13673,6 @@ function openPhotoView(dateKey){
   if(!p||!p.dataUrl)return;
   const w=window.open("","_blank","width=500,height=600");
   w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><img src="${p.dataUrl}" style="max-width:100%;max-height:80vh;border-radius:12px"><p style="color:#fff;margin-top:12px">${dateKey} ${p.mood||''} ${p.note||''}</p></div>
-<script>
-/* ═══════ iOS PWA 底部横条修复 (P2 JS 兜底) ═══════ */
-(function(){
-  var isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if (!isStandalone) return;
-
-  /* ── MOD 8: PWA 冷启动 env() 重新探测 ── */
-  function measureEnv(prop) {
-    var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(' + prop + ', 0px);visibility:hidden;pointer-events:none';
-    document.body.appendChild(el);
-    var val = el.offsetHeight;
-    el.remove();
-    return val;
-  }
-
-  var viewportMeta = document.querySelector('meta[name="viewport"]');
-  if (viewportMeta) {
-    var originalContent = viewportMeta.getAttribute('content');
-    if (originalContent && originalContent.indexOf('viewport-fit=cover') !== -1) {
-      viewportMeta.setAttribute('content', originalContent.replace('viewport-fit=cover', 'viewport-fit=auto'));
-      requestAnimationFrame(function() {
-        viewportMeta.setAttribute('content', originalContent);
-        requestAnimationFrame(function() {
-          var topInset = measureEnv('safe-area-inset-top');
-          var bottomInset = measureEnv('safe-area-inset-bottom');
-          document.documentElement.style.setProperty('--measured-top', topInset + 'px');
-          document.documentElement.style.setProperty('--measured-bottom', bottomInset + 'px');
-        });
-      });
-    }
-  }
-
-  /* ── MOD 9: 键盘收起后视口修复 ── */
-  var maxVH = window.innerHeight;
-
-  window.addEventListener('resize', function() {
-    maxVH = Math.max(maxVH, window.innerHeight);
-  });
-
-  function healViewport() {
-    if (maxVH - window.innerHeight <= 4) return;
-    var app = document.querySelector('.app');
-    if (!app) return;
-    var scroller = document.querySelector('.scroll');
-    var st = scroller ? scroller.scrollTop : 0;
-    app.style.display = 'none';
-    void app.offsetHeight;
-    app.style.display = '';
-    if (scroller) scroller.scrollTop = st;
-  }
-
-  document.addEventListener('blur', function(e) {
-    var tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) {
-      setTimeout(healViewport, 140);
-    }
-  }, true);
-})();
-</script>
 </body></html>`);
 }
 
@@ -15071,5 +15011,66 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   </div>
 </div>
 <button class="tts-toggle-btn" id="ttsToggleBtn" title="小鹿语音开关">🔇</button>
+<!-- iOS PWA 底部横条修复 (P2 JS 兜底) -->
+<script>
+(function(){
+  var isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if (!isStandalone) return;
+
+  /* ── MOD 8: PWA 冷启动 env() 重新探测 ── */
+  function measureEnv(prop) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(' + prop + ', 0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(el);
+    var val = el.offsetHeight;
+    el.remove();
+    return val;
+  }
+
+  var viewportMeta = document.querySelector('meta[name="viewport"]');
+  if (viewportMeta) {
+    var originalContent = viewportMeta.getAttribute('content');
+    if (originalContent && originalContent.indexOf('viewport-fit=cover') !== -1) {
+      viewportMeta.setAttribute('content', originalContent.replace('viewport-fit=cover', 'viewport-fit=auto'));
+      requestAnimationFrame(function() {
+        viewportMeta.setAttribute('content', originalContent);
+        requestAnimationFrame(function() {
+          var topInset = measureEnv('safe-area-inset-top');
+          var bottomInset = measureEnv('safe-area-inset-bottom');
+          document.documentElement.style.setProperty('--measured-top', topInset + 'px');
+          document.documentElement.style.setProperty('--measured-bottom', bottomInset + 'px');
+        });
+      });
+    }
+  }
+
+  /* ── MOD 9: 键盘收起后视口修复 ── */
+  var maxVH = window.innerHeight;
+
+  window.addEventListener('resize', function() {
+    maxVH = Math.max(maxVH, window.innerHeight);
+  });
+
+  function healViewport() {
+    if (maxVH - window.innerHeight <= 4) return;
+    var app = document.querySelector('.app');
+    if (!app) return;
+    var scroller = document.querySelector('.scroll');
+    var st = scroller ? scroller.scrollTop : 0;
+    app.style.display = 'none';
+    void app.offsetHeight;
+    app.style.display = '';
+    if (scroller) scroller.scrollTop = st;
+  }
+
+  document.addEventListener('blur', function(e) {
+    var tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) {
+      setTimeout(healViewport, 140);
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
