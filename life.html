@@ -12103,6 +12103,7 @@ async function init(){
   try{initChallengeForm();}catch(e){console.error("initChallengeForm 失败",e);}
   try{initDailyPhoto();}catch(e){console.error("initDailyPhoto 失败",e);}
   try{initQuickPanel();}catch(e){console.error("initQuickPanel 失败",e);}
+  try{bindAI();}catch(e){console.error("bindAI 失败",e);}
   // #116/#108 体验增强：手势系统 + 全屏按钮绑定
   try{initGestures();}catch(e){console.error("initGestures 失败",e);}
   try{initEnhancements();}catch(e){console.error("initEnhancements 失败",e);}
@@ -12931,39 +12932,37 @@ function openAIPanel(){
 }
 
 // 绑定 AI 面板事件
-(function bindAI(){
-  function ready(fn){if(document.readyState!=='loading')fn();else document.addEventListener('DOMContentLoaded',fn);}
-  ready(()=>{
-    const panel=document.getElementById("aiPanel");
-    const close=document.getElementById("aiClose");
-    const sendBtn=document.getElementById("aiSendBtn");
-    const micBtn=document.getElementById("aiMicBtn");
-    const input=document.getElementById("aiInput");
-    if(close)close.onclick=()=>{
-      if(panel)panel.classList.remove("open");
-      const fab=document.getElementById("quickCaptureBtn");
-      if(fab)fab.style.display="";
-    };
-    if(sendBtn)sendBtn.onclick=window.__aiSend;
-    if(micBtn)micBtn.onclick=toggleAISpeech;
-    // 自动高度
-    if(input)input.oninput=function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,100)+"px";};
-    // 快捷问题
-    document.querySelectorAll("[data-ai-q]").forEach(b=>{
-      b.onclick=()=>aiSend(b.dataset.aiQ);
-    });
-    // Tab 切换 + 面板内动作（事件委托，兼容动态渲染的按钮）
-    if(panel)panel.addEventListener("click",e=>{
-      const tab=e.target.closest("[data-ai-tab]");
-      if(tab){aiSwitchTab(tab.dataset.aiTab);return;}
-      const act=e.target.closest("[data-ai-act]");
-      if(act){
-        if(act.dataset.aiAct==="gen-report")aiGenReportUI();
-        else if(act.dataset.aiAct==="gen-insight")aiGenInsightUI();
-      }
-    });
+function bindAI(){
+  if(bindAI._bound)return;bindAI._bound=true;
+  const panel=document.getElementById("aiPanel");
+  const close=document.getElementById("aiClose");
+  const sendBtn=document.getElementById("aiSendBtn");
+  const micBtn=document.getElementById("aiMicBtn");
+  const input=document.getElementById("aiInput");
+  if(close)close.onclick=()=>{
+    if(panel)panel.classList.remove("open");
+    const fab=document.getElementById("quickCaptureBtn");
+    if(fab)fab.style.display="";
+  };
+  if(sendBtn)sendBtn.onclick=window.__aiSend;
+  if(micBtn)micBtn.onclick=toggleAISpeech;
+  // 自动高度
+  if(input)input.oninput=function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,100)+"px";};
+  // 快捷问题
+  document.querySelectorAll("[data-ai-q]").forEach(b=>{
+    b.onclick=()=>aiSend(b.dataset.aiQ);
   });
-})();
+  // Tab 切换 + 面板内动作（事件委托，兼容动态渲染的按钮）
+  if(panel)panel.addEventListener("click",e=>{
+    const tab=e.target.closest("[data-ai-tab]");
+    if(tab){aiSwitchTab(tab.dataset.aiTab);return;}
+    const act=e.target.closest("[data-ai-act]");
+    if(act){
+      if(act.dataset.aiAct==="gen-report")aiGenReportUI();
+      else if(act.dataset.aiAct==="gen-insight")aiGenInsightUI();
+    }
+  });
+}
 
 /* ═══════════ [JS 6.8] 快捷指令面板 ═══════════ */
 function initQuickPanel(){
