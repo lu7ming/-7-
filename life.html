@@ -10454,14 +10454,19 @@ function startRestClock(){
 }
 function stopRestClock(){if(restClockTimer)clearInterval(restClockTimer);restClockTimer=null;}
 function applyRestMode(){
-  const on=!!settings.restMode;
-  document.body.classList.toggle("rest-mode",on);
-  const amb=document.getElementById("restAmbient");if(amb)amb.style.display=on?"block":"none";
-  const panel=document.getElementById("restPanel");if(panel)panel.classList.toggle("hidden",!on);
-  const rl=document.getElementById("restLine");if(rl)rl.textContent=on?restLineToday():"";
-  if(amb)amb.classList.toggle("xmas-on",!!settings.restXmas);
-  const btn=document.getElementById("restBtn");if(btn)btn.style.opacity=on?"1":"0.55";
-  if(on){startSnow();startRestClock();}else{stopSnow();stopRestClock();}
+  try{
+    const on=!!settings.restMode;
+    document.body.classList.toggle("rest-mode",on);
+    const amb=document.getElementById("restAmbient");if(amb)amb.style.display=on?"block":"none";
+    const panel=document.getElementById("restPanel");if(panel)panel.classList.toggle("hidden",!on);
+    const rl=document.getElementById("restLine");if(rl)rl.textContent=on?restLineToday():"";
+    if(amb)amb.classList.toggle("xmas-on",!!settings.restXmas);
+    const btn=document.getElementById("restBtn");if(btn)btn.style.opacity=on?"1":"0.55";
+    if(on){startSnow();startRestClock();}else{stopSnow();stopRestClock();}
+  }catch(e){
+    console.error("[applyRestMode] 出错",e);
+    // 休息模式不影响核心功能，静默降级
+  }
 }
 function toggleRest(){
   settings.restMode=!settings.restMode;saveSettings();applyRestMode();
@@ -12192,18 +12197,25 @@ async function init(){
   // 恢复休息模式（若上次开启）
   window.__initStage="applyRestMode";
   applyRestMode();
+  window.__initStage="afterRestMode";
   // 异步获取天气（不阻塞渲染）
   setTimeout(()=>{try{fetchWeather().then(w=>{if(w)render();});}catch(e){}},1500);
+  window.__initStage="tmRegister";
   // 每分钟刷新一次问候/连续打卡
   tmRegister("renderTop", renderTop, 60000);
+  window.__initStage="themeAuto";
   // 自动暗色模式：每小时检查一次
   settings.themeAuto=settings.themeAuto!==false;
+  window.__initStage="autoThemeTimer";
   setTimeout(()=>{try{autoThemeByTime();}catch(e){}},3000);
   tmRegister("autoTheme", autoThemeByTime, 3600000);
+  window.__initStage="backupCheck";
   // 启动时检查是否需要自动备份
   setTimeout(()=>{try{autoBackupCheck();}catch(e){}},3000);
+  window.__initStage="cloudPull";
   // 自动云同步：启动后拉取云端（若已开启自动同步）
   setTimeout(()=>{try{cloudAutoPull();}catch(e){}},4000);
+  window.__initStage="registerSW";
  // 注册 Service Worker（file:// 协议下不会注册，安全失败）
  if("serviceWorker" in navigator){
    try{
