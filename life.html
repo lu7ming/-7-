@@ -315,12 +315,7 @@ body::after{
 }
 .top-icon:hover{transform:translateY(-1px);box-shadow:var(--glass-shadow),var(--glass-inset);}
 .top-icon:active{transform:scale(.93);}
-/* 顶栏图标收纳 */
-.top-icons-wrap{position:relative;display:flex;align-items:center;gap:8px;}
-.top-more-btn{font-size:18px;font-weight:700;line-height:1;}
-.top-more-menu{display:none;position:fixed;top:auto;right:auto;flex-direction:column;gap:6px;padding:8px;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border:1px solid var(--glass-border);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:10000;}
-.top-more-menu.show{display:flex;animation:tmIn .15s ease;}
-@keyframes tmIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);contain:layout style;/* #143 隔离滚动容器重排 */}
 .scroll::-webkit-scrollbar{width:6px;}
 .scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
@@ -526,13 +521,13 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 .greet-deer.crown::after{content:"👑";position:absolute;top:-14px;right:12px;font-size:16px;}
 .greet-deer.glow{filter:drop-shadow(0 0 8px rgba(255,215,0,.7));}
 /* 全局小鹿：内联在顶部栏日期旁 */
-.deer-global{position:fixed;top:10px;left:248px;width:36px;height:36px;z-index:10000;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s;}
+.deer-global{position:relative;width:36px;height:36px;flex-shrink:0;margin-left:60px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s;}
 .deer-global:active{transform:scale(.9);}
 .deer-global svg{width:100%;height:100%;transition:transform .15s,opacity .15s;}
 .deer-global .deer-bubble{position:fixed;top:auto;bottom:auto;left:auto;right:auto;max-width:180px;z-index:10000;}
 .deer-global .deer-bubble::after{top:50%;transform:translateY(-50%);left:-5px;border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid #fff;border-left:none;}
 @media(max-width:768px){
-  .deer-global{top:8px;left:210px;width:32px;height:32px;}
+  .deer-global{width:30px;height:30px;}
   .deer-global .deer-bubble{max-width:140px;bottom:-38px;}
 }
 /* 聊天气泡 */
@@ -2292,23 +2287,18 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
         </div>
         <div id="saveIndicator" style="font-size:11px;color:var(--muted);opacity:0;transition:opacity 0.3s">已保存</div>
       </div>
-      <div class="top-icons-wrap">
-        <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
+      <div style="display:flex;gap:8px">
+        <button class="top-icon" data-top="tree" title="生命树 · 成长轨迹">🌳</button>
+        <button class="top-icon" data-top="search" title="搜索">🔍</button>
         <button class="top-icon" data-top="data" title="数据">💾</button>
+        <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
+        <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
+        <button class="top-icon" title="全屏沉浸" id="fullscreenBtn">⛶</button>
         <button class="top-icon" data-top="theme" title="主题" id="themeBtn">☀️</button>
-        <button class="top-icon top-more-btn" id="topMoreBtn" title="更多">⋯</button>
       </div>
     </div>
     <div class="scroll" id="scroll"></div>
   </div>
-
-<!-- 顶栏更多菜单(放在 body 层级避免被 .main 裁剪) -->
-<div class="top-more-menu" id="topMoreMenu">
-  <button class="top-icon" data-top="tree" title="生命树 · 成长轨迹">🌳</button>
-  <button class="top-icon" data-top="search" title="搜索">🔍</button>
-  <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
-  <button class="top-icon" title="全屏沉浸" id="fullscreenBtn">⛶</button>
-</div>
 
 <!-- Search modal -->
 <div class="overlay hidden" id="searchOverlay">
@@ -10381,27 +10371,6 @@ document.getElementById("restPanel").addEventListener("click",onClick);
  };
  document.getElementById("searchClose").onclick=closeSearch;
  document.getElementById("searchOverlay").onclick=e=>{if(e.target.id==="searchOverlay")closeSearch();};
- // 顶栏收纳菜单
- const _tmBtn=document.getElementById("topMoreBtn");
- const _tmMenu=document.getElementById("topMoreMenu");
- if(_tmBtn&&_tmMenu){
-   _tmBtn.onclick=(e)=>{
-     e.stopPropagation();
-     if(_tmMenu.classList.contains("show")){
-       _tmMenu.classList.remove("show");
-     }else{
-       // 动态定位到按钮正下方(按钮在 main 内,菜单在 body 层级,用 fixed)
-       const r=_tmBtn.getBoundingClientRect();
-       _tmMenu.style.top=(r.bottom+6)+"px";
-       _tmMenu.style.left=r.left+"px";
-       _tmMenu.style.right="auto";
-       _tmMenu.classList.add("show");
-     }
-   };
-   _tmMenu.addEventListener("click",(e)=>{e.stopPropagation();});
-   document.addEventListener("click",()=>_tmMenu.classList.remove("show"));
-   window.addEventListener("scroll",()=>_tmMenu.classList.remove("show"),{passive:true});
- }
  document.getElementById("searchInput").addEventListener("input",debounce(runSearch,150));
  document.getElementById("paletteClose").onclick=()=>document.getElementById("paletteOverlay").classList.add("hidden");
  document.getElementById("paletteOverlay").onclick=e=>{if(e.target.id==="paletteOverlay")e.target.classList.add("hidden");};
@@ -12246,33 +12215,12 @@ window.addEventListener("beforeunload", tmUnregisterAll);
 /* ============== 小鹿 AI 伙伴系统 ============== */
 function deerEl(){return document.getElementById("deerEl");}
 function deerSet(cls,ms){const el=deerEl();if(!el)return;el.classList.add(cls);if(ms)setTimeout(()=>el.classList.remove(cls),ms);}
-/* 聊天气泡 */
-let _bubbleTypeTimer=null;/* 打字机效果进行中的定时器，新气泡会取消它 */
+/* 聊天气泡（改用 toast 代替，避免定位问题） */
+let _bubbleTypeTimer=null;
 function deerBubble(msg,ms){
-  const el=deerEl();if(!el)return;
-  let b=el.querySelector(".deer-bubble");
-  if(!b){b=document.createElement("div");b.className="deer-bubble";el.appendChild(b);}
-  /* 气泡紧贴小鹿右侧，垂直居中对齐 */
-  const r=el.getBoundingClientRect();
-  b.style.top=r.top+"px";
-  b.style.left=(r.right+6)+"px";
-  b.style.right="auto";
-  b.style.bottom="auto";
-  if(_bubbleTypeTimer){clearTimeout(_bubbleTypeTimer);_bubbleTypeTimer=null;}
-  /* 纯前端"流式"打字机：较长文本逐字显现，短提示保持即时 */
-  if(msg&&msg.length>=10){
-    b.textContent="";b.classList.add("show");
-    let _i=0;const _sp=28;
-    const _step=()=>{
-      b.textContent=msg.slice(0,_i);_i++;
-      if(_i<=msg.length){_bubbleTypeTimer=setTimeout(_step,_sp);}
-      else{_bubbleTypeTimer=null;if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);}
-    };
-    _step();
-  }else{
-    b.textContent=msg;b.classList.add("show");
-    if(ms)setTimeout(()=>b.classList.remove("show"),ms||4000);
-  }
+  if(!msg)return;
+  if(typeof toast==="function")toast(msg);
+}
 }
 /* 鹿事件状态（闭包变量，不受 DOM 重建影响） */
 let _dpTimer=null,_dpFired=false,_dpStart=0,_dpX=0,_dpY=0;
