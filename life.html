@@ -187,7 +187,7 @@ body[data-theme="dark"][data-palette="lavender"]{
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
+  background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;overflow-x:hidden;max-width:100%;}
 html{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
 body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
 /* ================== 自定义背景图层 ================== */
@@ -303,6 +303,7 @@ body::after{
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
   flex-shrink:0;border-bottom:1px solid var(--glass-border);
   box-shadow:var(--glass-inset);
+  overflow:hidden;min-width:0;
 }
 .main-top .top-search{display:flex;align-items:center;gap:8px;}
 .top-icon{
@@ -316,7 +317,7 @@ body::after{
 .top-icon:hover{transform:translateY(-1px);box-shadow:var(--glass-shadow),var(--glass-inset);}
 .top-icon:active{transform:scale(.93);}
 
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);contain:layout style;/* #143 隔离滚动容器重排 */}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 22px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);contain:layout style;/* #143 隔离滚动容器重排 */}
 .scroll::-webkit-scrollbar{width:6px;}
 .scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
 
@@ -380,6 +381,7 @@ body::after{
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
   border-radius:var(--radius-lg);padding:18px;
   margin-bottom:14px;box-shadow:var(--glass-shadow),var(--glass-inset);
+  min-width:0;max-width:100%;
   contain:layout style; /* #143 渲染隔离：限制重排/重绘范围（不含 paint，避免裁剪玻璃阴影） */
 }
 .card.dark{background:var(--ink);color:var(--accent-ink);border-color:var(--ink);}
@@ -473,7 +475,7 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 
 /* ---- iPad panoramic layout ---- */
 @media(min-width:780px){
-.pano-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.pano-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0;}
    .pano-grid > .card{margin-bottom:0;}
    .pano-full{grid-column:1/-1;}
 }
@@ -541,7 +543,7 @@ body[data-theme="dark"] .focus-add input{background:rgba(255,255,255,.05);border
 @keyframes deerFlower{0%{opacity:0;transform:translateY(0) scale(.5)}50%{opacity:1;transform:translateY(-12px) scale(1.2)}100%{opacity:0;transform:translateY(-20px) scale(.8)}}
 
 /* ---- KPIs ---- */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;min-width:0;}
 .kpi{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);
   padding:14px 16px;box-shadow:var(--shadow-sm);
@@ -951,7 +953,7 @@ body[data-theme="dark"] .digest-card{background:linear-gradient(135deg,#3A3020,#
 @keyframes pulse-red{0%,100%{opacity:1;}50%{opacity:0.6;}}
 
 /* ---- 今日概览卡片 ---- */
-.overview-card{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:14px;align-items:center;padding:18px 22px;}
+.overview-card{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:14px;align-items:center;padding:18px 22px;min-width:0;}
 .overview-ring{width:72px;height:72px;position:relative;flex-shrink:0;}
 .overview-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
 .overview-ring .ring-bg{fill:none;stroke:var(--line);stroke-width:6;}
