@@ -13993,6 +13993,20 @@ const SCENE_PRESETS={
 function applyScene(sceneId){
   const scene=SCENE_PRESETS[sceneId];
   if(!scene){toast("未知场景");return;}
+  const today=fmtDate(new Date());
+  const currentScene=localStorage.getItem("current_scene_"+today)||"";
+
+  // 再点一次已选中的场景 = 关闭，恢复默认
+  if(currentScene===sceneId){
+    localStorage.removeItem("current_scene_"+today);
+    settings.pomoDuration=25*60;
+    settings.breakDuration=5*60;
+    save(true);
+    render();
+    deerBubble("已退出场景模式，恢复默认 25+5",4000);
+    toast("已退出场景模式");
+    return;
+  }
 
   // 切换导航
   activeNav=scene.nav;
@@ -14004,6 +14018,7 @@ function applyScene(sceneId){
     save(true);
   }
 
+  localStorage.setItem("current_scene_"+today,sceneId);
   render();
   deerBubble(`已切换到 ${scene.name} · ${scene.desc}`,5000);
   ttsSpeak(`已切换到${scene.name}`);
@@ -14013,9 +14028,9 @@ function applyScene(sceneId){
 function sceneCardHTML(){
   const today=fmtDate(new Date());
   const currentScene=localStorage.getItem("current_scene_"+today)||"";
-  let html=`<div class="card scene-card pano-full"><div class="suggest-title">⚡ 场景模式</div><div class="scene-grid">`;
+  let html=`<div class="card scene-card pano-full"><div class="suggest-title">⚡ 场景模式${currentScene?` <span style="font-size:11px;color:var(--ink-muted);font-weight:400">· 再点当前场景可退出</span>`:""}</div><div class="scene-grid">`;
   Object.entries(SCENE_PRESETS).forEach(([id,scene])=>{
-    html+=`<button class="scene-btn ${id===currentScene?"active":""}" onclick="applyScene('${id}');localStorage.setItem('current_scene_${today}','${id}');">${scene.name}<span class="scene-desc">${scene.desc}</span></button>`;
+    html+=`<button class="scene-btn ${id===currentScene?"active":""}" onclick="applyScene('${id}')">${scene.name}<span class="scene-desc">${scene.desc}</span></button>`;
   });
   html+=`</div></div>`;
   return html;
