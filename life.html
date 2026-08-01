@@ -13086,19 +13086,27 @@ function getDailyPush(){
     const cached=localStorage.getItem(cacheKey);
     if(cached){
       const data=JSON.parse(cached);
-      if(data&&data.news)return data;
+      if(data&&data.news){
+        console.log("[getDailyPush] 使用今日缓存");
+        return data;
+      }
     }
   }catch(e){}
   // 2. 异步调 AI（不阻塞渲染），返回后自动刷新卡片
   if(DEEPSEEK_KEY){
+    console.log("[getDailyPush] 有 API Key,异步调用 AI 生成...");
     aiGenerateDailyPush(today,cacheKey).then(data=>{
       if(data){
+        console.log("[getDailyPush] AI 生成成功,刷新卡片");
         _dailyPushCache=data;
-        // 局部刷新推送卡片
         const card=document.getElementById("dailyPushCard");
         if(card)card.outerHTML=dailyPushCardHTML(data);
+      }else{
+        console.warn("[getDailyPush] AI 生成返回 null,可能 Key 失效或额度用完");
       }
-    }).catch(()=>{});
+    }).catch((e)=>{console.warn("[getDailyPush] AI 调用失败:",e.message||e);});
+  }else{
+    console.log("[getDailyPush] 未配置 DeepSeek API Key,使用离线推送。请在 AI 面板中设置 Key。");
   }
   // 3. 返回兜底数据（AI 结果异步更新）
   return fallbackDailyPush();
