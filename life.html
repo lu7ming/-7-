@@ -1750,14 +1750,20 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
     display: none;
   }
   
-  /* ---- 主内容滚动区：控制最大宽度，提升可读性 ---- */
+  /* ---- 主内容滚动区：充分利用宽屏空间 ---- */
   .scroll {
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
     width: 100%;
     padding: 12px 28px 100px;
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
+  
+  /* ---- 宽屏下网格升级为 3 列 ---- */
+  .cal-row { grid-template-columns: repeat(3, 1fr); }
+  .pano-grid { grid-template-columns: repeat(3, 1fr); }
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .pano-full { grid-column: 1 / -1; }
   
   /* ---- 顶栏更舒适的间距 ---- */
   .main-top {
@@ -1791,9 +1797,9 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
     display: block;
   }
   
-  /* ---- KPI 网格：2列布局（保持合理密度）---- */
+  /* ---- KPI 网格：3列布局 ---- */
   .kpi-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
   }
   .kpi {
@@ -1803,15 +1809,15 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
     font-size: 32px;
   }
   
-  /* ---- 全景网格：2列（保持）---- */
+  /* ---- 全景网格：3列 ---- */
   .pano-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
   
-  /* ---- 日历行：2列 ---- */
+  /* ---- 日历行：3列 ---- */
   .cal-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
   
@@ -1821,9 +1827,9 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
     gap: 10px;
   }
   
-  /* ---- 年度回顾高亮：2列 ---- */
+  /* ---- 年度回顾高亮：3列 ---- */
   .yr-hl-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
   
@@ -1942,27 +1948,30 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
 .dp-replace-btn:hover{color:var(--warn);}
 /* ───────────── iPad 横屏优化 ───────────── */
 @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
-  .app{max-width:1100px;margin:0 auto;}
-  .main{max-width:780px;}
+  .app{max-width:100%;margin:0 auto;}
+  .main{max-width:100%;}
   .sidebar{width:220px;}
-  .grid{grid-template-columns:repeat(2,1fr);gap:12px;}
-  .cards{grid-template-columns:repeat(2,1fr);}
-  .pano-full{grid-column:span 2;}
+  .grid{grid-template-columns:repeat(3,1fr);gap:12px;}
+  .cards{grid-template-columns:repeat(3,1fr);}
+  .pano-full{grid-column:1/-1;}
   .kpi-row{flex-wrap:nowrap;gap:12px;}
   .kpi-card{min-width:140px;flex:1;}
   .greet-h{font-size:28px;}
   .mob-bar{display:none;}
   .scroll{padding:16px 20px;}
-  .hm-cell{width:48%;}
-  .daily-push-card .dpc-body{max-width:700px;}
+  .hm-cell{width:31%;}
+  .daily-push-card .dpc-body{max-width:100%;}
 }
 
 @media (min-width: 1367px) {
-  .app{max-width:1200px;margin:0 auto;}
-  .main{max-width:860px;}
-  .grid{grid-template-columns:repeat(3,1fr);}
-  .cards{grid-template-columns:repeat(2,1fr);}
-  .pano-full{grid-column:span 3;}
+  .app{max-width:100%;margin:0 auto;}
+  .main{max-width:100%;}
+  .grid{grid-template-columns:repeat(4,1fr);}
+  .cards{grid-template-columns:repeat(3,1fr);}
+  .pano-full{grid-column:1/-1;}
+  .cal-row{grid-template-columns:repeat(4,1fr);}
+  .pano-grid{grid-template-columns:repeat(4,1fr);}
+  .kpi-grid{grid-template-columns:repeat(4,1fr);}
 }
 /* ───────────── 每日一拍 ───────────── */
 .daily-photo-card{margin:10px 0;}
