@@ -12099,6 +12099,10 @@ async function init(){
   bind();
   bindBgControls();
   bindDeer();
+  // 初始化依赖 body 末尾 DOM 的弹窗/面板（必须在 DOMContentLoaded 后）
+  try{initChallengeForm();}catch(e){console.error("initChallengeForm 失败",e);}
+  try{initDailyPhoto();}catch(e){console.error("initDailyPhoto 失败",e);}
+  try{initQuickPanel();}catch(e){console.error("initQuickPanel 失败",e);}
   // #116/#108 体验增强：手势系统 + 全屏按钮绑定
   try{initGestures();}catch(e){console.error("initGestures 失败",e);}
   try{initEnhancements();}catch(e){console.error("initEnhancements 失败",e);}
@@ -12962,25 +12966,26 @@ function openAIPanel(){
 })();
 
 /* ═══════════ [JS 6.8] 快捷指令面板 ═══════════ */
-(function initQuickPanel(){
+function initQuickPanel(){
+  if(initQuickPanel._bound)return;initQuickPanel._bound=true;
   const overlay=document.getElementById("quickPanelOverlay");
   const closeBtn=document.getElementById("quickPanelClose");
   if(!overlay)return;
-  
+
   function open(){overlay.classList.add("show");}
   function close(){overlay.classList.remove("show");}
-  
+
   // 双击空白区域触发
   document.addEventListener("dblclick",function(e){
     const t=e.target;
     if(t.closest("button")||t.closest("input")||t.closest("textarea")||t.closest("select")||t.closest("a")||t.closest(".card")||t.closest(".quick-panel"))return;
     open();
   });
-  
+
   overlay.addEventListener("click",function(e){if(e.target===overlay)close();});
   closeBtn.addEventListener("click",close);
   document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
-  
+
   // 按钮动作
   overlay.querySelectorAll("[data-qp-action]").forEach(btn=>{
     btn.addEventListener("click",function(){
@@ -12998,7 +13003,7 @@ function openAIPanel(){
       },150);
     });
   });
-})();
+}
 
 /* ═══════════ [JS 6.5] 每日推送系统（AI生成+缓存+兜底） ═══════════ */
 /* ============== 兜底数据：AI 不可用时使用 ============== */
@@ -13576,7 +13581,8 @@ function openPhotoView(dateKey){
 }
 
 // 初始化每日一拍事件绑定
-(function initDailyPhoto(){
+function initDailyPhoto(){
+  if(initDailyPhoto._bound)return;initDailyPhoto._bound=true;
   const fileInput=document.getElementById("photoFileInput");
   const overlay=document.getElementById("photoCaptureOverlay");
   const preview=document.getElementById("photoPreview");
@@ -13584,11 +13590,11 @@ function openPhotoView(dateKey){
   const cancelBtn=document.getElementById("photoCancelBtn");
   const saveBtn=document.getElementById("photoSaveBtn");
   const moodBtns=document.querySelectorAll(".photo-mood-btn");
-  
+
   if(!fileInput)return;
-  
+
   let currentDataUrl=null,currentMood="";
-  
+
   fileInput.addEventListener("change",async function(){
     const file=this.files[0];
     if(!file)return;
@@ -13599,13 +13605,13 @@ function openPhotoView(dateKey){
       preview.classList.add("has-photo");
     }catch(e){toast("图片处理失败");}
   });
-  
+
   overlay.addEventListener("click",function(e){
     if(e.target===overlay)closePhotoCapture();
   });
-  
+
   cancelBtn.addEventListener("click",closePhotoCapture);
-  
+
   moodBtns.forEach(b=>{
     b.addEventListener("click",function(){
       moodBtns.forEach(x=>x.classList.remove("selected"));
@@ -13613,7 +13619,7 @@ function openPhotoView(dateKey){
       currentMood=this.dataset.mood;
     });
   });
-  
+
   saveBtn.addEventListener("click",function(){
     if(!currentDataUrl){toast("请先拍照或选择照片");return;}
     const today=fmtDate(new Date());
@@ -13626,12 +13632,12 @@ function openPhotoView(dateKey){
     const card=document.querySelector(".daily-photo-card");
     if(card)card.outerHTML=dailyPhotoCardHTML();
   });
-  
+
   // 键盘关闭
   document.addEventListener("keydown",function(e){
     if(e.key==="Escape")closePhotoCapture();
   });
-})();
+}
 
 /* ═══════════ [JS 6.9] 挑战模式 ═══════════ */
 function getChallenges(){try{return JSON.parse(localStorage.getItem("challenges")||"[]");}catch(e){return[];}}
@@ -13692,7 +13698,8 @@ function closeChallengeForm(){
   document.getElementById("challengeUnitInput").value="天";
 }
 
-(function initChallengeForm(){
+function initChallengeForm(){
+  if(initChallengeForm._bound)return;initChallengeForm._bound=true;
   const overlay=document.getElementById("challengeFormOverlay");
   if(!overlay)return;
   overlay.addEventListener("click",function(e){if(e.target===overlay)closeChallengeForm();});
@@ -13717,7 +13724,7 @@ function closeChallengeForm(){
     });
   });
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeChallengeForm();});
-})();
+}
 
 /* ═══════════ [JS 6.12] 存储容量预警 ═══════════ */
 function getStorageUsage(){
