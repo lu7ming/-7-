@@ -209,7 +209,7 @@ body[data-theme="dark"][data-palette="lavender"]{
 html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;overflow-x:hidden;max-width:100%;}
 html{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
-body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
+body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:100% calc(100% - env(safe-area-inset-bottom));}
 /* ================== 自定义背景图层 ================== */
 .bg-layer{position:fixed;top:-3%;left:-3%;width:106%;height:106%;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;transform:scale(1.08);transition:background-image .25s ease,filter .25s ease;display:none;will-change:filter;}
 .bg-overlay{position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background .25s ease;display:none;}
