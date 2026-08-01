@@ -12257,7 +12257,12 @@ function _dpTm(e){
 }
 function _dpTe(e){
   if(!_dpStart)return;
-  if(_dpFired){_dpClear();return;}
+  if(_dpFired){
+    // 松手时停止语音识别（按住就听，松手就停）
+    if(_deerRec){try{_deerRec.stop();}catch(_){}}
+    _dpClear();
+    return;
+  }
   _dpClear();if(Date.now()-_dpStart<_DP_LONG)_dpClick();
 }
 function _dpClickFallback(e){
@@ -12449,27 +12454,46 @@ function deerRandomThought(){
   }catch(_){}
 }
 /* 长按鹿 → 语音识别后自动发送给 AI */
+let _deerRec=null;
 function _deerVoiceSend(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){deerBubble("当前浏览器不支持语音识别",3000);return;}
-  deerBubble("🎤 说吧，我在听…",0);
+  deerBubble("🎤 说吧，我在听…松手即发送",0);
   openAIPanel();
   const rec=new SR();
-  rec.lang="zh-CN";rec.continuous=false;rec.interimResults=false;
+  rec.lang="zh-CN";rec.continuous=true;rec.interimResults=true;
+  _deerRec=rec;
   rec.onstart=()=>{deerSet("glow",0);};
-  rec.onend=()=>{const el=deerEl();if(el)el.classList.remove("glow");};
+  rec.onend=()=>{
+    const el=deerEl();if(el)el.classList.remove("glow");
+    _deerRec=null;
+    // 隐藏"正在听"气泡
+    const b=el&&el.querySelector(".deer-bubble");
+    if(b)b.classList.remove("show");
+  };
   rec.onerror=(e)=>{
     const el=deerEl();if(el)el.classList.remove("glow");
+    _deerRec=null;
     if(e.error==="not-allowed")deerBubble("请允许麦克风权限",3000);
-    else if(e.error!=="aborted")deerBubble("语音识别失败，再试试？",3000);
+    else if(e.error!=="aborted"&&e.error!=="no-speech")deerBubble("语音识别失败，再试试？",3000);
   };
   rec.onresult=(e)=>{
-    const txt=e.results[0][0].transcript;
-    const el=deerEl();if(el)el.classList.remove("glow");
-    deerBubble("已识别：\""+txt.slice(0,15)+(txt.length>15?"…":"")+"\"",2000);
-    const input=document.getElementById("aiInput");
-    if(input){input.value=txt;input.dispatchEvent(new Event("input",{bubbles:true}));}
-    setTimeout(()=>{if(window.__aiSend)window.__aiSend();else aiSend(txt);},300);
+    // 实时显示识别中的文字
+    let interim="";
+    let final="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    const show=final||interim;
+    if(show)deerBubble("🎤 "+show.slice(0,30)+(show.length>30?"…":""),0);
+    if(final){
+      const el=deerEl();if(el)el.classList.remove("glow");
+      deerBubble("已识别：\""+final.slice(0,15)+(final.length>15?"…":"")+"\"",2000);
+      const input=document.getElementById("aiInput");
+      if(input){input.value=final;input.dispatchEvent(new Event("input",{bubbles:true}));}
+      setTimeout(()=>{if(window.__aiSend)window.__aiSend();else aiSend(final);},300);
+    }
   };
   try{rec.start();}catch(e){deerBubble("无法启动语音识别",3000);}
 }
