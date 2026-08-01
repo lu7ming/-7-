@@ -12554,13 +12554,17 @@ function _deerVoiceSend(){
   try{rec.start();}catch(e){deerBubble("无法启动语音识别",3000);}
 }
 window.addEventListener("error",function(e){
- const sa=document.getElementById("scroll");
- const m=(e&&(e.message||(e.error&&e.error.message)))||"未知错误";
- const where=(e&&e.filename?" · "+e.filename+":"+e.lineno+":"+e.colno:"");
- const stack=(e&&e.error&&e.error.stack)?"\n\nStack:\n"+e.error.stack.slice(0,500):"";
- const stage=window.__initStage?"\nStage: "+window.__initStage:"";
- console.error("[window.onerror]",m,where,stack,e);
- if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+esc(stack)+esc(stage)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
+ try{
+  var sa=document.getElementById("scroll");
+  var m=(e&&(e.message||(e.error&&e.error.message)))||"未知错误";
+  var where=(e&&e.filename)?" @ "+e.filename+":"+e.lineno+":"+e.colno:"";
+  var stack=(e&&e.error&&e.error.stack)?"\n"+String(e.error.stack).slice(0,500):"";
+  var stage=window.__initStage?"\nStage: "+window.__initStage:"";
+  var ua=navigator.userAgent.slice(0,100);
+  var msg=String(m)+String(where)+String(stack)+String(stage)+"\nUA: "+ua;
+  if(sa)sa.innerHTML='<div class="card" style="padding:20px"><h3 style="color:#c00;margin:0 0 10px">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;font-size:12px;line-height:1.6">'+msg.replace(/</g,"&lt;").replace(/>/g,"&gt;")+'</pre><button style="margin-top:12px;padding:8px 16px;background:#4a90d9;color:#fff;border:none;border-radius:8px;font-size:14px" onclick="location.reload()">重新加载</button></div>';
+  console.error("[onerror]",msg,e);
+ }catch(e2){console.error("[onerror-handler-failed]",e2);}
 });
 window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
