@@ -2,7 +2,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <!--  [0] HTML 头部：meta / title / 防白边脚本                                      -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<html lang="zh-CN" style="background:#E8C8A8;">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="人生工作台" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#E8C8A8" id="meta-theme-color" />
+<meta name="theme-color" content="#D4B896" id="meta-theme-color" />
 <meta name="description" content="鹿7铭 · 人生工作台 — 学习、健康、资产、关系、课程、项目、思考、复盘一站式记录" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
@@ -27,14 +27,14 @@ try{
   var pal=s.palette||"default";
   var dark=theme==="dark";
   var bgMap={
-    "default":dark?"#1A1825":"#E8C8A8",
-    "forest":dark?"#0F1810":"#B8D9A8",
-    "ocean":dark?"#0F1E30":"#A8C8E8",
-    "sunset":dark?"#1A0E08":"#E8B898",
-    "lavender":dark?"#0E0A18":"#C8B0E0"
+    "default":dark?"#0F0A18":"#D4B896",
+    "forest":dark?"#0A1208":"#92C286",
+    "ocean":dark?"#060A12":"#79A6D0",
+    "sunset":dark?"#100804":"#D08868",
+    "lavender":dark?"#080612":"#A48CC8"
   };
-  var bg=bgMap[pal]||(dark?"#1A1825":"#E8C8A8");
-  document.documentElement.style.background=bg;
+  var bg=bgMap[pal]||(dark?"#0F0A18":"#D4B896");
+  document.documentElement.style.backgroundColor=bg;
   document.documentElement.setAttribute("data-theme",theme);
   if(pal!=="default")document.documentElement.setAttribute("data-palette",pal);
   var m=document.getElementById("meta-theme-color");
@@ -44,8 +44,8 @@ try{
 <title>鹿7铭 · 人生工作台</title>
 <style>
 /* 防刷新白边：在 CSS 变量加载前就铺好背景 */
-html{background:#E8C8A8 no-repeat fixed;background-size:cover;}
-html[data-theme="dark"]{background:#1A1825 no-repeat fixed;background-size:cover;}
+html{background-color:#D4B896 no-repeat scroll;background-size:cover;}
+html[data-theme="dark"]{background-color:#0F0A18 no-repeat scroll;background-size:cover;}
 </style>
 <style>
 /* ═══════════ [CSS 1.1] 主题变量 + 多主题配色 ═══════════ */
@@ -191,8 +191,8 @@ body[data-theme="dark"][data-palette="lavender"]{
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;overflow-x:hidden;max-width:100%;}
-html{min-height:100vh;min-height:-webkit-fill-available;background:#E8C8A8;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:scroll;background-size:cover;}
-body{min-height:100vh;min-height:-webkit-fill-available;background-color:#E8C8A8;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:scroll;background-size:cover;}
+html{min-height:100dvh;min-height:-webkit-fill-available;background-color:#D4B896;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:scroll;background-size:cover;}
+body{min-height:100dvh;min-height:-webkit-fill-available;background-color:#D4B896;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:scroll;background-size:cover;}
 /* ================== 自定义背景图层 ================== */
 .bg-layer{position:fixed;top:-3%;left:-3%;width:106%;height:106%;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;transform:scale(1.08);transition:background-image .25s ease,filter .25s ease;display:none;will-change:filter;}
 .bg-overlay{position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background .25s ease;display:none;}
@@ -206,13 +206,13 @@ button{cursor:pointer;border:none;background:none;}
 /* ================== Layout ================== */
 .app{
   display:flex;
-  height:100vh;
-  min-height:100vh;
+  height:100dvh;
+  min-height:0;
   overflow:hidden;
   background:transparent;
   box-sizing:border-box;
 }
-.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:transparent;min-height:100vh;}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:transparent;min-height:0;}
 
 /* ---- Sidebar ---- */
 .sidebar{
@@ -3674,14 +3674,14 @@ function applyTheme(){
   var dark=settings.theme==="dark";
   var pal=settings.palette||"default";
   var bgMap={
-    "default":dark?"#1A1825":"#E8C8A8",
-    "forest":dark?"#0F1810":"#B8D9A8",
-    "ocean":dark?"#0F1E30":"#A8C8E8",
-    "sunset":dark?"#1A0E08":"#E8B898",
-    "lavender":dark?"#0E0A18":"#C8B0E0"
+    "default":dark?"#0F0A18":"#D4B896",
+    "forest":dark?"#0A1208":"#92C286",
+    "ocean":dark?"#060A12":"#79A6D0",
+    "sunset":dark?"#100804":"#D08868",
+    "lavender":dark?"#080612":"#A48CC8"
   };
-  var bg=bgMap[pal]||(dark?"#1A1825":"#E8C8A8");
-  document.documentElement.style.background=bg;
+  var bg=bgMap[pal]||(dark?"#0F0A18":"#D4B896");
+  document.documentElement.style.backgroundColor=bg;
   var m=document.getElementById("meta-theme-color");
   if(m)m.setAttribute("content",bg);
   applyBackground();
@@ -13672,7 +13672,68 @@ function openPhotoView(dateKey){
   const p=photos[dateKey];
   if(!p||!p.dataUrl)return;
   const w=window.open("","_blank","width=500,height=600");
-  w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><img src="${p.dataUrl}" style="max-width:100%;max-height:80vh;border-radius:12px"><p style="color:#fff;margin-top:12px">${dateKey} ${p.mood||''} ${p.note||''}</p></div></body></html>`);
+  w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><img src="${p.dataUrl}" style="max-width:100%;max-height:80vh;border-radius:12px"><p style="color:#fff;margin-top:12px">${dateKey} ${p.mood||''} ${p.note||''}</p></div>
+<script>
+/* ═══════ iOS PWA 底部横条修复 (P2 JS 兜底) ═══════ */
+(function(){
+  var isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if (!isStandalone) return;
+
+  /* ── MOD 8: PWA 冷启动 env() 重新探测 ── */
+  function measureEnv(prop) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(' + prop + ', 0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(el);
+    var val = el.offsetHeight;
+    el.remove();
+    return val;
+  }
+
+  var viewportMeta = document.querySelector('meta[name="viewport"]');
+  if (viewportMeta) {
+    var originalContent = viewportMeta.getAttribute('content');
+    if (originalContent && originalContent.indexOf('viewport-fit=cover') !== -1) {
+      viewportMeta.setAttribute('content', originalContent.replace('viewport-fit=cover', 'viewport-fit=auto'));
+      requestAnimationFrame(function() {
+        viewportMeta.setAttribute('content', originalContent);
+        requestAnimationFrame(function() {
+          var topInset = measureEnv('safe-area-inset-top');
+          var bottomInset = measureEnv('safe-area-inset-bottom');
+          document.documentElement.style.setProperty('--measured-top', topInset + 'px');
+          document.documentElement.style.setProperty('--measured-bottom', bottomInset + 'px');
+        });
+      });
+    }
+  }
+
+  /* ── MOD 9: 键盘收起后视口修复 ── */
+  var maxVH = window.innerHeight;
+
+  window.addEventListener('resize', function() {
+    maxVH = Math.max(maxVH, window.innerHeight);
+  });
+
+  function healViewport() {
+    if (maxVH - window.innerHeight <= 4) return;
+    var app = document.querySelector('.app');
+    if (!app) return;
+    var scroller = document.querySelector('.scroll');
+    var st = scroller ? scroller.scrollTop : 0;
+    app.style.display = 'none';
+    void app.offsetHeight;
+    app.style.display = '';
+    if (scroller) scroller.scrollTop = st;
+  }
+
+  document.addEventListener('blur', function(e) {
+    var tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) {
+      setTimeout(healViewport, 140);
+    }
+  }, true);
+})();
+</script>
+</body></html>`);
 }
 
 // 初始化每日一拍事件绑定
