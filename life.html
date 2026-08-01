@@ -6,6 +6,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="人生工作台" />
@@ -37,6 +40,23 @@ try{
   var m=document.getElementById("meta-theme-color");
   if(m)m.setAttribute("content",bg);
 }catch(e){}
+</script>
+<script>
+/* 强制检查 Service Worker 更新：发现新版本立即激活 */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./service-worker.js').then(function(reg){
+    reg.addEventListener('updatefound', function(){
+      var newWorker = reg.installing;
+      newWorker.addEventListener('statechange', function(){
+        if(newWorker.state === 'activated'){
+          if(confirm('人生工作台已更新到新版，是否立即刷新？')){
+            location.reload();
+          }
+        }
+      });
+    });
+  }).catch(function(){});
+}
 </script>
 <title>鹿7铭 · 人生工作台</title>
 <style>
@@ -1910,7 +1930,7 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
   
   /* ---- 月度统计卡片 ---- */
   .month-card .mc-stat-row {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 }

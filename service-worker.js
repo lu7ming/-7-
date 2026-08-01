@@ -1,7 +1,7 @@
 /* 鹿7铭 · 人生工作台 Service Worker
  * 策略：HTML 文档 network-first（保证更新生效），静态资源 cache-first（离线可用）
  */
-const CACHE = "life-workbench-v8"; // v8: 修复弹窗按钮绑定
+const CACHE = "life-workbench-v9"; // v9: 修复宽屏布局+保险库/AI Key持久化+缓存强制更新
 const SHELL = "./life.html";
 const ASSETS = [
   "./manifest.json",
