@@ -315,6 +315,12 @@ body::after{
 }
 .top-icon:hover{transform:translateY(-1px);box-shadow:var(--glass-shadow),var(--glass-inset);}
 .top-icon:active{transform:scale(.93);}
+/* 顶栏图标收纳 */
+.top-icons-wrap{position:relative;display:flex;align-items:center;gap:8px;}
+.top-more-btn{font-size:18px;font-weight:700;line-height:1;}
+.top-more-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;flex-direction:column;gap:6px;padding:8px;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border:1px solid var(--glass-border);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:200;}
+.top-more-menu.show{display:flex;animation:tmIn .15s ease;}
+@keyframes tmIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;min-height:0;-webkit-transform:translateZ(0);transform:translateZ(0);contain:layout style;/* #143 隔离滚动容器重排 */}
 .scroll::-webkit-scrollbar{width:6px;}
 .scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
@@ -2286,16 +2292,17 @@ body[data-theme="dark"] .dash-stat{background:rgba(255,255,255,.04);}
         </div>
         <div id="saveIndicator" style="font-size:11px;color:var(--muted);opacity:0;transition:opacity 0.3s">已保存</div>
       </div>
-      <div style="display:flex;gap:8px">
-        <div id="miniTimer" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
-        <div id="miniSound" style="display:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;align-self:center;padding:2px 8px;background:var(--card-soft);border-radius:8px"></div>
-        <button class="top-icon" data-top="tree" title="生命树 · 成长轨迹">🌳</button>
-        <button class="top-icon" data-top="search" title="搜索">🔍</button>
-        <button class="top-icon" data-top="data" title="数据">💾</button>
+      <div class="top-icons-wrap">
         <button class="top-icon" data-top="refresh" title="刷新" id="refreshBtn">🔄</button>
-        <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
-        <button class="top-icon" title="全屏沉浸" id="fullscreenBtn">⛶</button>
+        <button class="top-icon" data-top="data" title="数据">💾</button>
         <button class="top-icon" data-top="theme" title="主题" id="themeBtn">☀️</button>
+        <button class="top-icon top-more-btn" id="topMoreBtn" title="更多">⋯</button>
+        <div class="top-more-menu" id="topMoreMenu">
+          <button class="top-icon" data-top="tree" title="生命树 · 成长轨迹">🌳</button>
+          <button class="top-icon" data-top="search" title="搜索">🔍</button>
+          <button class="top-icon" data-top="rest" title="休息模式 · 魁北克冬夜" id="restBtn">❄️</button>
+          <button class="top-icon" title="全屏沉浸" id="fullscreenBtn">⛶</button>
+        </div>
       </div>
     </div>
     <div class="scroll" id="scroll"></div>
@@ -10372,6 +10379,14 @@ document.getElementById("restPanel").addEventListener("click",onClick);
  };
  document.getElementById("searchClose").onclick=closeSearch;
  document.getElementById("searchOverlay").onclick=e=>{if(e.target.id==="searchOverlay")closeSearch();};
+ // 顶栏收纳菜单
+ const _tmBtn=document.getElementById("topMoreBtn");
+ const _tmMenu=document.getElementById("topMoreMenu");
+ if(_tmBtn&&_tmMenu){
+   _tmBtn.onclick=(e)=>{e.stopPropagation();_tmMenu.classList.toggle("show");};
+   _tmMenu.addEventListener("click",(e)=>{e.stopPropagation();});
+   document.addEventListener("click",()=>_tmMenu.classList.remove("show"));
+ }
  document.getElementById("searchInput").addEventListener("input",debounce(runSearch,150));
  document.getElementById("paletteClose").onclick=()=>document.getElementById("paletteOverlay").classList.add("hidden");
  document.getElementById("paletteOverlay").onclick=e=>{if(e.target.id==="paletteOverlay")e.target.classList.add("hidden");};
