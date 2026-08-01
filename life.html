@@ -2534,6 +2534,8 @@ let settings={theme:"light",palette:"default",lastBackupRemind:0,customCheckinIt
 const MODULE_ACTIONS={};
 let currentDate=fmtDate(new Date());
 let activeNav="home";
+function goNav(nav){activeNav=nav;activeTool=null;render();}
+window.goNav=goNav;
 let selMood="";   // 当前选中的心情（思考流录入用）
 let pomoDuration=1500; // 番茄钟总秒数，默认25分钟
 let pomoRemain=1500;   // 剩余秒数
@@ -7564,6 +7566,20 @@ function onClick(e){
     else if(a==="theme")toggleTheme();
     else if(a==="rest")toggleRest();
     else if(a==="tree"){activeNav="tree";activeTool=null;render();}
+    else if(a==="palette")openPalette();
+    else if(a==="voice")toggleVoice();
+    else if(a==="sound"){activeNav="sound";activeTool=null;render();}
+    else if(a==="refresh"){
+      const refEl=t;
+      refEl.style.transition="transform .6s";
+      refEl.style.transform="rotate(360deg)";
+      setTimeout(()=>{refEl.style.transform="";},600);
+      if("serviceWorker" in navigator){
+        navigator.serviceWorker.getRegistrations().then(regs=>{
+          Promise.all(regs.map(r=>r.unregister())).then(()=>location.reload(true));
+        });
+      }else{location.reload(true);}
+    }
     return;
   }
   // 打卡签到
@@ -11935,8 +11951,8 @@ function exitFocusMode(){
 }
 
 /* ---------- #116 手势操作系统 ---------- */
-let _gsX=0,_gsY=0,_gsT=0,_gsMoved=false,_gsLong=null,_gsPinch=false,_gsPinchFired=false,_gsDist0=0;
-const _GS_SWIPE=64,_GS_LONG=560,_GS_MOVE=12;
+let _gsX=0,_gsY=0,_gsT=0,_gsMoved=false,_gsLong=null,_gsPinch=false,_gsPinchFired=false,_gsDist0=0,_gsStartX=0;
+const _GS_SWIPE=64,_GS_LONG=560,_GS_MOVE=12,_GS_EDGE=40,_GS_SWIPE_HOME=120;
 function _gsInteractive(el){
   return !!(el&&el.closest&&el.closest('input,textarea,select,button,a,[data-jump],[contenteditable="true"],.pomo-box,.viz-heat,.viz-list,.habit-heatmap,.heat-grid,#deerEl,.gesture-menu,[style*="overflow-x"]'));
 }
@@ -11954,7 +11970,7 @@ function _gsTs(e){
     if(_gsLong){clearTimeout(_gsLong);_gsLong=null;}return;
   }
   const t=e.touches[0];if(!t)return;
-  _gsX=t.clientX;_gsY=t.clientY;_gsT=Date.now();_gsMoved=false;
+  _gsX=t.clientX;_gsY=t.clientY;_gsT=Date.now();_gsMoved=false;_gsStartX=t.clientX;
   if(_gsLong){clearTimeout(_gsLong);_gsLong=null;}
   if(!_gsInteractive(e.target))_gsLong=setTimeout(()=>{if(!_gsMoved)showGestureMenu(_gsX,_gsY);},_GS_LONG);
 }
@@ -11980,7 +11996,10 @@ function _gsTe(e){
   if(dt>600||_gsMoved===false&&Math.abs(dx)<_GS_MOVE)return;
   if(_gsInteractive(e.target))return;
   if(Math.abs(dx)>_GS_SWIPE&&Math.abs(dx)>Math.abs(dy)*1.8){
-    if(dx>0){if(activeNav!=="home"){activeNav="home";activeTool=null;render();gestureHint("← 返回工作台");}}
+    if(dx>0){
+      // 右滑返回工作台：仅当从屏幕左边缘起滑且滑动距离足够大，避免误触
+      if(_gsStartX<=_GS_EDGE&&dx>_GS_SWIPE_HOME&&activeNav!=="home"){activeNav="home";activeTool=null;render();gestureHint("← 返回工作台");}
+    }
     else{const ids=_gsMainIds();let i=ids.indexOf(activeNav);i=(i<0?0:(i+1)%ids.length);activeNav=ids[i];activeTool=null;render();gestureHint("→ "+navLabel(activeNav));}
   }
 }
@@ -13886,7 +13905,7 @@ function crossModuleCardHTML(){
   if(!suggestions.length)return"";
   let html=`<div class="card suggest-card pano-full"><div class="suggest-title">🔗 智能推荐</div>`;
   suggestions.forEach(s=>{
-    html+=`<div class="suggest-item"><span class="suggest-icon">${s.icon}</span><span class="suggest-text">${esc(s.text)}</span>${s.action?`<button class="suggest-btn" onclick="activeNav='${s.action}';render();">${s.actionLabel}</button>`:""}</div>`;
+    html+=`<div class="suggest-item"><span class="suggest-icon">${s.icon}</span><span class="suggest-text">${esc(s.text)}</span>${s.action?`<button class="suggest-btn" onclick="goNav('${s.action}')">${s.actionLabel}</button>`:""}</div>`;
   });
   html+=`</div>`;
   return html;
@@ -13950,7 +13969,7 @@ function contextCardHTML(){
   if(!suggestions.length)return"";
   let html=`<div class="card context-card pano-full"><div class="suggest-title">🎯 情境感知</div>`;
   suggestions.forEach(s=>{
-    html+=`<div class="suggest-item"><span class="suggest-icon">${s.icon}</span><span class="suggest-text">${esc(s.text)}</span>${s.action?`<button class="suggest-btn" onclick="activeNav='${s.action}';render();">→</button>`:""}</div>`;
+    html+=`<div class="suggest-item"><span class="suggest-icon">${s.icon}</span><span class="suggest-text">${esc(s.text)}</span>${s.action?`<button class="suggest-btn" onclick="goNav('${s.action}')">→</button>`:""}</div>`;
   });
   html+=`</div>`;
   return html;
@@ -14733,6 +14752,15 @@ function themeMarketHTML(){
       <div class="theme-mkt-list">${items}</div>`;
   }catch(e){return "";}
 }
+
+/* 防御：内联 onclick 调用的函数需暴露到全局，否则移动端 Safari 报 Can't find variable */
+window.openChallengeForm=openChallengeForm;
+window.closeChallengeForm=closeChallengeForm;
+window.updateChallengeProgress=updateChallengeProgress;
+window.openPhotoCapture=openPhotoCapture;
+window.openPhotoView=openPhotoView;
+window.applyScene=applyScene;
+window.restoreSnapshot=restoreSnapshot;
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
