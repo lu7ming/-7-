@@ -2553,6 +2553,7 @@ function nextSaturdayISO(){
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+window.esc=esc;/* 防御：错误处理/扩展可能从全局访问 */
 function debounce(fn,ms){let t;return function(){clearTimeout(t);const a=arguments,c=this;t=setTimeout(()=>fn.apply(c,a),ms);};}
 function diffDays(a,b){const ms=parseDate(b)-parseDate(a);return Math.round(ms/86400000);}
 
@@ -7496,6 +7497,7 @@ function render(){
   // #141 思考流：长列表用虚拟滚动挂载
   if(activeNav==="reflect")requestAnimationFrame(()=>{try{mountReflectVirtual();}catch(e){}});
 }
+window.render=render;/* 防御：全局可访问，避免外部脚本/扩展触发 Can't find variable: render */
 
 /* ============== 交互 ============== */
 function onClick(e){
@@ -12156,7 +12158,7 @@ async function init(){
  }catch(err){
   const sa=document.getElementById("scroll");
   const msg=(err&&err.stack)?(err.stack):String(err);
-  if(sa)sa.innerHTML=`<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 启动失败</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">${esc(msg||"未知错误")}\n\nUA：${esc(navigator.userAgent.slice(0,90))}</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>`;
+  if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 启动失败</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(msg||"未知错误")+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
   console.error("[init] failed:",err);
  }
 }
@@ -12451,7 +12453,7 @@ window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
  const m=(e&&(e.message||(e.error&&e.error.message)))||"未知错误";
  const where=(e&&e.filename?" · "+e.filename+":"+e.lineno+":"+e.colno:"");
- if(sa)sa.innerHTML=`<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">${esc(m)}${esc(where)}\n\nUA：${esc(navigator.userAgent.slice(0,90))}</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>`;
+ if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
 });
 window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
