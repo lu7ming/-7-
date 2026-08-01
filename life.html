@@ -209,7 +209,7 @@ body[data-theme="dark"][data-palette="lavender"]{
 html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   background:var(--body-gradient);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;overflow-x:hidden;max-width:100%;}
 html{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
-body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:100% calc(100% - env(safe-area-inset-bottom));}
+body{min-height:100vh;min-height:100dvh;min-height:-webkit-fill-available;background-color:#C8A890;background-image:var(--body-gradient);background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}
 /* ================== 自定义背景图层 ================== */
 .bg-layer{position:fixed;top:-3%;left:-3%;width:106%;height:106%;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;transform:scale(1.08);transition:background-image .25s ease,filter .25s ease;display:none;will-change:filter;}
 .bg-overlay{position:fixed;inset:0;z-index:-1;pointer-events:none;transition:background .25s ease;display:none;}
@@ -12547,7 +12547,9 @@ window.addEventListener("error",function(e){
  const sa=document.getElementById("scroll");
  const m=(e&&(e.message||(e.error&&e.error.message)))||"未知错误";
  const where=(e&&e.filename?" · "+e.filename+":"+e.lineno+":"+e.colno:"");
- if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
+ const stack=(e&&e.error&&e.error.stack)?"\n\nStack:\n"+e.error.stack.slice(0,500):"";
+ console.error("[window.onerror]",m,where,stack,e);
+ if(sa)sa.innerHTML='<div class="card"><h3 style="margin:0 0 8px;color:var(--warn)">⚠️ 运行出错</h3><pre style="white-space:pre-wrap;color:var(--ink-2);font-size:12.5px;line-height:1.6">'+esc(m)+esc(where)+esc(stack)+'\n\nUA：'+esc(navigator.userAgent.slice(0,90))+'</pre><button class="btn" style="margin-top:12px" onclick="location.reload()">重新加载</button></div>';
 });
 window.addEventListener("unhandledrejection",function(e){
  console.error("[unhandledrejection]",e.reason);
